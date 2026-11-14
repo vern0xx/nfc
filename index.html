@@ -1,830 +1,290 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0f19">
-  <title>NFC Master Pro · Web NFC</title>
-  <style>
-    /* ===== RESET & TOKENS ===== */
-    :root {
-      --bg: #0b0f19;
-      --bg2: #111827;
-      --surface: #1f2937;
-      --surface2: #374151;
-      --border: #4b5563;
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --primary: #6366f1;
-      --primary-glow: rgba(99, 102, 241, 0.35);
-      --success: #22c55e;
-      --error: #ef4444;
-      --warning: #f59e0b;
-      --info: #06b6d4;
-      --radius: 16px;
-      --radius-sm: 10px;
-      --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
-      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
-      --card-width: 320px;
-      --card-theme: 'dark';
-    }
-
-    /* ===== CARD THEMES (via data-attribute) ===== */
-    [data-card-theme="dark"] .card-visual {
-      --card-bg: linear-gradient(145deg, #1e1e2f 0%, #0f0f17 100%);
-      --card-border: #3f3f5a;
-      --card-chip: #eab308;
-      --card-wave: rgba(99, 102, 241, 0.6);
-      --card-uid: #f9fafb;
-      --card-label: #9ca3af;
-    }
-    [data-card-theme="light"] .card-visual {
-      --card-bg: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
-      --card-border: #cbd5e1;
-      --card-chip: #b45309;
-      --card-wave: rgba(59, 130, 246, 0.5);
-      --card-uid: #0f172a;
-      --card-label: #64748b;
-    }
-    [data-card-theme="neon"] .card-visual {
-      --card-bg: linear-gradient(145deg, #0a0a1a 0%, #1a0a2e 100%);
-      --card-border: #7c3aed;
-      --card-chip: #22d3ee;
-      --card-wave: rgba(34, 211, 238, 0.7);
-      --card-uid: #a78bfa;
-      --card-label: #c4b5fd;
-    }
-    [data-card-theme="gold"] .card-visual {
-      --card-bg: linear-gradient(145deg, #1a1a1a 0%, #2d1b0e 100%);
-      --card-border: #b45309;
-      --card-chip: #fbbf24;
-      --card-wave: rgba(251, 191, 36, 0.5);
-      --card-uid: #fde68a;
-      --card-label: #d97706;
-    }
-
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body { height: 100%; margin: 0; }
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-      overflow-x: hidden;
-    }
-
-    /* ===== ICONS ===== */
-    .icon { width: 20px; height: 20px; flex-shrink: 0; vertical-align: middle; }
-    .icon-lg { width: 28px; height: 28px; }
-    .icon-xl { width: 80px; height: 80px; }
-
-    /* ===== HEADER ===== */
-    header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: rgba(17, 24, 39, 0.8);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 50;
-    }
-    header h1 {
-      font-size: 16px;
-      margin: 0;
-      font-weight: 700;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: linear-gradient(90deg, #818cf8, #c084fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .badge {
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      white-space: nowrap;
-    }
-    .badge .icon { width: 12px; height: 12px; }
-    .badge.ok { background: var(--success); color: #000; border-color: var(--success); }
-    .badge.err { background: var(--error); color: #fff; border-color: var(--error); }
-    .badge.wait { background: var(--warning); color: #000; border-color: var(--warning); }
-    .hbtn {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      width: 38px;
-      height: 38px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
-    }
-    .hbtn:active { background: var(--surface2); }
-
-    /* ===== NAV ===== */
-    nav {
-      display: flex;
-      gap: 4px;
-      padding: 8px 12px;
-      overflow-x: auto;
-      background: var(--bg2);
-      border-bottom: 1px solid var(--border);
-      scrollbar-width: none;
-    }
-    nav::-webkit-scrollbar { display: none; }
-    nav button {
-      flex-shrink: 0;
-      padding: 8px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--muted);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-family: inherit;
-      transition: all 0.2s;
-      min-height: 38px;
-    }
-    nav button .icon { width: 16px; height: 16px; }
-    nav button.active {
-      background: var(--primary);
-      color: #fff;
-      box-shadow: 0 0 15px var(--primary-glow);
-    }
-    nav button:active { transform: scale(0.96); }
-
-    /* ===== MAIN ===== */
-    main { flex: 1; padding: 16px; overflow-y: auto; }
-    .tab { display: none; max-width: 640px; margin: 0 auto; padding-bottom: 40px; }
-    .tab.active { display: block; animation: fadeIn 0.25s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-
-    /* ===== CARDS ===== */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: var(--shadow);
-    }
-    .card h2 {
-      margin: 0 0 14px;
-      font-size: 13px;
-      color: var(--primary);
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .card.danger h2 { color: var(--error); }
-    .card.warn h2 { color: var(--warning); }
-    .card.ok h2 { color: var(--success); }
-
-    label {
-      display: block;
-      font-size: 11px;
-      margin-bottom: 6px;
-      color: var(--muted);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    input, textarea, select {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 12px;
-      background: var(--bg2);
-      border: 2px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      font-size: 14px;
-      font-family: inherit;
-      min-height: 44px;
-      transition: border 0.2s;
-    }
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px var(--primary-glow);
-    }
-    textarea {
-      resize: vertical;
-      min-height: 100px;
-      font-family: var(--mono);
-      font-size: 12px;
-    }
-    select { cursor: pointer; }
-
-    /* ===== BUTTONS ===== */
-    button.btn {
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      padding: 12px 18px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 44px;
-      width: 100%;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      transition: transform 0.15s, box-shadow 0.2s;
-    }
-    button.btn:active:not(:disabled) { transform: scale(0.97); }
-    button.btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    button.btn.secondary {
-      background: var(--surface2);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    button.btn.success { background: var(--success); color: #000; }
-    button.btn.danger { background: var(--error); }
-    button.btn.warning { background: var(--warning); color: #000; }
-    button.btn.sm { padding: 8px 12px; font-size: 11px; width: auto; min-height: 34px; }
-    .row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-    .row > * { flex: 1; min-width: 100px; }
-
-    /* ===== UID ===== */
-    .uid-display {
-      font-family: var(--mono);
-      font-size: 15px;
-      padding: 10px;
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      text-align: center;
-      letter-spacing: 2px;
-      color: var(--primary);
-      margin: 10px 0;
-      font-weight: 700;
-    }
-
-    /* ===== RESULTS ===== */
-    .result-item {
-      padding: 10px 12px;
-      background: var(--bg2);
-      border-radius: 8px;
-      margin-bottom: 8px;
-      font-size: 12px;
-      word-break: break-all;
-      border-left: 3px solid var(--primary);
-    }
-    .result-item strong {
-      color: var(--primary);
-      font-weight: 700;
-      display: block;
-      margin-bottom: 4px;
-      font-size: 10px;
-      text-transform: uppercase;
-    }
-    .hex-block {
-      font-family: var(--mono);
-      font-size: 10px;
-      background: #000;
-      padding: 8px;
-      border-radius: 6px;
-      color: #9ca3af;
-      white-space: pre;
-      overflow-x: auto;
-      line-height: 1.4;
-      margin-top: 6px;
-    }
-
-    /* ===== ALERTS ===== */
-    .alert {
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      margin-bottom: 12px;
-      font-size: 12px;
-      display: flex;
-      gap: 10px;
-      line-height: 1.5;
-    }
-    .alert .icon { flex-shrink: 0; margin-top: 2px; }
-    .alert.info { background: rgba(6, 182, 212, 0.1); border: 1px solid var(--info); color: #67e8f9; }
-    .alert.warn { background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); color: #fcd34d; }
-    .alert.error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); color: #fca5a5; }
-    .alert.success { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); color: #86efac; }
-
-    /* ===== CARD VISUAL ===== */
-    .card-visual {
-      perspective: 1200px;
-      margin-bottom: 20px;
-      transition: transform 0.3s;
-    }
-    .card-inner {
-      position: relative;
-      aspect-ratio: 1.586;
-      width: var(--card-width);
-      max-width: 100%;
-      margin: 0 auto;
-      border-radius: 20px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      overflow: hidden;
-      transition: box-shadow 0.3s, border-color 0.3s;
-      animation: cardFloat 5s ease-in-out infinite;
-    }
-    @keyframes cardFloat {
-      0%, 100% { transform: translateY(0) rotateX(2deg) rotateY(-2deg); }
-      50% { transform: translateY(-6px) rotateX(-2deg) rotateY(2deg); }
-    }
-    .card-visual.active .card-inner {
-      border-color: var(--success);
-      box-shadow: 0 25px 80px -15px rgba(34, 197, 94, 0.4),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.08);
-      animation: none;
-      transform: none;
-    }
-    .card-visual.error .card-inner {
-      border-color: var(--error);
-      box-shadow: 0 25px 80px -15px rgba(239, 68, 68, 0.4);
-      animation: none;
-    }
-    .card-visual.scanning .card-inner {
-      border-color: var(--primary);
-      box-shadow: 0 25px 80px -15px var(--primary-glow),
-                  0 0 0 1px rgba(99, 102, 241, 0.3);
-    }
-    .card-inner::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05), transparent 50%),
-                  radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.03), transparent 50%);
-      pointer-events: none;
-    }
-    .card-scanline {
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 3px;
-      top: -3px;
-      background: linear-gradient(90deg, transparent, var(--primary), transparent);
-      box-shadow: 0 0 25px 6px var(--primary);
-      opacity: 0;
-      pointer-events: none;
-    }
-    .card-visual.scanning .card-scanline {
-      opacity: 1;
-      animation: scanMove 1.5s ease-in-out infinite;
-    }
-    @keyframes scanMove { 0% { top: 0; } 100% { top: 100%; } }
-    .card-top { display: flex; justify-content: space-between; align-items: flex-start; z-index: 1; }
-    .card-chip { width: 42px; height: 34px; color: var(--card-chip); }
-    .card-wave {
-      width: 32px;
-      height: 32px;
-      color: var(--card-wave);
-      transition: color 0.3s;
-    }
-    .card-visual.active .card-wave { color: var(--success); }
-    .card-visual.scanning .card-wave { color: var(--primary); animation: pl 1.2s ease-in-out infinite; }
-    .card-uid {
-      font-family: var(--mono);
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      color: var(--card-uid);
-      text-align: center;
-      z-index: 1;
-      transition: color 0.3s, text-shadow 0.3s;
-      word-spacing: 4px;
-    }
-    .card-visual.active .card-uid { color: var(--success); text-shadow: 0 0 20px rgba(34, 197, 94, 0.5); }
-    .card-records {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      justify-content: center;
-      z-index: 1;
-      min-height: 22px;
-    }
-    .card-empty { font-size: 10px; color: var(--card-label); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-    .card-chip-tag {
-      padding: 3px 8px;
-      border-radius: 20px;
-      font-size: 9px;
-      font-weight: 700;
-      background: rgba(99, 102, 241, 0.2);
-      color: #a5b4fc;
-      border: 1px solid rgba(99, 102, 241, 0.4);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .card-chip-tag.mime { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border-color: rgba(245, 158, 11, 0.4); }
-    .card-chip-tag.text { background: rgba(6, 182, 212, 0.2); color: #67e8f9; border-color: rgba(6, 182, 212, 0.4); }
-    .card-chip-tag.url { background: rgba(34, 197, 94, 0.2); color: #86efac; border-color: rgba(34, 197, 94, 0.4); }
-    .card-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 1;
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--card-label);
-      font-weight: 700;
-    }
-    .card-visual.active .card-footer { color: var(--card-uid); }
-
-    /* ===== BLOCKS ===== */
-    .sector-block {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      margin-bottom: 10px;
-      overflow: hidden;
-    }
-    .sector-head {
-      padding: 8px 12px;
-      background: var(--surface2);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--primary);
-    }
-    .sector-head .badge-sm {
-      background: var(--surface);
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 9px;
-      color: var(--muted);
-    }
-    .sector-head .badge-sm.used { background: var(--success); color: #000; }
-    .block-row {
-      display: grid;
-      grid-template-columns: 38px 1fr;
-      gap: 6px;
-      padding: 5px 10px;
-      font-family: var(--mono);
-      font-size: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.03);
-      align-items: center;
-    }
-    .block-row.trailer { background: rgba(239, 68, 68, 0.08); color: #fca5a5; }
-    .block-row.ndef-used { background: rgba(34, 197, 94, 0.06); }
-    .block-row.empty { color: #52525b; }
-    .block-addr { color: var(--primary); font-weight: 700; text-align: right; }
-    .block-row.trailer .block-addr { color: var(--error); }
-    .block-data { display: flex; flex-direction: column; gap: 1px; word-break: break-all; }
-    .block-hex { color: var(--text); }
-    .block-row.empty .block-hex { color: #52525b; }
-    .block-ascii { color: var(--muted); font-size: 9px; opacity: 0.7; }
-
-    /* ===== STATS ===== */
-    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-    .stat { background: var(--bg2); padding: 10px; border-radius: 8px; text-align: center; }
-    .stat .v { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--primary); }
-    .stat .l { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
-
-    /* ===== SETTINGS ===== */
-    .settings-grid { display: grid; gap: 16px; }
-    .settings-group { background: var(--bg2); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
-    .settings-group h3 { margin: 0 0 12px; font-size: 12px; color: var(--text); text-transform: uppercase; letter-spacing: 0.5px; }
-    .theme-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    .theme-options button {
-      padding: 10px;
-      border-radius: 8px;
-      border: 2px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-    .theme-options button.active { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
-    .size-options { display: flex; gap: 8px; }
-    .size-options button {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      border: 2px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .size-options button.active { border-color: var(--primary); }
-
-    /* ===== LOG ===== */
-    #logPanel {
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-      max-height: 36px;
-      overflow: hidden;
-      transition: max-height 0.3s;
-    }
-    #logPanel.open { max-height: 200px; }
-    #logHeader {
-      display: flex;
-      align-items: center;
-      padding: 8px 14px;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--muted);
-      font-weight: 700;
-      cursor: pointer;
-      background: var(--surface);
-      gap: 6px;
-    }
-    #logHeader .icon { width: 14px; height: 14px; }
-    #logHeader .spacer { flex: 1; }
-    #logHeader button {
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      padding: 4px;
-      display: flex;
-    }
-    #log {
-      background: #000;
-      padding: 8px 14px;
-      font-family: var(--mono);
-      font-size: 10px;
-      max-height: 160px;
-      overflow-y: auto;
-      line-height: 1.6;
-    }
-    #log div { padding: 1px 0; color: #9ca3af; word-break: break-all; }
-    #log div.ok { color: var(--success); }
-    #log div.err { color: var(--error); }
-    #log div.info { color: var(--warning); }
-
-    /* ===== TOASTS ===== */
-    #toasts {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 200;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      pointer-events: none;
-      width: calc(100% - 32px);
-      max-width: 400px;
-    }
-    .toast {
-      background: var(--surface);
-      border: 2px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 12px 16px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-      font-size: 12px;
-      font-weight: 600;
-      animation: slideUp 0.25s;
-      pointer-events: auto;
-    }
-    .toast.ok { border-color: var(--success); color: #86efac; }
-    .toast.err { border-color: var(--error); color: #fca5a5; }
-    .toast.info { border-color: var(--info); color: #67e8f9; }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
-
-    /* ===== BIG STATUS ===== */
-    #bigStatus {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.94);
-      z-index: 999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      padding: 32px;
-      text-align: center;
-      backdrop-filter: blur(6px);
-    }
-    #bigStatus.show { display: flex; }
-    #bigStatus .icon-xl {
-      color: var(--primary);
-      margin-bottom: 24px;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-    #bigStatus.ok .icon-xl { color: var(--success); animation: none; }
-    #bigStatus.err .icon-xl { color: var(--error); animation: none; }
-    #bigStatus .text { font-size: 20px; font-weight: 700; line-height: 1.4; max-width: 400px; }
-    #bigStatus .sub { font-size: 13px; color: var(--muted); margin-top: 12px; max-width: 400px; }
-    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.08); } }
-    #bigStatus button {
-      margin-top: 24px;
-      background: var(--surface2);
-      color: var(--text);
-      border: 2px solid var(--border);
-      padding: 12px 24px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* ===== CROP MODAL ===== */
-    #cropModal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.95);
-      z-index: 1000;
-      display: none;
-      flex-direction: column;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-    }
-    #cropModal.show { display: flex; }
-    .crop-header {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      gap: 12px;
-    }
-    .crop-header h3 { margin: 0; font-size: 14px; flex: 1; }
-    .crop-header button {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .crop-stage {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-      touch-action: none;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 10px;
-      border-radius: var(--radius-sm);
-    }
-    #cropCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: grab; }
-    #cropCanvas:active { cursor: grabbing; }
-    .crop-frame {
-      position: absolute;
-      pointer-events: none;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
-      border: 2px solid white;
-      border-radius: 2px;
-    }
-    .crop-controls {
-      padding: 10px 16px;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .crop-controls .ctrl-row { display: flex; align-items: center; gap: 10px; }
-    .crop-controls label { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; margin: 0; min-width: 50px; }
-    .crop-controls input[type=range] { flex: 1; margin: 0; padding: 0; background: transparent; border: none; min-height: auto; }
-    .crop-aspects { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .crop-aspects button {
-      background: var(--surface2);
-      border: 2px solid var(--border);
-      color: var(--text);
-      padding: 8px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .crop-aspects button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-    .crop-footer { display: flex; gap: 10px; padding: 10px 16px; background: var(--surface); border-top: 1px solid var(--border); }
-    .crop-footer .btn { flex: 1; }
-
-    /* ===== MISC ===== */
-    .info-text { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
-    .info-text kbd { background: var(--bg2); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: var(--primary); }
-    .photo-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-    #photoPreview { max-width: 100%; max-height: 180px; border-radius: 8px; display: none; margin: 10px auto; border: 2px solid var(--border); }
-    .slot { border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; background: var(--bg2); }
-    .slot.empty { opacity: 0.6; }
-    .slot-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .slot-title strong { font-size: 11px; text-transform: uppercase; color: var(--primary); }
-    .slot-info { font-family: var(--mono); font-size: 10px; color: var(--muted); word-break: break-all; white-space: pre-line; }
-    .slot-count { padding: 2px 8px; background: var(--primary); color: #fff; border-radius: 20px; font-size: 10px; font-weight: 700; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<title>NFC Master Pro</title>
+<style>
+:root{
+--bg:#0a0a0a;--s1:#141414;--s2:#1a1a1a;--s3:#222;--s4:#2a2a2a;
+--b1:#262626;--b2:#333;--b3:#444;
+--tx:#f5f5f5;--mu:#8a8a8a;--dm:#555;
+--pr:#3b82f6;--pr-h:#2563eb;--su:#10b981;--wa:#f59e0b;--er:#ef4444;--in:#06b6d4;--go:#d4af37;
+--r-sm:6px;--r:10px;--r-lg:16px;
+--sh:0 2px 8px rgba(0,0,0,.4);--sh-lg:0 12px 40px rgba(0,0,0,.6);
+--t:44px;--mo:'SF Mono',Consolas,monospace
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;display:flex;flex-direction:column;font-size:15px;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);overflow-x:hidden}
+svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle}
+svg.ic-lg{width:26px;height:26px}
+svg.ic-xl{width:80px;height:80px}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--s1);border-bottom:1px solid var(--b1);position:sticky;top:0;z-index:50}
+header h1{font-size:15px;margin:0;font-weight:700;flex:1;display:flex;align-items:center;gap:8px;letter-spacing:-.2px}
+.bd{padding:4px 9px;border-radius:16px;font-size:10px;font-weight:800;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;gap:4px;text-transform:uppercase;letter-spacing:.4px}
+.bd svg{width:12px;height:12px}
+.bd.ok{background:var(--su);color:#000;border-color:var(--su)}
+.bd.err{background:var(--er);color:#fff;border-color:var(--er)}
+.bd.wait{background:var(--wa);color:#000;border-color:var(--wa)}
+.hb{background:var(--s2);border:1px solid var(--b1);color:var(--tx);width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.hb:active{background:var(--b2)}
+nav{display:flex;gap:4px;padding:8px 10px;overflow-x:auto;background:var(--s1);border-bottom:1px solid var(--b1);scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex-shrink:0;padding:9px 12px;font-size:12px;font-weight:600;background:transparent;border:1px solid transparent;color:var(--mu);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;min-height:38px;transition:all .15s}
+nav button svg{width:15px;height:15px}
+nav button.active{background:var(--s3);color:var(--tx);border-color:var(--b2)}
+nav button:active{transform:scale(.97)}
+main{flex:1;padding:14px;overflow-y:auto}
+.tab{display:none;max-width:640px;margin:0 auto;padding-bottom:32px}
+.tab.active{display:block}
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.card h2{margin:0 0 12px;font-size:12px;color:var(--pr);font-weight:800;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.8px}
+.card h2 svg{width:16px;height:16px}
+.card.danger h2{color:var(--er)}
+.card.warn h2{color:var(--wa)}
+.card.ok h2{color:var(--su)}
+label{display:block;font-size:10px;margin-bottom:5px;color:var(--mu);font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+input,textarea,select{width:100%;padding:11px;margin-bottom:10px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;color:var(--tx);font-size:14px;font-family:inherit;min-height:var(--t);transition:border-color .15s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--pr)}
+textarea{resize:vertical;min-height:100px;font-family:var(--mo);font-size:12px;line-height:1.5}
+select{cursor:pointer}
+.btn{background:var(--pr);color:#fff;border:none;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:var(--t);width:100%;text-transform:uppercase;letter-spacing:.4px;transition:background .15s,transform .1s}
+.btn:active:not(:disabled){transform:scale(.98)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn svg{width:16px;height:16px}
+.btn.secondary{background:var(--s2);color:var(--tx);border:1px solid var(--b1)}
+.btn.secondary:active{background:var(--s3)}
+.btn.success{background:var(--su);color:#000}
+.btn.danger{background:var(--er)}
+.btn.warning{background:var(--wa);color:#000}
+.btn.sm{padding:8px 11px;font-size:11px;width:auto;min-height:34px}
+.btn.ghost{background:transparent;border:1px solid var(--b2);color:var(--tx)}
+.row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.row>*{flex:1;min-width:100px}
+.uid-display{font-family:var(--mo);font-size:15px;padding:11px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;text-align:center;letter-spacing:2px;color:var(--pr);margin:8px 0;font-weight:700}
+.result-item{padding:10px 12px;background:var(--s2);border-radius:8px;margin-bottom:6px;font-size:13px;word-break:break-all;border-left:2px solid var(--pr)}
+.result-item strong{color:var(--pr);font-weight:800;display:block;margin-bottom:5px;font-size:10px;text-transform:uppercase;letter-spacing:.6px}
+.result-item .preview{font-family:var(--mo);font-size:11px;color:var(--mu);word-break:break-all;line-height:1.5}
+.result-item details{margin-top:6px}
+.result-item summary{cursor:pointer;color:var(--in);font-size:10px;font-weight:800;text-transform:uppercase;padding:3px 0;letter-spacing:.4px}
+.hex-block{font-family:var(--mo);font-size:11px;background:#000;padding:10px;border-radius:6px;color:#9ca3af;white-space:pre;overflow-x:auto;line-height:1.5;margin-top:4px;border:1px solid var(--b1)}
+.info-text{font-size:11px;color:var(--mu);margin-top:8px;line-height:1.6}
+.info-text kbd{background:var(--s2);padding:1px 5px;border-radius:3px;border:1px solid var(--b1);font-family:var(--mo);font-size:10px;color:var(--pr)}
+.alert{padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:12px;display:flex;gap:10px;line-height:1.55}
+.alert svg{width:18px;height:18px;flex-shrink:0;margin-top:1px}
+.alert.info{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.4);color:#67e8f9}
+.alert.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);color:#fcd34d}
+.alert.error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.4);color:#fca5a5}
+.alert.success{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.4);color:#86efac}
+#photoPreview{max-width:100%;max-height:180px;border-radius:10px;display:none;margin:8px auto;border:1px solid var(--b1)}
+.photo-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.slot{border:1px solid var(--b1);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--s2)}
+.slot.empty{opacity:.5}
+.slot-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.slot-title strong{font-size:11px;text-transform:uppercase;color:var(--pr);letter-spacing:.4px}
+.slot-info{font-family:var(--mo);font-size:11px;color:var(--mu);word-break:break-all;white-space:pre-line}
+.slot-count{padding:2px 8px;background:var(--pr);color:#fff;border-radius:16px;font-size:10px;font-weight:800}
+#logPanel{background:var(--s1);border-top:1px solid var(--b1);max-height:34px;overflow:hidden;transition:max-height .2s}
+#logPanel.open{max-height:180px}
+#logHeader{display:flex;align-items:center;padding:7px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--mu);font-weight:800;cursor:pointer;background:var(--s1);gap:6px}
+#logHeader svg{width:13px;height:13px}
+#logHeader .spacer{flex:1}
+#logHeader button{background:none;border:none;color:var(--mu);cursor:pointer;padding:4px;display:flex}
+#log{background:#000;padding:8px 12px;font-family:var(--mo);font-size:11px;max-height:140px;overflow-y:auto;line-height:1.6}
+#log div{padding:1px 0;color:#9ca3af;word-break:break-all}
+#log div.ok{color:var(--su)}
+#log div.err{color:var(--er)}
+#log div.info{color:var(--wa)}
+#toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:6px;pointer-events:none;width:calc(100% - 24px);max-width:380px}
+.toast{background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:var(--sh-lg);font-size:13px;font-weight:600;animation:su .25s;pointer-events:auto}
+.toast svg{width:18px;height:18px;flex-shrink:0}
+.toast.ok{border-color:var(--su);color:#86efac}
+.toast.err{border-color:var(--er);color:#fca5a5}
+.toast.info{border-color:var(--in);color:#67e8f9}
+@keyframes su{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+#bigStatus{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:999;display:none;align-items:center;justify-content:center;flex-direction:column;padding:32px;text-align:center}
+#bigStatus.show{display:flex}
+#bigStatus svg.ic-xl{color:var(--pr);margin-bottom:20px;animation:pl 1.4s ease-in-out infinite}
+#bigStatus.ok svg.ic-xl{color:var(--su);animation:none}
+#bigStatus.err svg.ic-xl{color:var(--er);animation:none}
+#bigStatus .text{font-size:18px;font-weight:700;line-height:1.4;max-width:400px}
+#bigStatus .sub{font-size:12px;color:var(--mu);margin-top:10px;max-width:400px}
+@keyframes pl{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(1.06)}}
+#bigStatus button{margin-top:22px;background:var(--s2);color:var(--tx);border:1px solid var(--b2);padding:10px 22px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:6px;margin-top:10px}
+.stat{background:var(--s2);padding:9px;border-radius:8px;text-align:center;border:1px solid var(--b1)}
+.stat .v{font-family:var(--mo);font-size:15px;font-weight:800;color:var(--pr)}
+.stat .l{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;font-weight:700}
+.chip{display:inline-block;padding:2px 7px;background:var(--pr);color:#fff;border-radius:12px;font-size:9px;font-weight:800;margin-right:3px;text-transform:uppercase;letter-spacing:.3px}
+.chip.mime{background:var(--wa);color:#000}
+.chip.text{background:var(--in);color:#000}
+.chip.url{background:var(--su);color:#000}
+.chip.empty{background:var(--mu);color:#000}
+.card-viz{perspective:1000px;margin-bottom:14px;transition:all .3s}
+.card-inner{position:relative;aspect-ratio:1.586;width:100%;max-width:400px;margin:0 auto;border-radius:16px;background:#1a1a1a;border:1px solid #2a2a2a;box-shadow:var(--sh-lg),inset 0 1px 0 rgba(255,255,255,.04);padding:16px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;background-size:cover;background-position:center;transition:border-color .3s,box-shadow .3s}
+.card-inner::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.35);border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s}
+.card-inner.has-image::after{opacity:1}
+.card-inner.floating{animation:cf 4s ease-in-out infinite}
+@keyframes cf{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.card-viz.active .card-inner{border-color:var(--su);box-shadow:0 15px 50px rgba(16,185,129,.3),inset 0 1px 0 rgba(255,255,255,.06);animation:none}
+.card-viz.error .card-inner{border-color:var(--er);box-shadow:0 15px 50px rgba(239,68,68,.3)}
+.card-viz.scanning .card-inner{border-color:var(--pr);box-shadow:0 15px 50px rgba(59,130,246,.4)}
+.card-scanline{position:absolute;left:0;right:0;height:2px;top:-2px;background:var(--in);box-shadow:0 0 20px 3px var(--in);opacity:0;pointer-events:none;z-index:2}
+.card-viz.scanning .card-scanline{opacity:1;animation:sm 1.5s ease-in-out infinite}
+@keyframes sm{0%{top:0}100%{top:100%}}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;z-index:3;position:relative}
+.card-chip{width:34px;height:28px;color:var(--go)}
+.card-wave{width:28px;height:28px;color:rgba(59,130,246,.5);transition:color .3s}
+.card-viz.active .card-wave{color:var(--su)}
+.card-viz.scanning .card-wave{color:var(--pr);animation:pl 1.2s ease-in-out infinite}
+.card-uid{font-family:var(--mo);font-size:18px;font-weight:800;letter-spacing:2px;color:var(--mu);text-align:center;z-index:3;position:relative;transition:color .3s;word-spacing:3px}
+.card-viz.active .card-uid{color:var(--tx)}
+.card-records{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;z-index:3;position:relative;min-height:20px}
+.card-empty{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;font-weight:700}
+.card-chip-tag{padding:2px 6px;border-radius:10px;font-size:9px;font-weight:800;background:rgba(59,130,246,.2);color:#93c5fd;border:1px solid rgba(59,130,246,.4);text-transform:uppercase;letter-spacing:.3px}
+.card-chip-tag.mime{background:rgba(245,158,11,.2);color:#fcd34d;border-color:rgba(245,158,11,.4)}
+.card-chip-tag.text{background:rgba(6,182,212,.2);color:#67e8f9;border-color:rgba(6,182,212,.4)}
+.card-chip-tag.url{background:rgba(34,197,94,.2);color:#86efac;border-color:rgba(34,197,94,.4)}
+.card-footer{display:flex;justify-content:space-between;align-items:center;z-index:3;position:relative;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);font-weight:800}
+.card-viz.active .card-footer{color:var(--tx)}
+.preset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.preset-btn{aspect-ratio:1.586;border-radius:8px;cursor:pointer;border:2px solid var(--b1);transition:all .15s;position:relative}
+.preset-btn.active{border-color:var(--pr);transform:scale(1.02)}
+.preset-btn.dark{background:#1a1a1a}
+.preset-btn.blue{background:#1e3a5f}
+.preset-btn.green{background:#1a4f3a}
+.preset-btn.purple{background:#3a1e5f}
+.preset-btn.red{background:#5f1e2a}
+.preset-btn.gold{background:#5f4a1e}
+.preset-btn.cyan{background:#1e4f5f}
+.preset-btn.pink{background:#5f1e4a}
+.toggle{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--b1);font-size:13px;font-weight:600}
+.toggle:last-child{border-bottom:none}
+.toggle-switch{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;margin:0;padding:0;min-height:0}
+.toggle-switch span{position:absolute;inset:0;background:var(--s4);border-radius:12px;cursor:pointer;transition:background .2s}
+.toggle-switch span::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--tx);border-radius:50%;transition:transform .2s}
+.toggle-switch input:checked+span{background:var(--pr)}
+.toggle-switch input:checked+span::before{transform:translateX(20px)}
+.slider-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.slider-row input[type=range]{flex:1;margin:0;padding:0;background:transparent;border:none;min-height:auto}
+.slider-row .val{font-family:var(--mo);font-size:12px;color:var(--pr);font-weight:800;min-width:32px;text-align:right}
+.sector-block{background:var(--s2);border:1px solid var(--b1);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.sector-head{padding:7px 12px;background:var(--s3);display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--pr)}
+.sector-head .badge-sm{background:var(--s2);padding:2px 7px;border-radius:12px;font-size:9px;color:var(--mu);font-weight:700}
+.sector-head .badge-sm.used{background:var(--su);color:#000}
+.block-row{display:grid;grid-template-columns:38px 1fr;gap:8px;padding:6px 10px;font-family:var(--mo);font-size:10px;border-top:1px solid rgba(255,255,255,.03);align-items:center;cursor:pointer;transition:background .15s}
+.block-row:hover{background:var(--s3)}
+.block-row.trailer{background:rgba(239,68,68,.06);color:#fca5a5}
+.block-row.ndef-used{background:rgba(34,197,94,.05)}
+.block-row.empty{color:#3a3a3a}
+.block-row.tlv-head{background:rgba(6,182,212,.08)}
+.block-row.ndef-rec{background:rgba(59,130,246,.08)}
+.block-row.selected{outline:2px solid var(--pr);outline-offset:-2px}
+.block-addr{color:var(--pr);font-weight:800;text-align:right}
+.block-row.trailer .block-addr{color:var(--er)}
+.block-data{display:flex;flex-direction:column;gap:2px;word-break:break-all}
+.block-hex{color:var(--tx)}
+.block-row.empty .block-hex{color:#3a3a3a}
+.block-ascii{color:var(--mu);font-size:9px;opacity:.8}
+.block-row.trailer .block-hex{color:#fca5a5}
+.tlv-diagram{background:#000;border:1px solid var(--b1);border-radius:8px;padding:10px;font-family:var(--mo);font-size:10px;line-height:1.7;overflow-x:auto;white-space:pre;color:#9ca3af}
+.tlv-diagram .tag{color:var(--in);font-weight:800}
+.tlv-diagram .len{color:var(--wa);font-weight:800}
+.tlv-diagram .ndef-h{color:var(--pr);font-weight:800}
+.tlv-diagram .ndef-t{color:var(--su);font-weight:800}
+.tlv-diagram .ndef-p{color:#93c5fd}
+.tlv-diagram .term{color:var(--er);font-weight:800}
+.tlv-diagram .lbl{color:var(--dm)}
+.view-controls{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.view-controls select{flex:1;min-width:120px;margin:0}
+.view-controls .btn{margin:0;min-width:auto}
+#cropModal{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:1000;display:none;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#cropModal.show{display:flex}
+.crop-header{display:flex;align-items:center;padding:12px 16px;background:var(--s1);border-bottom:1px solid var(--b1);gap:12px}
+.crop-header h3{margin:0;font-size:14px;flex:1}
+.crop-header button{background:var(--s2);border:1px solid var(--b1);color:var(--tx);width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.crop-stage{flex:1;position:relative;overflow:hidden;touch-action:none;background:#000;display:flex;align-items:center;justify-content:center;margin:10px;border-radius:10px;border:1px solid var(--b1)}
+#cropCanvas{position:absolute;top:0;left:0;width:100%;height:100%;cursor:grab}
+#cropCanvas:active{cursor:grabbing}
+.crop-frame{position:absolute;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.65);border:2px solid #fff;border-radius:2px}
+.crop-frame::before,.crop-frame::after{content:'';position:absolute;pointer-events:none}
+.crop-frame::before{top:33.33%;bottom:33.33%;left:0;right:0;border-top:1px dashed rgba(255,255,255,.4);border-bottom:1px dashed rgba(255,255,255,.4)}
+.crop-frame::after{left:33.33%;right:33.33%;top:0;bottom:0;border-left:1px dashed rgba(255,255,255,.4);border-right:1px dashed rgba(255,255,255,.4)}
+.crop-controls{padding:10px 16px;background:var(--s1);border-top:1px solid var(--b1);display:flex;flex-direction:column;gap:8px}
+.crop-controls .ctrl-row{display:flex;align-items:center;gap:10px}
+.crop-controls label{font-size:10px;color:var(--mu);font-weight:800;text-transform:uppercase;margin:0;min-width:50px}
+.crop-controls input[type=range]{flex:1;margin:0;padding:0;background:transparent;border:none;min-height:auto}
+.crop-aspects{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.crop-aspects button{background:var(--s2);border:1px solid var(--b1);color:var(--tx);padding:8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+.crop-aspects button.active{background:var(--pr);border-color:var(--pr);color:#fff}
+.crop-footer{display:flex;gap:8px;padding:10px 16px;background:var(--s1);border-top:1px solid var(--b1)}
+.crop-footer .btn{flex:1}
+.img-preview{width:100%;max-width:200px;aspect-ratio:1.586;border-radius:8px;border:1px solid var(--b1);object-fit:cover;display:block;margin:0 auto 10px;background:var(--s2)}
+</style>
 </head>
-<body data-card-theme="dark">
+<body>
 
-<!-- SVG SPRITE -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
-  <symbol id="i-nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/></symbol>
-  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
-  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
-  <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
-  <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
-  <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
-  <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
-  <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
-  <symbol id="i-unlock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol>
-  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
-  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
-  <symbol id="i-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
-  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
-  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
-  <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
-  <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
-  <symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></symbol>
-  <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
-  <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
-  <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
-  <symbol id="i-clone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M8 22h12a2 2 0 0 0 2-2V8"/><path d="M14 8h4v4"/><path d="M14 12 8 18"/></symbol>
-  <symbol id="i-hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
-  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
-  <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
-  <symbol id="i-chip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></symbol>
-  <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
-  <symbol id="i-crop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></symbol>
-  <symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
+<symbol id="i-nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+<symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
+<symbol id="i-unlock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+<symbol id="i-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+<symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+<symbol id="i-clone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M8 22h12a2 2 0 0 0 2-2V8"/><path d="M14 8h4v4"/><path d="M14 12 8 18"/></symbol>
+<symbol id="i-move" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></symbol>
+<symbol id="i-hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+<symbol id="i-chip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
+<symbol id="i-crop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
+<symbol id="i-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
 </svg>
 
-<!-- HEADER -->
 <header>
-  <h1><svg class="icon icon-lg"><use href="#i-nfc"/></svg> NFC Master Pro</h1>
-  <span id="nfcBadge" class="badge wait"><svg class="icon"><use href="#i-scan"/></svg> Sprawdzam</span>
-  <button class="hbtn" id="fsBtn" title="Fullscreen"><svg class="icon"><use href="#i-full"/></svg></button>
+  <h1><svg class="ic ic-lg"><use href="#i-nfc"/></svg> NFC Master Pro</h1>
+  <span id="nfcBadge" class="bd wait"><svg><use href="#i-scan"/></svg> <span>Sprawdzam</span></span>
+  <button class="hb" id="fsBtn" title="Pełny ekran"><svg class="ic"><use href="#i-full"/></svg></button>
 </header>
 
-<!-- NAV -->
 <nav>
-  <button data-tab="read" class="active"><svg class="icon"><use href="#i-search"/></svg> Odczyt</button>
-  <button data-tab="blocks"><svg class="icon"><use href="#i-grid"/></svg> Bloki</button>
-  <button data-tab="write"><svg class="icon"><use href="#i-globe"/></svg> URL</button>
-  <button data-tab="data"><svg class="icon"><use href="#i-doc"/></svg> Dane</button>
-  <button data-tab="photo"><svg class="icon"><use href="#i-camera"/></svg> Zdjęcie</button>
-  <button data-tab="edit"><svg class="icon"><use href="#i-edit"/></svg> Edycja</button>
-  <button data-tab="clone"><svg class="icon"><use href="#i-clone"/></svg> Klonuj</button>
-  <button data-tab="hex"><svg class="icon"><use href="#i-hex"/></svg> HEX</button>
-  <button data-tab="settings"><svg class="icon"><use href="#i-settings"/></svg> Ustawienia</button>
-  <button data-tab="tools"><svg class="icon"><use href="#i-refresh"/></svg> Narzędzia</button>
+  <button data-tab="read" class="active"><svg class="ic"><use href="#i-search"/></svg> Odczyt</button>
+  <button data-tab="blocks"><svg class="ic"><use href="#i-grid"/></svg> Bloki</button>
+  <button data-tab="write"><svg class="ic"><use href="#i-globe"/></svg> URL</button>
+  <button data-tab="data"><svg class="ic"><use href="#i-doc"/></svg> Dane</button>
+  <button data-tab="photo"><svg class="ic"><use href="#i-camera"/></svg> Zdjęcie</button>
+  <button data-tab="edit"><svg class="ic"><use href="#i-edit"/></svg> Edycja</button>
+  <button data-tab="clone"><svg class="ic"><use href="#i-clone"/></svg> Klonuj</button>
+  <button data-tab="hex"><svg class="ic"><use href="#i-hex"/></svg> HEX</button>
+  <button data-tab="settings"><svg class="ic"><use href="#i-palette"/></svg> Wygląd</button>
+  <button data-tab="tools"><svg class="ic"><use href="#i-settings"/></svg> Narzędzia</button>
 </nav>
 
 <main>
 
-<!-- ===== ODCZYT ===== -->
 <section id="tab-read" class="tab active">
-  <div class="card-visual" id="cardViz">
-    <div class="card-inner">
+  <div class="card-viz" id="cardViz">
+    <div class="card-inner floating" id="cardInner">
       <div class="card-scanline"></div>
       <div class="card-top">
         <svg class="card-chip"><use href="#i-chip"/></svg>
@@ -839,93 +299,124 @@
     </div>
   </div>
   <div class="card">
-    <h2><svg class="icon"><use href="#i-search"/></svg> Odczyt karty</h2>
-    <button class="btn" id="readBtn"><svg class="icon"><use href="#i-scan"/></svg> Odczytaj kartę</button>
+    <h2><svg><use href="#i-search"/></svg> Odczyt karty</h2>
+    <button class="btn" id="readBtn"><svg><use href="#i-scan"/></svg> Odczytaj kartę</button>
     <div id="readResult" style="margin-top:12px"></div>
     <div id="readActions" style="display:none;margin-top:10px">
       <div class="row">
-        <button class="btn sm secondary" id="readToClone"><svg class="icon"><use href="#i-clone"/></svg> Do klonowania</button>
-        <button class="btn sm secondary" id="readToHex"><svg class="icon"><use href="#i-hex"/></svg> Do HEX</button>
+        <button class="btn sm secondary" id="readToClone"><svg><use href="#i-clone"/></svg> Do klonowania</button>
+        <button class="btn sm secondary" id="readToHex"><svg><use href="#i-hex"/></svg> Do HEX</button>
       </div>
       <div class="row">
-        <button class="btn sm secondary" id="readExportJson"><svg class="icon"><use href="#i-download"/></svg> JSON</button>
-        <button class="btn sm secondary" id="readExportBin"><svg class="icon"><use href="#i-download"/></svg> BIN</button>
+        <button class="btn sm secondary" id="readToBlocks"><svg><use href="#i-grid"/></svg> Do bloków</button>
+        <button class="btn sm secondary" id="readExportJson"><svg><use href="#i-download"/></svg> JSON</button>
+        <button class="btn sm secondary" id="readExportBin"><svg><use href="#i-download"/></svg> BIN</button>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===== BLOKI ===== -->
 <section id="tab-blocks" class="tab">
+  <div class="alert error">
+    <svg><use href="#i-warn"/></svg>
+    <div><b>Ograniczenie Web NFC:</b> API przeglądarki <u>nie udostępnia</u> surowych bloków MIFARE. Poniżej widzisz <b>rekonstrukcję</b> opartą na rzeczywistych bajtach NDEF + strukturze TLV. Prawdziwy odczyt bloków (Key A/B, access bits, sektory surowe) wymaga <b>MIFARE Classic Tool</b> lub <b>Proxmark3</b>.</div>
+  </div>
   <div class="card">
-    <h2><svg class="icon"><use href="#i-grid"/></svg> Bloki MIFARE</h2>
-    <div class="alert warn">
-      <svg class="icon"><use href="#i-warn"/></svg>
-      <div><b>Uwaga:</b> Web NFC nie ma dostępu do surowych bloków. Poniżej <b>rekonstrukcja</b> z NDEF. Prawdziwy odczyt bloków wymaga natywnej aplikacji (np. MIFARE Classic Tool) lub WebUSB z czytnikiem ACR122U[reference:0].</div>
-    </div>
-    <button class="btn" id="blocksRead"><svg class="icon"><use href="#i-scan"/></svg> Odczytaj i pokaż bloki</button>
+    <h2><svg><use href="#i-grid"/></svg> Odczyt i rekonstrukcja</h2>
+    <button class="btn" id="blocksRead"><svg><use href="#i-scan"/></svg> Odczytaj kartę</button>
     <div class="stats">
       <div class="stat"><div class="v" id="blocksUsed">0</div><div class="l">Zajęte</div></div>
       <div class="stat"><div class="v" id="blocksFree">0</div><div class="l">Wolne</div></div>
       <div class="stat"><div class="v" id="blocksPct">0%</div><div class="l">Użycie</div></div>
+      <div class="stat"><div class="v" id="blocksSize">0 B</div><div class="l">NDEF</div></div>
     </div>
   </div>
-  <div id="blocksView"></div>
-</section>
-
-<!-- ===== ZAPIS URL ===== -->
-<section id="tab-write" class="tab">
   <div class="card">
-    <h2><svg class="icon"><use href="#i-globe"/></svg> Zapisz URL</h2>
-    <label>Adres strony</label>
-    <input type="url" id="urlInput" value="https://vercode.pl">
-    <button class="btn" id="writeUrlBtn"><svg class="icon"><use href="#i-save"/></svg> Zapisz URL</button>
+    <h2><svg><use href="#i-layers"/></svg> Struktura TLV</h2>
+    <div class="tlv-diagram" id="tlvDiagram">Czeka na odczyt karty…</div>
+  </div>
+  <div class="card">
+    <h2><svg><use href="#i-grid"/></svg> Widok bloków</h2>
+    <div class="view-controls">
+      <select id="blockViewMode">
+        <option value="mixed">HEX + ASCII</option>
+        <option value="hex">Tylko HEX</option>
+        <option value="ascii">Tylko ASCII</option>
+        <option value="annotated">Z adnotacjami</option>
+      </select>
+      <button class="btn sm secondary" id="toggleTrailer">Trailer</button>
+      <button class="btn sm secondary" id="toggleEmpty">Puste</button>
+    </div>
+    <div id="blocksView"><div class="info-text">Brak danych. Odczytaj kartę.</div></div>
+  </div>
+  <div class="card">
+    <h2><svg><use href="#i-info"/></svg> Inspektor bajtu</h2>
+    <div id="byteInspector" class="info-text">Kliknij bajt w widoku bloków, aby zobaczyć szczegóły.</div>
+  </div>
+  <div class="card">
+    <h2><svg><use href="#i-download"/></svg> Eksport</h2>
+    <div class="row">
+      <button class="btn sm secondary" id="exportMfd"><svg><use href="#i-download"/></svg> .mfd</button>
+      <button class="btn sm secondary" id="exportBinBlocks"><svg><use href="#i-download"/></svg> .bin</button>
+      <button class="btn sm secondary" id="exportHexBlocks"><svg><use href="#i-download"/></svg> .hex</button>
+      <button class="btn sm secondary" id="exportTxtBlocks"><svg><use href="#i-download"/></svg> .txt</button>
+    </div>
+    <div class="row">
+      <button class="btn sm secondary" id="copyHexAll"><svg><use href="#i-copy"/></svg> Kopiuj HEX</button>
+      <button class="btn sm secondary" id="copyCArray"><svg><use href="#i-copy"/></svg> Kopiuj C</button>
+      <button class="btn sm secondary" id="copyPyBytes"><svg><use href="#i-copy"/></svg> Kopiuj Python</button>
+    </div>
   </div>
 </section>
 
-<!-- ===== DANE ===== -->
+<section id="tab-write" class="tab">
+  <div class="card">
+    <h2><svg><use href="#i-globe"/></svg> Zapisz URL</h2>
+    <label>Adres strony</label>
+    <input type="url" id="urlInput" value="https://vercode.pl">
+    <button class="btn" id="writeUrlBtn"><svg><use href="#i-save"/></svg> Zapisz URL</button>
+  </div>
+</section>
+
 <section id="tab-data" class="tab">
   <div class="card">
-    <h2><svg class="icon"><use href="#i-doc"/></svg> Dane dla Arduino</h2>
+    <h2><svg><use href="#i-doc"/></svg> Dane dla Arduino</h2>
     <label>Imię / Nazwa</label>
     <input type="text" id="nameInput" placeholder="Jan Kowalski">
     <label>ID / Numer</label>
     <input type="text" id="idInput" placeholder="42">
     <label>URL</label>
     <input type="url" id="urlDataInput" value="https://vercode.pl">
-    <button class="btn" id="writeDataBtn"><svg class="icon"><use href="#i-save"/></svg> Zapisz dane + URL</button>
-    <div class="alert info"><svg class="icon"><use href="#i-info"/></svg><div>Format: <kbd>NAME=X;ID=Y;URL=Z;</kbd></div></div>
+    <button class="btn" id="writeDataBtn"><svg><use href="#i-save"/></svg> Zapisz dane + URL</button>
+    <div class="alert info"><svg><use href="#i-info"/></svg><div>Format: <kbd>NAME=X;ID=Y;URL=Z;</kbd></div></div>
   </div>
 </section>
 
-<!-- ===== ZDJĘCIE ===== -->
 <section id="tab-photo" class="tab">
   <div class="card">
-    <h2><svg class="icon"><use href="#i-camera"/></svg> Zdjęcie (kadrowane)</h2>
+    <h2><svg><use href="#i-camera"/></svg> Zdjęcie (kadrowane)</h2>
     <div class="photo-btns">
-      <button class="btn secondary" id="cameraBtn"><svg class="icon"><use href="#i-camera"/></svg> Aparat</button>
-      <button class="btn secondary" id="galleryBtn"><svg class="icon"><use href="#i-image"/></svg> Galeria</button>
+      <button class="btn secondary" id="cameraBtn"><svg><use href="#i-camera"/></svg> Aparat</button>
+      <button class="btn secondary" id="galleryBtn"><svg><use href="#i-image"/></svg> Galeria</button>
     </div>
     <input type="file" id="fileInput" accept="image/*" style="display:none">
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
     <img id="photoPreview" alt="">
     <div id="photoInfo" class="info-text"></div>
-    <label style="margin-top:10px">Kompresja</label>
+    <label style="margin-top:8px">Kompresja</label>
     <select id="compressSelect">
       <option value="100">Bardzo mała (~100 B)</option>
       <option value="300" selected>Mała (~300 B)</option>
       <option value="600">Średnia (~600 B)</option>
     </select>
-    <button class="btn" id="writePhotoBtn" disabled><svg class="icon"><use href="#i-save"/></svg> Zapisz zdjęcie</button>
-    <div class="alert warn"><svg class="icon"><use href="#i-warn"/></svg><div>Miniatura base64 na kartę.</div></div>
+    <button class="btn" id="writePhotoBtn" disabled><svg><use href="#i-save"/></svg> Zapisz zdjęcie</button>
   </div>
 </section>
 
-<!-- ===== EDYCJA ===== -->
 <section id="tab-edit" class="tab">
   <div class="card">
-    <h2><svg class="icon"><use href="#i-edit"/></svg> Edycja</h2>
-    <button class="btn secondary" id="editLoadBtn"><svg class="icon"><use href="#i-search"/></svg> Wczytaj z karty</button>
+    <h2><svg><use href="#i-edit"/></svg> Edycja</h2>
+    <button class="btn secondary" id="editLoadBtn"><svg><use href="#i-search"/></svg> Wczytaj z karty</button>
     <div id="editForm" style="display:none;margin-top:12px">
       <div class="uid-display" id="editUid">UID: ---</div>
       <label>URL</label>
@@ -935,146 +426,160 @@
       <label>ID</label>
       <input type="text" id="editId">
       <div class="row">
-        <button class="btn" id="editSaveBtn"><svg class="icon"><use href="#i-save"/></svg> Zapisz</button>
-        <button class="btn danger" id="editClearBtn"><svg class="icon"><use href="#i-trash"/></svg> Wyczyść</button>
+        <button class="btn" id="editSaveBtn"><svg><use href="#i-save"/></svg> Zapisz</button>
+        <button class="btn danger" id="editClearBtn"><svg><use href="#i-trash"/></svg> Wyczyść</button>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===== KLONOWANIE ===== -->
 <section id="tab-clone" class="tab">
   <div class="card">
-    <h2><svg class="icon"><use href="#i-clone"/></svg> Klonowanie</h2>
+    <h2><svg><use href="#i-clone"/></svg> Klonowanie</h2>
     <div class="slot empty" id="slot">
       <div class="slot-title"><strong>Bufor źródłowy</strong><span class="slot-count" id="slotCount">—</span></div>
       <div class="slot-info" id="slotInfo">Brak danych.</div>
     </div>
     <div class="row">
-      <button class="btn" id="cloneRead"><svg class="icon"><use href="#i-search"/></svg> Odczytaj źródło</button>
-      <button class="btn secondary" id="cloneClear"><svg class="icon"><use href="#i-trash"/></svg> Wyczyść</button>
+      <button class="btn" id="cloneRead"><svg><use href="#i-search"/></svg> Odczytaj źródło</button>
+      <button class="btn secondary" id="cloneClear"><svg><use href="#i-trash"/></svg> Wyczyść</button>
     </div>
     <div class="row">
-      <button class="btn success" id="cloneCopy"><svg class="icon"><use href="#i-copy"/></svg> Kopiuj</button>
-      <button class="btn warning" id="cloneMove"><svg class="icon"><use href="#i-move"/></svg> Przenieś</button>
+      <button class="btn success" id="cloneCopy"><svg><use href="#i-copy"/></svg> Kopiuj</button>
+      <button class="btn warning" id="cloneMove"><svg><use href="#i-move"/></svg> Przenieś</button>
     </div>
   </div>
   <div class="card">
-    <h2><svg class="icon"><use href="#i-hex"/></svg> Podgląd HEX</h2>
+    <h2><svg><use href="#i-hex"/></svg> Podgląd HEX</h2>
     <div class="hex-block" id="cloneHex" style="min-height:60px">—</div>
   </div>
 </section>
 
-<!-- ===== HEX ===== -->
 <section id="tab-hex" class="tab">
   <div class="card">
-    <h2><svg class="icon"><use href="#i-hex"/></svg> Bufor binarny</h2>
+    <h2><svg><use href="#i-hex"/></svg> Bufor binarny</h2>
     <label>HEX</label>
     <textarea id="hexInput" placeholder="00 01 02 03 ..."></textarea>
     <div class="stats">
       <div class="stat"><div class="v" id="hexBytes">0</div><div class="l">Bajtów</div></div>
       <div class="stat"><div class="v" id="hexBits">0</div><div class="l">Bitów</div></div>
     </div>
-    <div class="row" style="margin-top:12px">
-      <button class="btn sm secondary" id="hexLoadFile"><svg class="icon"><use href="#i-upload"/></svg> BIN</button>
-      <button class="btn sm secondary" id="hexSaveFile"><svg class="icon"><use href="#i-download"/></svg> BIN</button>
-      <button class="btn sm secondary" id="hexLoadTag"><svg class="icon"><use href="#i-scan"/></svg> Z karty</button>
+    <div class="row" style="margin-top:10px">
+      <button class="btn sm secondary" id="hexLoadFile"><svg><use href="#i-upload"/></svg> BIN</button>
+      <button class="btn sm secondary" id="hexSaveFile"><svg><use href="#i-download"/></svg> BIN</button>
+      <button class="btn sm secondary" id="hexLoadTag"><svg><use href="#i-scan"/></svg> Z karty</button>
     </div>
     <div class="row">
-      <button class="btn success" id="hexWriteTag"><svg class="icon"><use href="#i-save"/></svg> Zapisz na kartę</button>
-      <button class="btn danger" id="hexClear"><svg class="icon"><use href="#i-trash"/></svg> Wyczyść</button>
+      <button class="btn success" id="hexWriteTag"><svg><use href="#i-save"/></svg> Zapisz na kartę</button>
+      <button class="btn danger" id="hexClear"><svg><use href="#i-trash"/></svg> Wyczyść</button>
     </div>
     <input type="file" id="hexFile" accept=".bin,.dat,application/octet-stream" style="display:none">
   </div>
   <div class="card">
-    <h2><svg class="icon"><use href="#i-doc"/></svg> Podgląd</h2>
+    <h2><svg><use href="#i-doc"/></svg> Podgląd</h2>
     <div class="hex-block" id="hexView" style="min-height:60px">—</div>
   </div>
 </section>
 
-<!-- ===== USTAWIENIA ===== -->
 <section id="tab-settings" class="tab">
   <div class="card">
-    <h2><svg class="icon"><use href="#i-settings"/></svg> Wygląd karty</h2>
-    <div class="settings-grid">
-      <div class="settings-group">
-        <h3>Motyw karty</h3>
-        <div class="theme-options" id="themeOptions">
-          <button data-theme="dark" class="active">Dark</button>
-          <button data-theme="light">Light</button>
-          <button data-theme="neon">Neon</button>
-          <button data-theme="gold">Gold</button>
-        </div>
-      </div>
-      <div class="settings-group">
-        <h3>Rozmiar karty</h3>
-        <div class="size-options" id="sizeOptions">
-          <button data-size="260">S</button>
-          <button data-size="320" class="active">M</button>
-          <button data-size="380">L</button>
-          <button data-size="440">XL</button>
-        </div>
-      </div>
-      <div class="settings-group">
-        <h3>Animacja</h3>
-        <div class="row">
-          <button class="btn secondary sm" id="toggleAnimation">Włącz/wyłącz float</button>
-        </div>
-      </div>
+    <h2><svg><use href="#i-palette"/></svg> Wizualizacja karty</h2>
+    <label>Kolor / motyw</label>
+    <div class="preset-grid" id="presetGrid">
+      <div class="preset-btn dark active" data-preset="dark"></div>
+      <div class="preset-btn blue" data-preset="blue"></div>
+      <div class="preset-btn green" data-preset="green"></div>
+      <div class="preset-btn purple" data-preset="purple"></div>
+      <div class="preset-btn red" data-preset="red"></div>
+      <div class="preset-btn gold" data-preset="gold"></div>
+      <div class="preset-btn cyan" data-preset="cyan"></div>
+      <div class="preset-btn pink" data-preset="pink"></div>
     </div>
+    <label>Obraz tła</label>
+    <img id="cardImagePreview" class="img-preview" style="display:none">
+    <div class="row">
+      <button class="btn sm secondary" id="uploadCardImage"><svg><use href="#i-upload"/></svg> Wybierz obraz</button>
+      <button class="btn sm secondary" id="clearCardImage"><svg><use href="#i-trash"/></svg> Usuń</button>
+    </div>
+    <input type="file" id="cardImageInput" accept="image/*" style="display:none">
+    <label style="margin-top:12px">Zaokrąglenie narożników</label>
+    <div class="slider-row">
+      <input type="range" id="cardRadius" min="0" max="28" value="16">
+      <span class="val" id="cardRadiusVal">16</span>
+    </div>
+    <div class="toggle">
+      <span>Animacja unoszenia</span>
+      <label class="toggle-switch"><input type="checkbox" id="cardFloat" checked><span></span></label>
+    </div>
+    <div class="toggle">
+      <span>Pokaż UID</span>
+      <label class="toggle-switch"><input type="checkbox" id="showUid" checked><span></span></label>
+    </div>
+    <div class="toggle">
+      <span>Pokaż rekordy</span>
+      <label class="toggle-switch"><input type="checkbox" id="showRecords" checked><span></span></label>
+    </div>
+    <div class="toggle">
+      <span>Pokaż rozmiar</span>
+      <label class="toggle-switch"><input type="checkbox" id="showSize" checked><span></span></label>
+    </div>
+    <div class="toggle">
+      <span>Pokaż logo NFC</span>
+      <label class="toggle-switch"><input type="checkbox" id="showWave" checked><span></span></label>
+    </div>
+    <div class="toggle">
+      <span>Pokaż chip</span>
+      <label class="toggle-switch"><input type="checkbox" id="showChip" checked><span></span></label>
+    </div>
+    <button class="btn secondary" id="resetCardSettings" style="margin-top:12px"><svg><use href="#i-refresh"/></svg> Reset ustawień</button>
   </div>
 </section>
 
-<!-- ===== NARZĘDZIA ===== -->
 <section id="tab-tools" class="tab">
   <div class="card ok">
-    <h2><svg class="icon"><use href="#i-unlock"/></svg> Formatuj / odblokuj</h2>
-    <button class="btn success" id="formatBtn"><svg class="icon"><use href="#i-unlock"/></svg> Format NDEF</button>
+    <h2><svg><use href="#i-unlock"/></svg> Formatuj / odblokuj</h2>
+    <button class="btn success" id="formatBtn"><svg><use href="#i-unlock"/></svg> Format NDEF</button>
   </div>
   <div class="card warn">
-    <h2><svg class="icon"><use href="#i-refresh"/></svg> Reset karty</h2>
-    <button class="btn warning" id="resetCardBtn"><svg class="icon"><use href="#i-refresh"/></svg> Wyczyść kartę</button>
+    <h2><svg><use href="#i-refresh"/></svg> Reset karty</h2>
+    <button class="btn warning" id="resetCardBtn"><svg><use href="#i-refresh"/></svg> Wyczyść kartę</button>
   </div>
   <div class="card">
-    <h2><svg class="icon"><use href="#i-refresh"/></svg> Reset aplikacji</h2>
-    <button class="btn secondary" id="resetAppBtn"><svg class="icon"><use href="#i-refresh"/></svg> Reset</button>
+    <h2><svg><use href="#i-refresh"/></svg> Reset aplikacji</h2>
+    <button class="btn secondary" id="resetAppBtn"><svg><use href="#i-refresh"/></svg> Reset</button>
   </div>
   <div class="card">
-    <h2><svg class="icon"><use href="#i-info"/></svg> Info</h2>
-    <div class="alert info"><svg class="icon"><use href="#i-info"/></svg><div><b>Web NFC</b> wymaga Chrome/Edge na Androidzie + HTTPS + NFC.</div></div>
-    <div class="alert warn"><svg class="icon"><use href="#i-warn"/></svg><div>Niestandardowe klucze MIFARE Classic → MIFARE Classic Tool.</div></div>
+    <h2><svg><use href="#i-info"/></svg> Info</h2>
+    <div class="alert info"><svg><use href="#i-info"/></svg><div><b>Web NFC</b> wymaga Chrome / Edge na Androidzie + HTTPS + NFC.</div></div>
+    <div class="alert warn"><svg><use href="#i-warn"/></svg><div>Niestandardowe klucze MIFARE Classic → MIFARE Classic Tool.</div></div>
   </div>
 </section>
 
 </main>
 
-<!-- LOG -->
 <div id="logPanel">
   <div id="logHeader">
-    <svg class="icon"><use href="#i-doc"/></svg> Log
+    <svg><use href="#i-doc"/></svg> Log
     <span class="spacer"></span>
-    <button id="logToggle"><svg class="icon"><use href="#i-chevron"/></svg></button>
-    <button id="logClear"><svg class="icon"><use href="#i-trash"/></svg></button>
+    <button id="logToggle"><svg><use href="#i-chevron"/></svg></button>
+    <button id="logClear"><svg><use href="#i-trash"/></svg></button>
   </div>
   <div id="log"></div>
 </div>
 
-<!-- TOASTS -->
 <div id="toasts"></div>
 
-<!-- BIG STATUS -->
 <div id="bigStatus">
-  <svg class="icon-xl" id="bigIcon"><use href="#i-scan"/></svg>
+  <svg class="ic-xl" id="bigIcon"><use href="#i-scan"/></svg>
   <div class="text" id="bigText"></div>
   <div class="sub" id="bigSub"></div>
-  <button id="bigCancel" style="display:none"><svg class="icon"><use href="#i-x"/></svg> Anuluj</button>
+  <button id="bigCancel" style="display:none"><svg class="ic"><use href="#i-x"/></svg> Anuluj</button>
 </div>
 
-<!-- CROP MODAL -->
 <div id="cropModal">
   <div class="crop-header">
     <h3>Przytnij zdjęcie</h3>
-    <button id="cropClose"><svg class="icon"><use href="#i-x"/></svg></button>
+    <button id="cropClose"><svg class="ic"><use href="#i-x"/></svg></button>
   </div>
   <div class="crop-stage" id="cropStage">
     <canvas id="cropCanvas"></canvas>
@@ -1092,759 +597,471 @@
       <button data-aspect="0">Free</button>
     </div>
     <div class="ctrl-row">
-      <button class="btn secondary sm" id="cropRotate"><svg class="icon"><use href="#i-rotate"/></svg> Obróć 90°</button>
-      <button class="btn secondary sm" id="cropReset"><svg class="icon"><use href="#i-refresh"/></svg> Reset</button>
+      <button class="btn secondary sm" id="cropRotate"><svg><use href="#i-rotate"/></svg> Obróć</button>
+      <button class="btn secondary sm" id="cropReset"><svg><use href="#i-refresh"/></svg> Reset</button>
     </div>
   </div>
   <div class="crop-footer">
     <button class="btn secondary" id="cropCancel">Anuluj</button>
-    <button class="btn success" id="cropApply"><svg class="icon"><use href="#i-crop"/></svg> Zastosuj</button>
+    <button class="btn success" id="cropApply"><svg><use href="#i-crop"/></svg> Zastosuj</button>
   </div>
 </div>
 
 <script>
 'use strict';
-const $ = id => document.getElementById(id);
-const state = { clone: null, hex: new Uint8Array(0), read: null, photo: null };
+const $=id=>document.getElementById(id);
+const S={clone:null,hex:new Uint8Array(0),read:null,photo:null,blocks:null,blockView:'mixed',showTrailer:false,showEmpty:true,cardSettings:{preset:'dark',image:null,radius:16,float:true,showUid:true,showRecords:true,showSize:true,showWave:true,showChip:true}};
 
-/* ===== LOG & TOAST ===== */
-function log(msg, type=''){
-  const el = $('log');
-  const d = document.createElement('div');
-  if(type) d.className = type;
-  d.textContent = `[${new Date().toLocaleTimeString('pl')}] ${msg}`;
-  el.appendChild(d); el.scrollTop = el.scrollHeight;
-  while(el.children.length > 120) el.removeChild(el.firstChild);
-}
-function toast(msg, type='info'){
-  const t = document.createElement('div');
-  t.className = 'toast ' + type;
-  const ic = type === 'ok' ? 'i-check' : type === 'err' ? 'i-x' : 'i-info';
-  t.innerHTML = `<svg class="icon"><use href="#${ic}"/></svg><span>${msg}</span>`;
-  $('toasts').appendChild(t);
-  setTimeout(() => { t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 2800);
-}
-function vibrate(p){ if(navigator.vibrate) navigator.vibrate(p); }
+const PRESET_COLORS={dark:'#1a1a1a',blue:'#1e3a5f',green:'#1a4f3a',purple:'#3a1e5f',red:'#5f1e2a',gold:'#5f4a1e',cyan:'#1e4f5f',pink:'#5f1e4a'};
 
-/* ===== BIG STATUS ===== */
-function showBig(icon, text, sub='', cancelFn=null){
-  $('bigIcon').innerHTML = `<use href="#${icon}"/>`;
-  $('bigStatus').className = 'show';
-  $('bigText').textContent = text;
-  $('bigSub').textContent = sub;
-  const btn = $('bigCancel');
-  if(cancelFn){ btn.style.display='flex'; btn.onclick = () => { cancelFn(); hideBig(); }; }
-  else btn.style.display='none';
-}
-function showBigSuccess(text, sub=''){
-  $('bigIcon').innerHTML = `<use href="#i-check"/>`;
-  $('bigStatus').className = 'show ok';
-  $('bigText').textContent = text;
-  $('bigSub').textContent = sub;
-  $('bigCancel').style.display='none';
-  vibrate([40,30,40]);
-  setTimeout(hideBig, 1600);
-}
-function showBigError(text, sub=''){
-  $('bigIcon').innerHTML = `<use href="#i-x"/>`;
-  $('bigStatus').className = 'show err';
-  $('bigText').textContent = text;
-  $('bigSub').textContent = sub;
-  $('bigCancel').style.display='none';
-  vibrate([80,40,80]);
-  setTimeout(hideBig, 3200);
-}
-function hideBig(){ $('bigStatus').className=''; }
+function log(m,t=''){const el=$('log');const d=document.createElement('div');if(t)d.className=t;d.textContent=`[${new Date().toLocaleTimeString('pl')}] ${m}`;el.appendChild(d);el.scrollTop=el.scrollHeight;while(el.children.length>120)el.removeChild(el.firstChild);}
+function toast(m,t='info'){const el=document.createElement('div');el.className='toast '+t;const ic=t==='ok'?'i-check':t==='err'?'i-x':'i-info';el.innerHTML=`<svg class="ic"><use href="#${ic}"/></svg><span>${m}</span>`;$('toasts').appendChild(el);setTimeout(()=>{el.style.transition='opacity .3s';el.style.opacity='0';setTimeout(()=>el.remove(),300);},2800);}
+function vibrate(p){if(navigator.vibrate)navigator.vibrate(p);}
 
-/* ===== NFC SUPPORT ===== */
-const hasNfc = 'NDEFReader' in window;
-if(hasNfc){
-  $('nfcBadge').className = 'badge ok';
-  $('nfcBadge').innerHTML = '<svg class="icon"><use href="#i-check"/></svg> NFC OK';
-  log('Web NFC dostępne','ok');
-}else{
-  $('nfcBadge').className = 'badge err';
-  $('nfcBadge').innerHTML = '<svg class="icon"><use href="#i-x"/></svg> Brak NFC';
-  log('Web NFC NIE wspierane','err');
-  document.querySelectorAll('main button').forEach(b => b.disabled = true);
+function showBig(icon,text,sub='',cancel=null){$('bigIcon').innerHTML=`<use href="#${icon}"/>`;$('bigStatus').className='show';$('bigText').textContent=text;$('bigSub').textContent=sub;const b=$('bigCancel');if(cancel){b.style.display='flex';b.onclick=()=>{cancel();hideBig();};}else b.style.display='none';}
+function showBigSuccess(text,sub=''){$('bigIcon').innerHTML=`<use href="#i-check"/>`;$('bigStatus').className='show ok';$('bigText').textContent=text;$('bigSub').textContent=sub;$('bigCancel').style.display='none';vibrate([40,30,40]);setTimeout(hideBig,1500);}
+function showBigError(text,sub=''){$('bigIcon').innerHTML=`<use href="#i-x"/>`;$('bigStatus').className='show err';$('bigText').textContent=text;$('bigSub').textContent=sub;$('bigCancel').style.display='none';vibrate([80,40,80]);setTimeout(hideBig,3000);}
+function hideBig(){$('bigStatus').className='';}
+
+function loadSettings(){try{const s=localStorage.getItem('nfcCardSettings');if(s){const parsed=JSON.parse(s);Object.assign(S.cardSettings,parsed);}}catch(e){}}
+function saveSettings(){try{localStorage.setItem('nfcCardSettings',JSON.stringify(S.cardSettings));}catch(e){}}
+function applyCardSettings(){
+  const c=S.cardSettings;
+  const inner=$('cardInner');
+  inner.style.backgroundImage=c.image?`url('${c.image}')`:'';
+  inner.style.backgroundColor=c.image?'#000':(PRESET_COLORS[c.preset]||'#1a1a1a');
+  inner.style.borderRadius=c.radius+'px';
+  inner.classList.toggle('has-image',!!c.image);
+  inner.classList.toggle('floating',c.float);
+  document.querySelector('.card-chip').style.display=c.showChip?'':'none';
+  document.querySelector('.card-wave').style.display=c.showWave?'':'none';
+  $('cardUid').style.display=c.showUid?'':'none';
+  $('cardRecords').style.display=c.showRecords?'':'none';
+  $('cardSize').style.display=c.showSize?'':'none';
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.toggle('active',b.dataset.preset===c.preset));
+  $('cardRadius').value=c.radius;
+  $('cardRadiusVal').textContent=c.radius;
+  $('cardFloat').checked=c.float;
+  $('showUid').checked=c.showUid;
+  $('showRecords').checked=c.showRecords;
+  $('showSize').checked=c.showSize;
+  $('showWave').checked=c.showWave;
+  $('showChip').checked=c.showChip;
+  const prev=$('cardImagePreview');
+  if(c.image){prev.src=c.image;prev.style.display='block';}else{prev.style.display='none';prev.src='';}
 }
 
-/* ===== FULLSCREEN & WAKE ===== */
-async function enterFs(){
-  try{
-    const el = document.documentElement;
-    if(el.requestFullscreen) await el.requestFullscreen();
-    else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-  }catch(e){}
-}
-$('fsBtn').onclick = enterFs;
-document.body.addEventListener('click', function a(){
-  if(!document.fullscreenElement && !document.webkitFullscreenElement) enterFs();
-  document.body.removeEventListener('click', a);
-}, { once:true });
+const hasNfc='NDEFReader' in window;
+if(hasNfc){$('nfcBadge').className='bd ok';$('nfcBadge').innerHTML='<svg><use href="#i-check"/></svg> <span>NFC OK</span>';log('Web NFC dostępne','ok');}
+else{$('nfcBadge').className='bd err';$('nfcBadge').innerHTML='<svg><use href="#i-x"/></svg> <span>Brak NFC</span>';log('Web NFC NIE wspierane','err');document.querySelectorAll('main button').forEach(b=>b.disabled=true);}
 
-async function keepAwake(){ try{ if('wakeLock' in navigator) await navigator.wakeLock.request('screen'); }catch(e){} }
+async function enterFs(){try{const el=document.documentElement;if(el.requestFullscreen)await el.requestFullscreen();else if(el.webkitRequestFullscreen)await el.webkitRequestFullscreen();}catch(e){}}
+$('fsBtn').onclick=enterFs;
+document.body.addEventListener('click',function a(){if(!document.fullscreenElement&&!document.webkitFullscreenElement)enterFs();document.body.removeEventListener('click',a);},{once:true});
+async function keepAwake(){try{if('wakeLock' in navigator)await navigator.wakeLock.request('screen');}catch(e){}}
 keepAwake();
-document.addEventListener('visibilitychange', () => { if(document.visibilityState==='visible') keepAwake(); });
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')keepAwake();});
 
-/* ===== TABS ===== */
-document.querySelectorAll('nav button').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    $('tab-' + btn.dataset.tab).classList.add('active');
-    vibrate(10);
-  };
-});
+document.querySelectorAll('nav button').forEach(btn=>{btn.onclick=()=>{document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');$('tab-'+btn.dataset.tab).classList.add('active');vibrate(10);};});
 
-/* ===== HELPERS ===== */
-function recData(r){
-  if(r.data instanceof DataView) return new Uint8Array(r.data.buffer, r.data.byteOffset, r.data.byteLength);
-  if(r.data instanceof ArrayBuffer) return new Uint8Array(r.data);
-  if(r.data instanceof Uint8Array) return r.data;
-  if(typeof r.data === 'string') return new TextEncoder().encode(r.data);
-  return new Uint8Array(0);
-}
-function bytesToHex(b, sep=' '){ return Array.from(b).map(x => x.toString(16).padStart(2,'0')).join(sep); }
-function hexToBytes(h){
-  h = h.replace(/\s+/g,'').replace(/0x/gi,'').replace(/[^0-9a-f]/gi,'');
-  if(h.length % 2) throw new Error('Nieparzysta długość HEX');
-  const a = new Uint8Array(h.length/2);
-  for(let i=0;i<a.length;i++) a[i] = parseInt(h.substr(i*2,2),16);
-  return a;
-}
-function hexDump(b){
-  const lines = [];
-  for(let i=0;i<b.length;i+=16){
-    const c = b.slice(i, i+16);
-    const hex = Array.from(c).map(x => x.toString(16).padStart(2,'0')).join(' ').padEnd(47,' ');
-    const asc = Array.from(c).map(x => x >= 32 && x < 127 ? String.fromCharCode(x) : '.').join('');
-    lines.push(`${i.toString(16).padStart(4,'0')}  ${hex}  ${asc}`);
-  }
-  return lines.join('\n') || '—';
-}
+function recData(r){if(r.data instanceof DataView)return new Uint8Array(r.data.buffer,r.data.byteOffset,r.data.byteLength);if(r.data instanceof ArrayBuffer)return new Uint8Array(r.data);if(r.data instanceof Uint8Array)return r.data;if(typeof r.data==='string')return new TextEncoder().encode(r.data);return new Uint8Array(0);}
+function bytesToHex(b,sep=' '){return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join(sep);}
+function hexToBytes(h){h=h.replace(/\s+/g,'').replace(/0x/gi,'').replace(/[^0-9a-f]/gi,'');if(h.length%2)throw new Error('Nieparzysta długość HEX');const a=new Uint8Array(h.length/2);for(let i=0;i<a.length;i++)a[i]=parseInt(h.substr(i*2,2),16);return a;}
+function hexDump(b){const lines=[];for(let i=0;i<b.length;i+=16){const c=b.slice(i,i+16);const hex=Array.from(c).map(x=>x.toString(16).padStart(2,'0')).join(' ').padEnd(47,' ');const asc=Array.from(c).map(x=>x>=32&&x<127?String.fromCharCode(x):'.').join('');lines.push(`${i.toString(16).padStart(4,'0')}  ${hex}  ${asc}`);}return lines.join('\n')||'—';}
 
-/* ===== CARD VISUAL ===== */
 function renderCard(tag){
-  const cardViz = $('cardViz');
-  cardViz.classList.remove('scanning','error');
-  if(!tag){
-    cardViz.classList.remove('active');
-    $('cardUid').textContent = '---- ---- ---- ----';
-    $('cardRecords').innerHTML = '<span class="card-empty">Czeka na kartę…</span>';
-    $('cardType').textContent = 'NFC TAG';
-    $('cardSize').textContent = '0 B';
-    return;
-  }
-  cardViz.classList.add('active');
-  $('cardUid').textContent = tag.serialNumber || '---- ---- ---- ----';
-  const chips = [];
-  let totalB = 0;
-  for(const r of tag.records){
-    const bytes = new Uint8Array(r.data);
-    totalB += bytes.length;
-    const cls = r.recordType === 'mime' ? 'mime' : r.recordType === 'text' ? 'text' : r.recordType === 'url' ? 'url' : '';
-    chips.push(`<span class="card-chip-tag ${cls}">${r.recordType}</span>`);
-  }
-  if(!chips.length) chips.push('<span class="card-empty">Pusty NDEF</span>');
-  $('cardRecords').innerHTML = chips.join('');
-  $('cardType').textContent = tag.serialNumber ? (tag.serialNumber.split(':').length === 7 ? 'MIFARE 1K' : 'NFC TAG') : 'NFC TAG';
-  $('cardSize').textContent = `${totalB} B`;
+  const v=$('cardViz');
+  v.classList.remove('scanning','error');
+  if(!tag){v.classList.remove('active');$('cardUid').textContent='---- ---- ---- ----';$('cardRecords').innerHTML='<span class="card-empty">Czeka na kartę…</span>';$('cardType').textContent='NFC TAG';$('cardSize').textContent='0 B';return;}
+  v.classList.add('active');
+  $('cardUid').textContent=tag.serialNumber||'---- ---- ---- ----';
+  const chips=[];let totalB=0;
+  for(const r of tag.records){const bytes=new Uint8Array(r.data);totalB+=bytes.length;const cls=r.recordType==='mime'?'mime':r.recordType==='text'?'text':r.recordType==='url'?'url':'';chips.push(`<span class="card-chip-tag ${cls}">${r.recordType}</span>`);}
+  if(!chips.length)chips.push('<span class="card-empty">Pusty NDEF</span>');
+  $('cardRecords').innerHTML=chips.join('');
+  $('cardType').textContent=tag.serialNumber?(tag.serialNumber.split(':').length===7?'MIFARE 1K':'NFC TAG'):'NFC TAG';
+  $('cardSize').textContent=`${totalB} B`;
 }
 
-/* ===== CAPTURE ===== */
 async function captureTag(){
-  return new Promise((resolve, reject) => {
-    if(!hasNfc) return reject(new Error('Brak Web NFC'));
-    const ndef = new NDEFReader();
-    const ctrl = new AbortController();
-    const to = setTimeout(() => { ctrl.abort(); reject(new Error('Timeout (30s)')); }, 30000);
-    ndef.onreading = ({ serialNumber, message }) => {
-      clearTimeout(to); ctrl.abort();
-      const records = [];
-      if(message && message.records){
-        for(const r of message.records){
-          const copy = { recordType: r.recordType };
-          if(r.mediaType) copy.mediaType = r.mediaType;
-          if(r.id) copy.id = r.id;
-          if(r.encoding) copy.encoding = r.encoding;
-          if(r.lang) copy.lang = r.lang;
-          const bytes = recData(r);
-          copy.data = bytes.buffer.slice(0);
-          records.push(copy);
-        }
-      }
-      resolve({ serialNumber, records });
-    };
-    ndef.onreadingerror = () => { clearTimeout(to); reject(new Error('Błąd odczytu')); };
-    ndef.scan({ signal: ctrl.signal }).catch(e => { clearTimeout(to); reject(e); });
+  return new Promise((resolve,reject)=>{
+    if(!hasNfc)return reject(new Error('Brak Web NFC'));
+    const ndef=new NDEFReader();
+    const ctrl=new AbortController();
+    const to=setTimeout(()=>{ctrl.abort();reject(new Error('Timeout (30s)'));},30000);
+    ndef.onreading=({serialNumber,message})=>{clearTimeout(to);ctrl.abort();const records=[];if(message&&message.records){for(const r of message.records){const copy={recordType:r.recordType};if(r.mediaType)copy.mediaType=r.mediaType;if(r.id)copy.id=r.id;if(r.encoding)copy.encoding=r.encoding;if(r.lang)copy.lang=r.lang;const bytes=recData(r);copy.data=bytes.buffer.slice(0);records.push(copy);}}resolve({serialNumber,records});};
+    ndef.onreadingerror=()=>{clearTimeout(to);reject(new Error('Błąd odczytu'));};
+    ndef.scan({signal:ctrl.signal}).catch(e=>{clearTimeout(to);reject(e);});
   });
 }
 
-/* ===== WRITE ===== */
 function recForWrite(r){
-  const t = r.recordType;
-  const bytes = new Uint8Array(r.data);
-  if(t === 'text'){
-    const txt = new TextDecoder(r.encoding || 'utf-8').decode(bytes);
-    const out = { recordType: 'text', data: txt };
-    if(r.encoding) out.encoding = r.encoding;
-    if(r.lang) out.lang = r.lang;
-    return out;
-  }
-  if(t === 'url') return { recordType: 'url', data: new TextDecoder().decode(bytes) };
-  if(t === 'absolute-url') return { recordType: 'absolute-url', data: new TextDecoder().decode(bytes) };
-  if(t === 'mime') return { recordType: 'mime', mediaType: r.mediaType || 'application/octet-stream', data: bytes };
-  if(t === 'empty') return { recordType: 'empty' };
-  return { recordType: 'mime', mediaType: r.mediaType || 'application/octet-stream', data: bytes };
-}
-async function writeTag(records){
-  if(!hasNfc) throw new Error('Brak Web NFC');
-  const ndef = new NDEFReader();
-  await ndef.write({ records });
+  const t=r.recordType;const bytes=new Uint8Array(r.data);
+  if(t==='text'){const txt=new TextDecoder(r.encoding||'utf-8').decode(bytes);const out={recordType:'text',data:txt};if(r.encoding)out.encoding=r.encoding;if(r.lang)out.lang=r.lang;return out;}
+  if(t==='url')return{recordType:'url',data:new TextDecoder().decode(bytes)};
+  if(t==='absolute-url')return{recordType:'absolute-url',data:new TextDecoder().decode(bytes)};
+  if(t==='mime')return{recordType:'mime',mediaType:r.mediaType||'application/octet-stream',data:bytes};
+  if(t==='empty')return{recordType:'empty'};
+  return{recordType:'mime',mediaType:r.mediaType||'application/octet-stream',data:bytes};
 }
 
-/* ===== DOWNLOAD ===== */
-function downloadBlob(blob, name){
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-}
+async function writeTag(records){if(!hasNfc)throw new Error('Brak Web NFC');const ndef=new NDEFReader();await ndef.write({records});}
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 
-/* ===== READ TAB ===== */
-$('readBtn').onclick = async () => {
-  if(!hasNfc) return;
-  $('readResult').innerHTML = '';
-  $('readActions').style.display = 'none';
+function recordPreview(r){const bytes=new Uint8Array(r.data);const head=bytes.slice(0,32);let txt;try{txt=new TextDecoder(r.encoding||'utf-8').decode(head);}catch(e){txt='';}if(/[\x00-\x08\x0e-\x1f]/.test(txt))return hexDump(head);return txt+(bytes.length>32?'…':'');}
+
+$('readBtn').onclick=async()=>{
+  if(!hasNfc)return;
+  $('readResult').innerHTML='';
+  $('readActions').style.display='none';
   $('cardViz').classList.add('scanning');
   $('cardViz').classList.remove('active','error');
   try{
-    showBig('i-scan', 'Zbliż kartę…', 'Odczyt w toku');
-    const tag = await captureTag();
-    hideBig(); vibrate(30);
-    state.read = tag;
-    renderCard(tag);
+    showBig('i-scan','Zbliż kartę…','Odczyt w toku');
+    const tag=await captureTag();
+    hideBig();vibrate(30);S.read=tag;renderCard(tag);
     log(`Odczyt ${tag.records.length} rekordów z ${tag.serialNumber}`,'ok');
-
-    let html = `<div class="uid-display">UID: ${tag.serialNumber}</div>`;
-    if(!tag.records.length){
-      html += `<div class="result-item"><strong>Zawartość</strong><div class="preview">Karta pusta (brak NDEF)</div></div>`;
-    } else {
-      tag.records.forEach(r => {
-        const cls = r.recordType === 'mime' ? 'mime' : r.recordType;
-        const bytes = new Uint8Array(r.data);
-        let prev = '';
-        try{ prev = new TextDecoder(r.encoding || 'utf-8').decode(bytes.slice(0,32)); }catch(e){ prev = ''; }
-        if(/[\x00-\x08\x0e-\x1f]/.test(prev)) prev = hexDump(bytes.slice(0,16));
-        else if(bytes.length > 32) prev += '…';
-        html += `<div class="result-item">
-          <strong><span class="chip ${cls}">${r.recordType}</span>${r.mediaType ? ' ' + r.mediaType : ''}</strong>
-          <div class="preview">${prev.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
-          <details><summary>HEX (${bytes.length} B)</summary><div class="hex-block">${hexDump(bytes).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div></details>
-        </div>`;
-      });
-    }
-    $('readResult').innerHTML = html;
-    $('readActions').style.display = 'block';
-  }catch(e){
-    hideBig();
-    $('cardViz').classList.remove('scanning');
-    $('cardViz').classList.add('error');
-    log('Błąd: ' + e.message,'err'); toast('Błąd: ' + e.message,'err');
-  }
+    let html=`<div class="uid-display">UID: ${tag.serialNumber}</div>`;
+    if(!tag.records.length){html+=`<div class="result-item"><strong>Zawartość</strong><div class="preview">Karta pusta (brak NDEF)</div></div>`;}
+    else{tag.records.forEach(r=>{const cls=r.recordType==='mime'?'mime':r.recordType;const bytes=new Uint8Array(r.data);const prev=recordPreview(r);html+=`<div class="result-item"><strong><span class="chip ${cls}">${r.recordType}</span>${r.mediaType?' '+r.mediaType:''}</strong><div class="preview">${prev.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><details><summary>HEX (${bytes.length} B)</summary><div class="hex-block">${hexDump(bytes).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div></details></div>`;});}
+    $('readResult').innerHTML=html;
+    $('readActions').style.display='block';
+  }catch(e){hideBig();$('cardViz').classList.remove('scanning');$('cardViz').classList.add('error');log('Błąd: '+e.message,'err');toast('Błąd: '+e.message,'err');}
 };
 
-$('readToClone').onclick = () => {
-  if(!state.read) return;
-  state.clone = state.read;
-  renderClone();
-  document.querySelector('nav button[data-tab="clone"]').click();
-  toast('Wysłano do klonowania','ok');
-};
-
-$('readToHex').onclick = () => {
-  if(!state.read) return;
-  const chunks = state.read.records.map(r => new Uint8Array(r.data));
-  const total = chunks.reduce((a,c) => a+c.length, 0);
-  const buf = new Uint8Array(total);
-  let off = 0;
-  for(const c of chunks){ buf.set(c, off); off += c.length; }
-  state.hex = buf;
-  $('hexInput').value = bytesToHex(buf);
-  updateHexView();
-  document.querySelector('nav button[data-tab="hex"]').click();
-  toast('Wysłano do HEX','ok');
-};
-
-$('readExportJson').onclick = () => {
-  if(!state.read) return;
-  const obj = {
-    serialNumber: state.read.serialNumber,
-    records: state.read.records.map(r => ({
-      recordType: r.recordType, mediaType: r.mediaType, id: r.id,
-      encoding: r.encoding, lang: r.lang,
-      dataHex: bytesToHex(new Uint8Array(r.data), '')
-    }))
-  };
-  downloadBlob(new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'}), `tag-${state.read.serialNumber.replace(/:/g,'')}.json`);
-  log('Eksport JSON','ok');
-};
-
-$('readExportBin').onclick = () => {
-  if(!state.read) return;
-  const chunks = state.read.records.map(r => new Uint8Array(r.data));
-  const total = chunks.reduce((a,c) => a+c.length, 0);
-  const buf = new Uint8Array(total);
-  let off = 0;
-  for(const c of chunks){ buf.set(c, off); off += c.length; }
-  downloadBlob(new Blob([buf], {type:'application/octet-stream'}), `tag-${state.read.serialNumber.replace(/:/g,'')}.bin`);
-  log(`Eksport BIN (${total} B)`,'ok');
-};
-
-/* ===== BLOCKS TAB ===== */
-function renderBlocks(tag){
-  const blocks = new Array(64).fill(null).map(() => new Uint8Array(16));
-  let totalData = new Uint8Array(0);
-  if(tag){
-    const chunks = tag.records.map(r => new Uint8Array(r.data));
-    const total = chunks.reduce((a,c) => a+c.length, 0);
-    totalData = new Uint8Array(total);
-    let off = 0;
-    for(const c of chunks){ totalData.set(c, off); off += c.length; }
+function encodeNDEFRecord(r,isFirst,isLast){
+  const t=r.recordType;let type,payload;
+  if(t==='text'){
+    type=new Uint8Array([0x54]);
+    const txt=new TextDecoder().decode(new Uint8Array(r.data));
+    const lang=r.lang||'en';
+    const langB=new TextEncoder().encode(lang);
+    const txtB=new TextEncoder().encode(txt);
+    payload=new Uint8Array(1+langB.length+txtB.length);
+    payload[0]=(langB.length)&0x3F;
+    payload.set(langB,1);
+    payload.set(txtB,1+langB.length);
+  }else if(t==='url'){
+    type=new Uint8Array([0x55]);
+    const url=new TextDecoder().decode(new Uint8Array(r.data));
+    let prefix=0x00,rest=url;
+    if(url.startsWith('https://www.')){prefix=0x02;rest=url.substring(12);}
+    else if(url.startsWith('http://www.')){prefix=0x01;rest=url.substring(11);}
+    else if(url.startsWith('https://')){prefix=0x04;rest=url.substring(8);}
+    else if(url.startsWith('http://')){prefix=0x03;rest=url.substring(7);}
+    else if(url.startsWith('tel:')){prefix=0x05;rest=url.substring(4);}
+    else if(url.startsWith('mailto:')){prefix=0x06;rest=url.substring(7);}
+    const restB=new TextEncoder().encode(rest);
+    payload=new Uint8Array(1+restB.length);
+    payload[0]=prefix;
+    payload.set(restB,1);
+  }else if(t==='mime'){
+    type=new TextEncoder().encode(r.mediaType||'application/octet-stream');
+    payload=new Uint8Array(r.data);
+  }else if(t==='empty'){
+    type=new Uint8Array(0);payload=new Uint8Array(0);
+  }else{
+    type=new TextEncoder().encode('application/octet-stream');
+    payload=new Uint8Array(r.data);
   }
-  const tlv = new Uint8Array(2 + totalData.length + 1);
-  if(totalData.length > 0){
-    tlv[0] = 0x03;
-    tlv[1] = totalData.length > 254 ? 0xFF : totalData.length;
-    let idx = 2;
-    if(totalData.length > 254){ tlv[1] = 0xFF; tlv[2] = (totalData.length >> 8) & 0xFF; tlv[3] = totalData.length & 0xFF; idx = 4; }
-    tlv.set(totalData, idx);
-    tlv[idx + totalData.length] = 0xFE;
-  }
-  for(let b = 4; b < 64; b++){
-    if((b % 4) === 3) continue;
-    const start = (b - 4) * 16;
-    if(start >= tlv.length) break;
-    blocks[b] = tlv.slice(start, start + 16);
-  }
-  if(tag && tag.serialNumber){
-    const parts = tag.serialNumber.split(':').map(x => parseInt(x, 16)).filter(x => !isNaN(x));
-    const b0 = new Uint8Array(16);
-    for(let i = 0; i < Math.min(parts.length, 4); i++) b0[i] = parts[i];
-    if(parts.length >= 4) b0[4] = parts[0] ^ parts[1] ^ parts[2] ^ parts[3];
-    blocks[0] = b0;
-  }
-  blocks[1] = new Uint8Array([0x14,0x01,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);
-  blocks[2] = new Uint8Array([0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);
-
-  let used = 0, free = 0;
-  const view = $('blocksView');
-  view.innerHTML = '';
-  for(let s = 0; s < 16; s++){
-    const sectorDiv = document.createElement('div');
-    sectorDiv.className = 'sector-block';
-    const head = document.createElement('div');
-    head.className = 'sector-head';
-    const usedInSector = [];
-    for(let i = 0; i < 4; i++){
-      const b = s * 4 + i;
-      if(i === 3) continue;
-      const d = blocks[b];
-      if(d && d.some(x => x !== 0)) usedInSector.push(b);
-    }
-    head.innerHTML = `<span>Sektor ${s} (bloki ${s*4}–${s*4+3})</span><span class="badge-sm ${usedInSector.length ? 'used' : ''}">${usedInSector.length}/3</span>`;
-    sectorDiv.appendChild(head);
-    for(let i = 0; i < 4; i++){
-      const b = s * 4 + i;
-      const d = blocks[b];
-      const row = document.createElement('div');
-      const isTrailer = (i === 3);
-      const isUsed = d && d.some(x => x !== 0);
-      row.className = 'block-row';
-      if(isTrailer) row.classList.add('trailer');
-      else if(isUsed) row.classList.add('ndef-used');
-      else row.classList.add('empty');
-      const hex = isTrailer ? '•• •• •• •• •• •• FF 07 80 69 •• •• •• •• •• ••' : Array.from(d || new Uint8Array(16)).map(x => x.toString(16).padStart(2,'0')).join(' ');
-      const asc = isTrailer ? 'Key A + Access + Key B' : Array.from(d || new Uint8Array(16)).map(x => x >= 32 && x < 127 ? String.fromCharCode(x) : '·').join('');
-      row.innerHTML = `<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hex}</span><span class="block-ascii">${asc}</span></div>`;
-      sectorDiv.appendChild(row);
-      if(!isTrailer){
-        if(isUsed) used++; else free++;
-      }
-    }
-    view.appendChild(sectorDiv);
-  }
-  $('blocksUsed').textContent = used;
-  $('blocksFree').textContent = free;
-  $('blocksPct').textContent = Math.round((used / (used + free)) * 100) + '%';
+  const tnf=t==='empty'?0:(t==='mime'?2:(t==='unknown'?5:1));
+  const sr=payload.length<256?1:0;
+  const il=r.id?1:0;
+  const mb=isFirst?1:0;
+  const me=isLast?1:0;
+  const header=(mb<<7)|(me<<6)|(0<<5)|(sr<<4)|(il<<3)|tnf;
+  const parts=[new Uint8Array([header,type.length])];
+  if(sr)parts.push(new Uint8Array([payload.length]));
+  else parts.push(new Uint8Array([(payload.length>>24)&0xFF,(payload.length>>16)&0xFF,(payload.length>>8)&0xFF,payload.length&0xFF]));
+  if(il)parts.push(new Uint8Array([r.id.length]));
+  parts.push(type);
+  if(il)parts.push(new Uint8Array(r.id));
+  parts.push(payload);
+  const total=parts.reduce((a,p)=>a+p.length,0);
+  const buf=new Uint8Array(total);
+  let off=0;for(const p of parts){buf.set(p,off);off+=p.length;}
+  return buf;
 }
 
-$('blocksRead').onclick = async () => {
-  if(!hasNfc) return;
+function buildNDEFMessage(tag){
+  if(!tag||!tag.records.length)return new Uint8Array(0);
+  const parts=[];
+  tag.records.forEach((r,i)=>parts.push(encodeNDEFRecord(r,i===0,i===tag.records.length-1)));
+  const total=parts.reduce((a,p)=>a+p.length,0);
+  const buf=new Uint8Array(total);
+  let off=0;for(const p of parts){buf.set(p,off);off+=p.length;}
+  return buf;
+}
+
+function buildTLV(ndefMsg){
+  if(!ndefMsg.length)return new Uint8Array(0);
+  if(ndefMsg.length<255){const tlv=new Uint8Array(2+ndefMsg.length+1);tlv[0]=0x03;tlv[1]=ndefMsg.length;tlv.set(ndefMsg,2);tlv[2+ndefMsg.length]=0xFE;return tlv;}
+  const tlv=new Uint8Array(4+ndefMsg.length+1);
+  tlv[0]=0x03;tlv[1]=0xFF;tlv[2]=(ndefMsg.length>>8)&0xFF;tlv[3]=ndefMsg.length&0xFF;
+  tlv.set(ndefMsg,4);tlv[4+ndefMsg.length]=0xFE;
+  return tlv;
+}
+
+function mapTLVToBlocks(tlv,tag){
+  const blocks=new Array(64).fill(null).map(()=>new Uint8Array(16));
+  if(tag&&tag.serialNumber){
+    const parts=tag.serialNumber.split(':').map(x=>parseInt(x,16)).filter(x=>!isNaN(x));
+    const b0=new Uint8Array(16);
+    for(let i=0;i<Math.min(parts.length,4);i++)b0[i]=parts[i];
+    if(parts.length>=4)b0[4]=parts[0]^parts[1]^parts[2]^parts[3];
+    b0[5]=0x08;b0[6]=0x00;b0[7]=0x04;
+    b0[8]=0x62;b0[9]=0x63;b0[10]=0x64;b0[11]=0x65;b0[12]=0x66;b0[13]=0x67;b0[14]=0x68;b0[15]=0x69;
+    blocks[0]=b0;
+  }
+  blocks[1]=new Uint8Array([0x14,0x01,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);
+  blocks[2]=new Uint8Array([0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);
+  let blockNum=4,offset=0;
+  while(offset<tlv.length&&blockNum<64){
+    if(blockNum%4===3){blockNum++;continue;}
+    const chunk=new Uint8Array(16);
+    const remaining=tlv.length-offset;
+    const toCopy=Math.min(16,remaining);
+    chunk.set(tlv.slice(offset,offset+toCopy));
+    blocks[blockNum]=chunk;
+    offset+=toCopy;blockNum++;
+  }
+  for(let b=3;b<64;b+=4){blocks[b]=new Uint8Array([0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x07,0x80,0x69,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]);}
+  return blocks;
+}
+
+function buildTLVDiagram(tlv){
+  if(!tlv.length)return 'Brak danych NDEF';
+  let html='';
+  const isLong=tlv[1]===0xFF;
+  const headerLen=isLong?4:2;
+  const ndefStart=headerLen;
+  const ndefLen=isLong?((tlv[2]<<8)|tlv[3]):tlv[1];
+  html+=`<span class="lbl">// Nagłówek TLV</span>\n`;
+  html+=`<span class="tag">0x03</span> <span class="lbl">(tag: NDEF Message)</span>\n`;
+  if(isLong){html+=`<span class="len">0xFF</span> <span class="len">0x${tlv[2].toString(16).padStart(2,'0')}</span> <span class="len">0x${tlv[3].toString(16).padStart(2,'0')}</span> <span class="lbl">(długość 3-bajtowa: ${ndefLen} B)</span>\n`;}
+  else{html+=`<span class="len">0x${tlv[1].toString(16).padStart(2,'0')}</span> <span class="lbl">(długość: ${ndefLen} B)</span>\n`;}
+  html+=`\n<span class="lbl">// Wiadomość NDEF (${ndefLen} B)</span>\n`;
+  let off=ndefStart;
+  while(off<ndefStart+ndefLen){
+    const h=tlv[off];
+    const mb=(h>>7)&1,me=(h>>6)&1,sr=(h>>4)&1,il=(h>>3)&1,tnf=h&7;
+    const typeLen=tlv[off+1];
+    let pos=off+2;
+    let payLen;
+    if(sr){payLen=tlv[pos];pos++;}
+    else{payLen=(tlv[pos]<<24)|(tlv[pos+1]<<16)|(tlv[pos+2]<<8)|tlv[pos+3];pos+=4;}
+    let idLen=0;
+    if(il){idLen=tlv[pos];pos++;}
+    html+=`<span class="ndef-h">0x${h.toString(16).padStart(2,'0')}</span> <span class="lbl">(MB=${mb} ME=${me} SR=${sr} IL=${il} TNF=${tnf})</span>\n`;
+    html+=`<span class="ndef-h">0x${typeLen.toString(16).padStart(2,'0')}</span> <span class="lbl">(długość typu: ${typeLen})</span>\n`;
+    if(sr){html+=`<span class="ndef-h">0x${payLen.toString(16).padStart(2,'0')}</span> <span class="lbl">(długość ładunku: ${payLen})</span>\n`;}
+    else{html+=`<span class="ndef-h">${[0,1,2,3].map(i=>'0x'+tlv[off+2+i].toString(16).padStart(2,'0')).join(' ')}</span> <span class="lbl">(długość: ${payLen})</span>\n`;}
+    if(il){html+=`<span class="ndef-h">0x${idLen.toString(16).padStart(2,'0')}</span> <span class="lbl">(długość ID: ${idLen})</span>\n`;}
+    const typeBytes=tlv.slice(pos,pos+typeLen);
+    const typeStr=Array.from(typeBytes).map(b=>'0x'+b.toString(16).padStart(2,'0')).join(' ');
+    html+=`<span class="ndef-t">${typeStr}</span> <span class="lbl">(typ: '${String.fromCharCode(...typeBytes)}')</span>\n`;
+    pos+=typeLen;
+    if(il)pos+=idLen;
+    const payBytes=tlv.slice(pos,pos+payLen);
+    const payHex=Array.from(payBytes).map(b=>'0x'+b.toString(16).padStart(2,'0')).join(' ');
+    const payAscii=Array.from(payBytes).map(b=>b>=32&&b<127?String.fromCharCode(b):'.').join('');
+    html+=`<span class="ndef-p">${payHex}</span> <span class="lbl">("${payAscii}")</span>\n`;
+    off=pos+payLen;
+    if(me)break;
+  }
+  html+=`\n<span class="term">0xFE</span> <span class="lbl">(terminator TLV)</span>`;
+  return html;
+}
+
+function renderBlocks(tag){
+  let tlv=new Uint8Array(0);
+  let ndefMsg=new Uint8Array(0);
+  if(tag){
+    ndefMsg=buildNDEFMessage(tag);
+    tlv=buildTLV(ndefMsg);
+  }
+  S.blocks=mapTLVToBlocks(tlv,tag);
+  $('tlvDiagram').innerHTML=tag?buildTLVDiagram(tlv).replace(/\n/g,'<br>'):'Czeka na odczyt karty…';
+  $('blocksSize').textContent=`${ndefMsg.length} B`;
+  const blocks=S.blocks;
+  let used=0,free=0;
+  const view=$('blocksView');
+  view.innerHTML='';
+  for(let s=0;s<16;s++){
+    const sectorDiv=document.createElement('div');
+    sectorDiv.className='sector-block';
+    const head=document.createElement('div');
+    head.className='sector-head';
+    const usedInSector=[];
+    for(let i=0;i<4;i++){if(i===3)continue;const b=s*4+i;const d=blocks[b];if(d&&d.some(x=>x!==0))usedInSector.push(b);}
+    head.innerHTML=`<span>Sektor ${s} (bloki ${s*4}–${s*4+3})</span><span class="badge-sm ${usedInSector.length?'used':''}">${usedInSector.length}/3</span>`;
+    sectorDiv.appendChild(head);
+    let skipSector=false;
+    for(let i=0;i<4;i++){
+      const b=s*4+i;
+      const d=blocks[b];
+      const isTrailer=(i===3);
+      const isUsed=d&&d.some(x=>x!==0);
+      if(isTrailer&&!S.showTrailer)continue;
+      if(!isUsed&&!S.showEmpty&&!isTrailer){skipSector=true;continue;}
+      const row=document.createElement('div');
+      row.className='block-row';
+      row.dataset.block=b;
+      if(isTrailer)row.classList.add('trailer');
+      else if(isUsed)row.classList.add('ndef-used');
+      else row.classList.add('empty');
+      let hex,asc;
+      const mode=S.blockView;
+      if(isTrailer){hex='•• •• •• •• •• •• FF 07 80 69 •• •• •• •• •• ••';asc='Key A + Access + Key B';}
+      else{hex=Array.from(d||new Uint8Array(16)).map(x=>x.toString(16).padStart(2,'0')).join(' ');asc=Array.from(d||new Uint8Array(16)).map(x=>x>=32&&x<127?String.fromCharCode(x):'·').join('');}
+      if(mode==='hex')row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hex}</span></div>`;
+      else if(mode==='ascii')row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${asc}</span></div>`;
+      else if(mode==='annotated'){
+        let annotation='';
+        if(b===0)annotation='Blok producenta (UID + BCC + SAK + ATQA)';
+        else if(b===1||b===2)annotation='MAD (MIFARE Application Directory)';
+        else if(isTrailer)annotation='Sektor trailer (klucze + access bits)';
+        else if(isUsed)annotation='Dane NDEF (TLV)';
+        else annotation='Pusty';
+        row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hex}</span><span class="block-ascii">${annotation}</span></div>`;
+      }else row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hex}</span><span class="block-ascii">${asc}</span></div>`;
+      sectorDiv.appendChild(row);
+      if(!isTrailer){if(isUsed)used++;else free++;}
+    }
+    if(!skipSector)view.appendChild(sectorDiv);
+  }
+  $('blocksUsed').textContent=used;
+  $('blocksFree').textContent=free;
+  $('blocksPct').textContent=Math.round((used/(used+free))*100)+'%';
+}
+
+$('blocksView').addEventListener('click',e=>{
+  const row=e.target.closest('.block-row');
+  if(!row)return;
+  document.querySelectorAll('.block-row.selected').forEach(r=>r.classList.remove('selected'));
+  row.classList.add('selected');
+  const b=parseInt(row.dataset.block,10);
+  const d=S.blocks[b];
+  if(!d)return;
+  let desc='';
+  if(b===0)desc='<b>Blok 0</b>: Dane producenta (UID, BCC, SAK, ATQA). Zwykle tylko do odczytu.';
+  else if(b===1||b===2)desc='<b>MAD</b>: MIFARE Application Directory – informuje telefon, że w sektorze 1 znajduje się NDEF.';
+  else if(b%4===3)desc='<b>Sektor trailer</b>: Klucz A (6B) + access bits (4B) + klucz B (6B). Chroniony przed zapisem.';
+  else if(d.some(x=>x!==0))desc='<b>Dane NDEF</b>: Fragment wiadomości TLV (tag 0x03 + długość + NDEF + terminator 0xFE).';
+  else desc='<b>Pusty blok</b>: Wypełniony zerami.';
+  $('byteInspector').innerHTML=`${desc}<br><br><span style="font-family:var(--mo);font-size:10px">Blok ${b} • Offset ${b*16}–${b*16+15}</span><div class="hex-block" style="margin-top:6px">${Array.from(d).map(x=>x.toString(16).padStart(2,'0')).join(' ')}</div>`;
+  vibrate(15);
+});
+
+$('blockViewMode').onchange=e=>{S.blockView=e.target.value;if(S.blocks)renderBlocks(S.read);};
+$('toggleTrailer').onclick=()=>{S.showTrailer=!S.showTrailer;if(S.blocks)renderBlocks(S.read);toast('Trailer: '+(S.showTrailer?'ON':'OFF'),'info');};
+$('toggleEmpty').onclick=()=>{S.showEmpty=!S.showEmpty;if(S.blocks)renderBlocks(S.read);toast('Puste: '+(S.showEmpty?'POKAZANE':'UKRYTE'),'info');};
+
+$('blocksRead').onclick=async()=>{
+  if(!hasNfc)return;
   try{
-    showBig('i-scan', 'Zbliż kartę…', 'Odczyt bloków');
-    const tag = await captureTag();
-    hideBig(); vibrate(30);
-    renderBlocks(tag);
-    renderCard(tag);
-    state.read = tag;
+    showBig('i-scan','Zbliż kartę…','Odczyt bloków');
+    const tag=await captureTag();
+    hideBig();vibrate(30);S.read=tag;renderCard(tag);renderBlocks(tag);
     log(`Bloki: ${tag.serialNumber}`,'ok');
     toast('Rekonstrukcja bloków gotowa','ok');
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
+  }catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}
 };
 
-/* ===== WRITE URL ===== */
-$('writeUrlBtn').onclick = async () => {
-  const url = $('urlInput').value.trim();
-  if(!url) return toast('Podaj URL','err');
-  try{
-    showBig('i-save', 'Zbliż kartę…', 'Zapis URL', hideBig);
-    await writeTag([{ recordType:'url', data: url }]);
-    hideBig(); showBigSuccess('URL zapisany', url); log('URL: ' + url,'ok');
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-};
+function exportMfd(){if(!S.blocks)return toast('Brak danych','err');const out=new Uint8Array(1024);for(let b=0;b<64;b++){out.set(S.blocks[b],b*16);}downloadBlob(new Blob([out],{type:'application/octet-stream'}),`tag-${(S.read?.serialNumber||'unknown').replace(/:/g,'')}.mfd`);log('Eksport .mfd','ok');toast('Eksport .mfd (rekonstrukcja)','ok');}
+function exportBinBlocks(){if(!S.blocks)return toast('Brak danych','err');const out=new Uint8Array(1024);for(let b=0;b<64;b++){out.set(S.blocks[b],b*16);}downloadBlob(new Blob([out],{type:'application/octet-stream'}),`tag-${(S.read?.serialNumber||'unknown').replace(/:/g,'')}.bin`);log('Eksport BIN','ok');}
+function exportHexBlocks(){if(!S.blocks)return toast('Brak danych','err');const out=new Uint8Array(1024);for(let b=0;b<64;b++){out.set(S.blocks[b],b*16);}downloadBlob(new Blob([hexDump(out)],{type:'text/plain'}),`tag-${(S.read?.serialNumber||'unknown').replace(/:/g,'')}.hex`);log('Eksport HEX','ok');}
+function exportTxtBlocks(){if(!S.blocks)return toast('Brak danych','err');let txt='';for(let b=0;b<64;b++){const d=S.blocks[b];txt+=`Blok ${b.toString().padStart(2,'0')}: ${Array.from(d).map(x=>x.toString(16).padStart(2,'0')).join(' ')}\n`;}downloadBlob(new Blob([txt],{type:'text/plain'}),`tag-${(S.read?.serialNumber||'unknown').replace(/:/g,'')}.txt`);log('Eksport TXT','ok');}
+async function copyHexAll(){if(!S.blocks)return toast('Brak danych','err');let txt='';for(let b=0;b<64;b++){txt+=Array.from(S.blocks[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ')+'\n';}await copyToClipboard(txt);log('Skopiowano HEX','ok');}
+async function copyCArray(){if(!S.blocks)return toast('Brak danych','err');let txt='const uint8_t tag[1024] = {\n  ';const arr=[];for(let b=0;b<64;b++){for(let i=0;i<16;i++)arr.push('0x'+S.blocks[b][i].toString(16).padStart(2,'0'));}for(let i=0;i<arr.length;i++){txt+=arr[i];if(i<arr.length-1)txt+=',';if((i+1)%16===0)txt+='\n  ';}txt+='\n};';await copyToClipboard(txt);log('Skopiowano C array','ok');}
+async function copyPyBytes(){if(!S.blocks)return toast('Brak danych','err');const arr=[];for(let b=0;b<64;b++){for(let i=0;i<16;i++)arr.push('0x'+S.blocks[b][i].toString(16).padStart(2,'0'));}const txt=`tag = bytes([${arr.join(', ')}])`;await copyToClipboard(txt);log('Skopiowano Python','ok');}
+async function copyToClipboard(text){try{await navigator.clipboard.writeText(text);toast('Skopiowano','ok');}catch(e){toast('Błąd kopiowania','err');}}
 
-/* ===== DATA ===== */
-$('writeDataBtn').onclick = async () => {
-  const name = $('nameInput').value.trim();
-  const id = $('idInput').value.trim();
-  const url = $('urlDataInput').value.trim();
-  if(!url) return toast('Podaj URL','err');
-  const payload = `NAME=${name};ID=${id};URL=${url};`;
-  try{
-    showBig('i-save', 'Zbliż kartę…', 'Zapis danych', hideBig);
-    await writeTag([
-      { recordType:'url', data: url },
-      { recordType:'text', data: payload, lang:'pl' }
-    ]);
-    hideBig(); showBigSuccess('Dane zapisane', payload); log('Dane: ' + payload,'ok');
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-};
+$('exportMfd').onclick=exportMfd;
+$('exportBinBlocks').onclick=exportBinBlocks;
+$('exportHexBlocks').onclick=exportHexBlocks;
+$('exportTxtBlocks').onclick=exportTxtBlocks;
+$('copyHexAll').onclick=copyHexAll;
+$('copyCArray').onclick=copyCArray;
+$('copyPyBytes').onclick=copyPyBytes;
 
-/* ===== PHOTO & CROP ===== */
-const fileInput = $('fileInput'), cameraInput = $('cameraInput');
-$('galleryBtn').onclick = () => fileInput.click();
-$('cameraBtn').onclick = () => cameraInput.click();
+$('readToClone').onclick=()=>{if(!S.read)return;S.clone=S.read;renderClone();document.querySelector('nav button[data-tab="clone"]').click();toast('Do klonowania','ok');};
+$('readToHex').onclick=()=>{if(!S.read)return;const chunks=S.read.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}S.hex=buf;$('hexInput').value=bytesToHex(buf);updateHexView();document.querySelector('nav button[data-tab="hex"]').click();toast('Do HEX','ok');};
+$('readToBlocks').onclick=()=>{if(!S.read)return;renderBlocks(S.read);document.querySelector('nav button[data-tab="blocks"]').click();toast('Do bloków','ok');};
+$('readExportJson').onclick=()=>{if(!S.read)return;const obj={serialNumber:S.read.serialNumber,records:S.read.records.map(r=>({recordType:r.recordType,mediaType:r.mediaType,id:r.id,encoding:r.encoding,lang:r.lang,dataHex:bytesToHex(new Uint8Array(r.data),'')}))};downloadBlob(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),`tag-${S.read.serialNumber.replace(/:/g,'')}.json`);log('Eksport JSON','ok');};
+$('readExportBin').onclick=()=>{if(!S.read)return;const chunks=S.read.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}downloadBlob(new Blob([buf],{type:'application/octet-stream'}),`tag-${S.read.serialNumber.replace(/:/g,'')}.bin`);log('Eksport BIN','ok');};
 
-const crop = { img: null, scale: 1, offsetX: 0, offsetY: 0, rotation: 0, aspect: 1, dragging: false, startX: 0, startY: 0, startOffX: 0, startOffY: 0 };
+$('writeUrlBtn').onclick=async()=>{const url=$('urlInput').value.trim();if(!url)return toast('Podaj URL','err');try{showBig('i-save','Zbliż kartę…','Zapis URL',hideBig);await writeTag([{recordType:'url',data:url}]);hideBig();showBigSuccess('URL zapisany',url);log('URL: '+url,'ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
+$('writeDataBtn').onclick=async()=>{const name=$('nameInput').value.trim();const id=$('idInput').value.trim();const url=$('urlDataInput').value.trim();if(!url)return toast('Podaj URL','err');const payload=`NAME=${name};ID=${id};URL=${url};`;try{showBig('i-save','Zbliż kartę…','Zapis danych',hideBig);await writeTag([{recordType:'url',data:url},{recordType:'text',data:payload,lang:'pl'}]);hideBig();showBigSuccess('Dane zapisane',payload);log('Dane: '+payload,'ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
 
-function openCropModal(file){
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      crop.img = img; crop.scale = 1; crop.offsetX = 0; crop.offsetY = 0; crop.rotation = 0; crop.aspect = 1;
-      document.querySelectorAll('.crop-aspects button').forEach(b => b.classList.toggle('active', b.dataset.aspect === '1'));
-      $('cropZoom').value = 100;
-      $('cropModal').classList.add('show');
-      requestAnimationFrame(() => { layoutCropFrame(); renderCrop(); });
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
+const fileInput=$('fileInput'),cameraInput=$('cameraInput');
+$('galleryBtn').onclick=()=>fileInput.click();
+$('cameraBtn').onclick=()=>cameraInput.click();
 
-function layoutCropFrame(){
-  const stage = $('cropStage'), frame = $('cropFrame');
-  const W = stage.clientWidth - 40, H = stage.clientHeight - 40;
-  let fw, fh;
-  if(crop.aspect === 0){ fw = W; fh = H; }
-  else if(W / H > crop.aspect){ fh = H; fw = fh * crop.aspect; }
-  else { fw = W; fh = fw / crop.aspect; }
-  const left = (stage.clientWidth - fw) / 2, top = (stage.clientHeight - fh) / 2;
-  frame.style.left = left + 'px'; frame.style.top = top + 'px';
-  frame.style.width = fw + 'px'; frame.style.height = fh + 'px';
-}
+const crop={img:null,scale:1,offsetX:0,offsetY:0,rotation:0,aspect:1,dragging:false,startX:0,startY:0,startOffX:0,startOffY:0};
+function openCropModal(file){const reader=new FileReader();reader.onload=e=>{const img=new Image();img.onload=()=>{crop.img=img;crop.scale=1;crop.offsetX=0;crop.offsetY=0;crop.rotation=0;crop.aspect=1;document.querySelectorAll('.crop-aspects button').forEach(b=>b.classList.toggle('active',b.dataset.aspect==='1'));$('cropZoom').value=100;$('cropModal').classList.add('show');requestAnimationFrame(()=>{layoutCropFrame();renderCrop();});};img.src=e.target.result;};reader.readAsDataURL(file);}
+function layoutCropFrame(){const stage=$('cropStage');const frame=$('cropFrame');const W=stage.clientWidth-40;const H=stage.clientHeight-40;let fw,fh;if(crop.aspect===0){fw=W;fh=H;}else if(W/H>crop.aspect){fh=H;fw=fh*crop.aspect;}else{fw=W;fh=fw/crop.aspect;}const left=(stage.clientWidth-fw)/2;const top=(stage.clientHeight-fh)/2;frame.style.left=left+'px';frame.style.top=top+'px';frame.style.width=fw+'px';frame.style.height=fh+'px';}
+function renderCrop(){const stage=$('cropStage');const canvas=$('cropCanvas');const W=stage.clientWidth;const H=stage.clientHeight;const dpr=window.devicePixelRatio||1;canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);if(!crop.img)return;ctx.save();ctx.translate(W/2+crop.offsetX,H/2+crop.offsetY);ctx.rotate(crop.rotation*Math.PI/180);const fit=Math.min(W/crop.img.width,H/crop.img.height);const s=fit*crop.scale;ctx.scale(s,s);ctx.drawImage(crop.img,-crop.img.width/2,-crop.img.height/2);ctx.restore();}
+function applyCrop(){const stage=$('cropStage');const canvas=$('cropCanvas');const frame=$('cropFrame');const stageRect=stage.getBoundingClientRect();const frameRect=frame.getBoundingClientRect();const dpr=window.devicePixelRatio||1;const cx=(frameRect.left-stageRect.left)*dpr;const cy=(frameRect.top-stageRect.top)*dpr;const cw=frameRect.width*dpr;const ch=frameRect.height*dpr;const out=document.createElement('canvas');out.width=cw;out.height=ch;const octx=out.getContext('2d');octx.drawImage(canvas,cx,cy,cw,ch,0,0,cw,ch);const target=parseInt($('compressSelect').value,10);let q=0.85;let dataUrl=out.toDataURL('image/jpeg',q);while(dataUrl.length>target*1.5&&q>0.15){q-=0.1;dataUrl=out.toDataURL('image/jpeg',q);}S.photo=dataUrl;$('photoPreview').src=dataUrl;$('photoPreview').style.display='block';const bytes=Math.round((dataUrl.split(',')[1]||'').length*0.75);$('photoInfo').textContent=`${Math.round(frameRect.width)}×${Math.round(frameRect.height)} px • ~${bytes} B`;$('writePhotoBtn').disabled=false;$('cropModal').classList.remove('show');log(`Zdjęcie: ~${bytes} B`,'ok');toast('Zdjęcie gotowe','ok');}
+$('cropClose').onclick=()=>$('cropModal').classList.remove('show');
+$('cropCancel').onclick=()=>$('cropModal').classList.remove('show');
+$('cropApply').onclick=applyCrop;
+$('cropZoom').oninput=e=>{crop.scale=parseInt(e.target.value,10)/100;renderCrop();};
+$('cropRotate').onclick=()=>{crop.rotation=(crop.rotation+90)%360;renderCrop();};
+$('cropReset').onclick=()=>{crop.scale=1;crop.offsetX=0;crop.offsetY=0;crop.rotation=0;$('cropZoom').value=100;renderCrop();};
+document.querySelectorAll('.crop-aspects button').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.crop-aspects button').forEach(x=>x.classList.remove('active'));b.classList.add('active');crop.aspect=parseFloat(b.dataset.aspect);layoutCropFrame();};});
+const cropCanvas=$('cropCanvas');
+cropCanvas.addEventListener('pointerdown',e=>{crop.dragging=true;crop.startX=e.clientX;crop.startY=e.clientY;crop.startOffX=crop.offsetX;crop.startOffY=crop.offsetY;cropCanvas.setPointerCapture(e.pointerId);});
+cropCanvas.addEventListener('pointermove',e=>{if(!crop.dragging)return;crop.offsetX=crop.startOffX+(e.clientX-crop.startX);crop.offsetY=crop.startOffY+(e.clientY-crop.startY);renderCrop();});
+cropCanvas.addEventListener('pointerup',()=>{crop.dragging=false;});
+cropCanvas.addEventListener('pointercancel',()=>{crop.dragging=false;});
+window.addEventListener('resize',()=>{if($('cropModal').classList.contains('show')){layoutCropFrame();renderCrop();}});
+fileInput.onchange=e=>{if(e.target.files[0])openCropModal(e.target.files[0]);e.target.value='';};
+cameraInput.onchange=e=>{if(e.target.files[0])openCropModal(e.target.files[0]);e.target.value='';};
+$('writePhotoBtn').onclick=async()=>{if(!S.photo)return;const b64=S.photo.split(',')[1];const bin=atob(b64);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);try{showBig('i-save','Zbliż kartę…',`${bytes.length} B`,hideBig);await writeTag([{recordType:'mime',mediaType:'image/jpeg',data:bytes}]);hideBig();showBigSuccess('Zdjęcie zapisane',`${bytes.length} B`);log('Zdjęcie OK','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
 
-function renderCrop(){
-  const stage = $('cropStage'), canvas = $('cropCanvas');
-  const W = stage.clientWidth, H = stage.clientHeight;
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = W * dpr; canvas.height = H * dpr;
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
-  if(!crop.img) return;
-  ctx.save();
-  ctx.translate(W/2 + crop.offsetX, H/2 + crop.offsetY);
-  ctx.rotate(crop.rotation * Math.PI / 180);
-  const fit = Math.min(W / crop.img.width, H / crop.img.height);
-  const s = fit * crop.scale;
-  ctx.scale(s, s);
-  ctx.drawImage(crop.img, -crop.img.width/2, -crop.img.height/2);
-  ctx.restore();
-}
+$('editLoadBtn').onclick=async()=>{if(!hasNfc)return;try{showBig('i-search','Zbliż kartę…','Odczyt');const tag=await captureTag();hideBig();vibrate(30);let url='',name='',id='';for(const r of tag.records){const t=r.recordType;if(t==='url')url=new TextDecoder().decode(new Uint8Array(r.data));else if(t==='text'){new TextDecoder().decode(new Uint8Array(r.data)).split(';').forEach(p=>{const [k,v]=p.split('=');if(k==='NAME')name=v||'';if(k==='ID')id=v||'';if(k==='URL'&&!url)url=v||'';});}}$('editUid').textContent='UID: '+tag.serialNumber;$('editUrl').value=url;$('editName').value=name;$('editId').value=id;$('editForm').style.display='block';renderCard(tag);S.read=tag;log(`Wczytano ${tag.serialNumber}`,'ok');}catch(e){hideBig();toast('Błąd: '+e.message,'err');log(e.message,'err');}};
+$('editSaveBtn').onclick=async()=>{const url=$('editUrl').value.trim();const name=$('editName').value.trim();const id=$('editId').value.trim();if(!url)return toast('Podaj URL','err');const payload=`NAME=${name};ID=${id};URL=${url};`;try{showBig('i-save','Zbliż kartę…','Zapis');await writeTag([{recordType:'url',data:url},{recordType:'text',data:payload,lang:'pl'}]);hideBig();showBigSuccess('Zaktualizowano');log('Edycja OK','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
+$('editClearBtn').onclick=async()=>{if(!confirm('Wyczyścić kartę?'))return;try{showBig('i-trash','Zbliż kartę…','Czyszczenie');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Wyczyszczono');log('Wyczyszczono','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
 
-function applyCrop(){
-  const stage = $('cropStage'), canvas = $('cropCanvas'), frame = $('cropFrame');
-  const stageRect = stage.getBoundingClientRect(), frameRect = frame.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  const cx = (frameRect.left - stageRect.left) * dpr;
-  const cy = (frameRect.top - stageRect.top) * dpr;
-  const cw = frameRect.width * dpr, ch = frameRect.height * dpr;
-  const out = document.createElement('canvas');
-  out.width = cw; out.height = ch;
-  const octx = out.getContext('2d');
-  octx.drawImage(canvas, cx, cy, cw, ch, 0, 0, cw, ch);
-  const target = parseInt($('compressSelect').value, 10);
-  let q = 0.85, dataUrl = out.toDataURL('image/jpeg', q);
-  while(dataUrl.length > target * 1.5 && q > 0.15){ q -= 0.1; dataUrl = out.toDataURL('image/jpeg', q); }
-  state.photo = dataUrl;
-  $('photoPreview').src = dataUrl; $('photoPreview').style.display = 'block';
-  const bytes = Math.round((dataUrl.split(',')[1] || '').length * 0.75);
-  $('photoInfo').textContent = `${Math.round(frameRect.width)}×${Math.round(frameRect.height)} px • ~${bytes} B`;
-  $('writePhotoBtn').disabled = false;
-  $('cropModal').classList.remove('show');
-  log(`Zdjęcie przycięte: ~${bytes} B`,'ok'); toast('Zdjęcie gotowe','ok');
-}
-
-$('cropClose').onclick = () => $('cropModal').classList.remove('show');
-$('cropCancel').onclick = () => $('cropModal').classList.remove('show');
-$('cropApply').onclick = applyCrop;
-$('cropZoom').oninput = e => { crop.scale = parseInt(e.target.value,10) / 100; renderCrop(); };
-$('cropRotate').onclick = () => { crop.rotation = (crop.rotation + 90) % 360; renderCrop(); };
-$('cropReset').onclick = () => { crop.scale = 1; crop.offsetX = 0; crop.offsetY = 0; crop.rotation = 0; $('cropZoom').value = 100; renderCrop(); };
-document.querySelectorAll('.crop-aspects button').forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll('.crop-aspects button').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    crop.aspect = parseFloat(b.dataset.aspect);
-    layoutCropFrame();
-  };
-});
-const cropCanvas = $('cropCanvas');
-cropCanvas.addEventListener('pointerdown', e => { crop.dragging = true; crop.startX = e.clientX; crop.startY = e.clientY; crop.startOffX = crop.offsetX; crop.startOffY = crop.offsetY; cropCanvas.setPointerCapture(e.pointerId); });
-cropCanvas.addEventListener('pointermove', e => { if(!crop.dragging) return; crop.offsetX = crop.startOffX + (e.clientX - crop.startX); crop.offsetY = crop.startOffY + (e.clientY - crop.startY); renderCrop(); });
-cropCanvas.addEventListener('pointerup', () => { crop.dragging = false; });
-cropCanvas.addEventListener('pointercancel', () => { crop.dragging = false; });
-window.addEventListener('resize', () => { if($('cropModal').classList.contains('show')){ layoutCropFrame(); renderCrop(); } });
-fileInput.onchange = e => { if(e.target.files[0]) openCropModal(e.target.files[0]); e.target.value = ''; };
-cameraInput.onchange = e => { if(e.target.files[0]) openCropModal(e.target.files[0]); e.target.value = ''; };
-
-$('writePhotoBtn').onclick = async () => {
-  if(!state.photo) return;
-  const b64 = state.photo.split(',')[1];
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
-  try{
-    showBig('i-save', 'Zbliż kartę…', `${bytes.length} B`, hideBig);
-    await writeTag([{ recordType:'mime', mediaType:'image/jpeg', data: bytes }]);
-    hideBig(); showBigSuccess('Zdjęcie zapisane', `${bytes.length} B`); log('Zdjęcie OK','ok');
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-};
-
-/* ===== EDIT ===== */
-$('editLoadBtn').onclick = async () => {
-  if(!hasNfc) return;
-  try{
-    showBig('i-search', 'Zbliż kartę…', 'Odczyt');
-    const tag = await captureTag();
-    hideBig(); vibrate(30);
-    let url = '', name = '', id = '';
-    for(const r of tag.records){
-      const t = r.recordType;
-      if(t === 'url') url = new TextDecoder().decode(new Uint8Array(r.data));
-      else if(t === 'text'){
-        new TextDecoder().decode(new Uint8Array(r.data)).split(';').forEach(p => {
-          const [k,v] = p.split('=');
-          if(k === 'NAME') name = v || '';
-          if(k === 'ID') id = v || '';
-          if(k === 'URL' && !url) url = v || '';
-        });
-      }
-    }
-    $('editUid').textContent = 'UID: ' + tag.serialNumber;
-    $('editUrl').value = url; $('editName').value = name; $('editId').value = id;
-    $('editForm').style.display = 'block';
-    renderCard(tag); state.read = tag;
-    log(`Wczytano ${tag.serialNumber}`,'ok');
-  }catch(e){ hideBig(); toast('Błąd: ' + e.message,'err'); log(e.message,'err'); }
-};
-
-$('editSaveBtn').onclick = async () => {
-  const url = $('editUrl').value.trim();
-  const name = $('editName').value.trim();
-  const id = $('editId').value.trim();
-  if(!url) return toast('Podaj URL','err');
-  const payload = `NAME=${name};ID=${id};URL=${url};`;
-  try{
-    showBig('i-save', 'Zbliż kartę…', 'Zapis');
-    await writeTag([{ recordType:'url', data: url }, { recordType:'text', data: payload, lang:'pl' }]);
-    hideBig(); showBigSuccess('Zaktualizowano'); log('Edycja OK','ok');
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-};
-
-$('editClearBtn').onclick = async () => {
-  if(!confirm('Wyczyścić kartę?')) return;
-  try{
-    showBig('i-trash', 'Zbliż kartę…', 'Czyszczenie');
-    await writeTag([{ recordType:'text', data:'', lang:'pl' }]);
-    hideBig(); showBigSuccess('Wyczyszczono'); log('Wyczyszczono','ok');
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-};
-
-/* ===== CLONE ===== */
-function renderClone(){
-  const s = state.clone;
-  if(!s){
-    $('slot').classList.add('empty'); $('slotCount').textContent = '—';
-    $('slotInfo').textContent = 'Brak danych.'; $('cloneHex').textContent = '—';
-    return;
-  }
-  $('slot').classList.remove('empty');
-  $('slotCount').textContent = s.records.length;
-  const totalB = s.records.reduce((a,r) => a + new Uint8Array(r.data).length, 0);
-  $('slotInfo').textContent = `UID: ${s.serialNumber}\nRekordy: ${s.records.length} • ${totalB} B`;
-  const chunks = s.records.map(r => new Uint8Array(r.data));
-  const total = chunks.reduce((a,c) => a+c.length, 0);
-  const buf = new Uint8Array(total);
-  let off = 0;
-  for(const c of chunks){ buf.set(c, off); off += c.length; }
-  $('cloneHex').textContent = hexDump(buf);
-}
+function renderClone(){const s=S.clone;if(!s){$('slot').classList.add('empty');$('slotCount').textContent='—';$('slotInfo').textContent='Brak danych.';$('cloneHex').textContent='—';return;}$('slot').classList.remove('empty');$('slotCount').textContent=s.records.length;const totalB=s.records.reduce((a,r)=>a+new Uint8Array(r.data).length,0);$('slotInfo').textContent=`UID: ${s.serialNumber}\nRekordy: ${s.records.length} • ${totalB} B`;const chunks=s.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}$('cloneHex').textContent=hexDump(buf);}
 renderClone();
+$('cloneRead').onclick=async()=>{try{showBig('i-scan','Zbliż kartę źródłową…','');const tag=await captureTag();hideBig();S.clone=tag;renderClone();vibrate(30);log(`Źródło: ${tag.serialNumber}`,'ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
+$('cloneClear').onclick=()=>{S.clone=null;renderClone();log('Bufor wyczyszczony','info');};
+$('cloneCopy').onclick=async()=>{if(!S.clone)return toast('Brak źródła','err');try{showBig('i-save','Zbliż kartę docelową…','Kopiowanie',hideBig);const records=S.clone.records.map(recForWrite).filter(Boolean);await writeTag(records);hideBig();showBigSuccess('Skopiowano!',`${records.length} rekordów`);log('Kopia OK','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
+$('cloneMove').onclick=async()=>{if(!S.clone)return toast('Brak źródła','err');if(!confirm('Przenieść?'))return;try{showBig('i-save','Zbliż kartę docelową…','Kopiowanie',hideBig);const records=S.clone.records.map(recForWrite).filter(Boolean);await writeTag(records);hideBig();showBigSuccess('Skopiowano!','Teraz wyczyścimy źródło');await new Promise(r=>setTimeout(r,1800));if(!confirm('Przyłóż kartę źródłową. Kontynuować?'))return;showBig('i-trash','Zbliż kartę źródłową…','Czyszczenie');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Przeniesiono!','Źródło wyczyszczone');log('Move OK','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
 
-$('cloneRead').onclick = async () => {
-  try{
-    showBig('i-scan', 'Zbliż kartę źródłową…', '');
-    const tag = await captureTag();
-    hideBig(); state.clone = tag; renderClone(); vibrate(30);
-    log(`Źródło: ${tag.serialNumber}, ${tag.records.length} rekordów`,'ok');
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-};
-$('cloneClear').onclick = () => { state.clone = null; renderClone(); log('Bufor wyczyszczony','info'); };
-$('cloneCopy').onclick = async () => {
-  if(!state.clone) return toast('Brak źródła','err');
-  try{
-    showBig('i-save', 'Zbliż kartę docelową…', 'Kopiowanie', hideBig);
-    const records = state.clone.records.map(recForWrite).filter(Boolean);
-    await writeTag(records);
-    hideBig(); showBigSuccess('Skopiowano!', `${records.length} rekordów`); log('Kopia OK','ok');
-  }catch(e){ hideBig(); showBigError('Błąd kopiowania', e.message); log(e.message,'err'); }
-};
-$('cloneMove').onclick = async () => {
-  if(!state.clone) return toast('Brak źródła','err');
-  if(!confirm('Przenieść? Skopiuje na nową kartę, potem poproszę o przyłożenie źródła, aby je wyczyścić.')) return;
-  try{
-    showBig('i-save', 'Zbliż kartę docelową…', 'Kopiowanie', hideBig);
-    const records = state.clone.records.map(recForWrite).filter(Boolean);
-    await writeTag(records);
-    hideBig(); showBigSuccess('Skopiowano!', 'Teraz wyczyścimy źródło');
-    await new Promise(r => setTimeout(r, 1800));
-    if(!confirm('Przyłóż kartę źródłową do wyczyszczenia. Kontynuować?')) return;
-    showBig('i-trash', 'Zbliż kartę źródłową…', 'Czyszczenie źródła');
-    await writeTag([{ recordType:'text', data:'', lang:'pl' }]);
-    hideBig(); showBigSuccess('Przeniesiono!', 'Źródło wyczyszczone'); log('Move OK','ok');
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-};
+function updateHexView(){$('hexView').textContent=hexDump(S.hex);$('hexBytes').textContent=S.hex.length;$('hexBits').textContent=S.hex.length*8;}
+$('hexInput').oninput=()=>{try{S.hex=hexToBytes($('hexInput').value);updateHexView();}catch(e){$('hexView').textContent='Błąd HEX: '+e.message;}};
+$('hexClear').onclick=()=>{S.hex=new Uint8Array(0);$('hexInput').value='';updateHexView();log('HEX wyczyszczony','info');};
+$('hexLoadFile').onclick=()=>$('hexFile').click();
+$('hexFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=new Uint8Array(await f.arrayBuffer());S.hex=buf;$('hexInput').value=bytesToHex(buf);updateHexView();log(`Wczytano ${buf.length} B`,'ok');e.target.value='';};
+$('hexSaveFile').onclick=()=>{if(!S.hex.length)return toast('Bufor pusty','err');downloadBlob(new Blob([S.hex],{type:'application/octet-stream'}),'nfc-buffer.bin');log('Eksport BIN','ok');};
+$('hexLoadTag').onclick=async()=>{try{showBig('i-scan','Zbliż kartę…','');const tag=await captureTag();const chunks=tag.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}S.hex=buf;$('hexInput').value=bytesToHex(buf);updateHexView();hideBig();showBigSuccess('Odczytano do HEX');log(`Karta → HEX (${total} B)`,'ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
+$('hexWriteTag').onclick=async()=>{if(!S.hex.length)return toast('Bufor pusty','err');try{showBig('i-save','Zbliż kartę…',`${S.hex.length} B`);await writeTag([{recordType:'mime',mediaType:'application/octet-stream',data:S.hex}]);hideBig();showBigSuccess('Zapisano',`${S.hex.length} B`);log('HEX → karta','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
 
-/* ===== HEX ===== */
-function updateHexView(){
-  $('hexView').textContent = hexDump(state.hex);
-  $('hexBytes').textContent = state.hex.length;
-  $('hexBits').textContent = state.hex.length * 8;
-}
-$('hexInput').oninput = () => {
-  try{ state.hex = hexToBytes($('hexInput').value); updateHexView(); }
-  catch(e){ $('hexView').textContent = 'Błąd HEX: ' + e.message; }
-};
-$('hexClear').onclick = () => { state.hex = new Uint8Array(0); $('hexInput').value = ''; updateHexView(); log('HEX wyczyszczony','info'); };
-$('hexLoadFile').onclick = () => $('hexFile').click();
-$('hexFile').onchange = async e => {
-  const f = e.target.files[0]; if(!f) return;
-  const buf = new Uint8Array(await f.arrayBuffer());
-  state.hex = buf; $('hexInput').value = bytesToHex(buf); updateHexView();
-  log(`Wczytano ${buf.length} B z ${f.name}`,'ok'); e.target.value = '';
-};
-$('hexSaveFile').onclick = () => {
-  if(!state.hex.length) return toast('Bufor pusty','err');
-  downloadBlob(new Blob([state.hex], {type:'application/octet-stream'}), 'nfc-buffer.bin'); log('Eksport BIN','ok');
-};
-$('hexLoadTag').onclick = async () => {
-  try{
-    showBig('i-scan', 'Zbliż kartę…', '');
-    const tag = await captureTag();
-    const chunks = tag.records.map(r => new Uint8Array(r.data));
-    const total = chunks.reduce((a,c) => a+c.length, 0);
-    const buf = new Uint8Array(total);
-    let off = 0;
-    for(const c of chunks){ buf.set(c, off); off += c.length; }
-    state.hex = buf; $('hexInput').value = bytesToHex(buf); updateHexView();
-    hideBig(); showBigSuccess('Odczytano do HEX'); log(`Karta → HEX (${total} B)`,'ok');
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-};
-$('hexWriteTag').onclick = async () => {
-  if(!state.hex.length) return toast('Bufor pusty','err');
-  try{
-    showBig('i-save', 'Zbliż kartę…', `${state.hex.length} B`);
-    await writeTag([{ recordType:'mime', mediaType:'application/octet-stream', data: state.hex }]);
-    hideBig(); showBigSuccess('Zapisano', `${state.hex.length} B`); log('HEX → karta','ok');
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-};
+document.querySelectorAll('.preset-btn').forEach(b=>{b.onclick=()=>{S.cardSettings.preset=b.dataset.preset;S.cardSettings.image=null;saveSettings();applyCardSettings();log('Motyw: '+b.dataset.preset,'ok');};});
+$('uploadCardImage').onclick=()=>$('cardImageInput').click();
+$('cardImageInput').onchange=e=>{const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=ev=>{const dataUrl=ev.target.result;if(dataUrl.length>500000)toast('Duży obraz – nie zapiszę w localStorage','err');else{S.cardSettings.image=dataUrl;saveSettings();}S.cardSettings.image=dataUrl;applyCardSettings();log('Obraz tła załadowany','ok');};reader.readAsDataURL(f);e.target.value='';};
+$('clearCardImage').onclick=()=>{S.cardSettings.image=null;saveSettings();applyCardSettings();log('Obraz usunięty','info');};
+$('cardRadius').oninput=e=>{S.cardSettings.radius=parseInt(e.target.value,10);$('cardRadiusVal').textContent=e.target.value;saveSettings();applyCardSettings();};
+$('cardFloat').onchange=e=>{S.cardSettings.float=e.target.checked;saveSettings();applyCardSettings();};
+$('showUid').onchange=e=>{S.cardSettings.showUid=e.target.checked;saveSettings();applyCardSettings();};
+$('showRecords').onchange=e=>{S.cardSettings.showRecords=e.target.checked;saveSettings();applyCardSettings();};
+$('showSize').onchange=e=>{S.cardSettings.showSize=e.target.checked;saveSettings();applyCardSettings();};
+$('showWave').onchange=e=>{S.cardSettings.showWave=e.target.checked;saveSettings();applyCardSettings();};
+$('showChip').onchange=e=>{S.cardSettings.showChip=e.target.checked;saveSettings();applyCardSettings();};
+$('resetCardSettings').onclick=()=>{S.cardSettings={preset:'dark',image:null,radius:16,float:true,showUid:true,showRecords:true,showSize:true,showWave:true,showChip:true};saveSettings();applyCardSettings();toast('Reset ustawień','ok');};
 
-/* ===== SETTINGS ===== */
-document.querySelectorAll('#themeOptions button').forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll('#themeOptions button').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    document.body.dataset.cardTheme = b.dataset.theme;
-  };
-});
-document.querySelectorAll('#sizeOptions button').forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll('#sizeOptions button').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    document.documentElement.style.setProperty('--card-width', b.dataset.size + 'px');
-  };
-});
-$('toggleAnimation').onclick = () => {
-  const card = document.querySelector('.card-inner');
-  if(card.style.animation === 'none'){ card.style.animation = ''; toast('Animacja włączona','ok'); }
-  else { card.style.animation = 'none'; toast('Animacja wyłączona','info'); }
-};
+$('formatBtn').onclick=async()=>{if(!confirm('Sformatować jako NDEF?'))return;try{showBig('i-unlock','Zbliż kartę…','Formatowanie');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Sformatowano');log('Format OK','ok');}catch(e){hideBig();showBigError('Nie udało się','Może mieć niestandardowe klucze');log(e.message,'err');}};
+$('resetCardBtn').onclick=async()=>{if(!confirm('Wyczyścić kartę?'))return;try{showBig('i-refresh','Zbliż kartę…','Reset');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Zresetowano');log('Reset karty OK','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
+$('resetAppBtn').onclick=()=>{if(!confirm('Reset aplikacji?'))return;$('urlInput').value='https://vercode.pl';$('urlDataInput').value='https://vercode.pl';$('nameInput').value='';$('idInput').value='';$('editForm').style.display='none';$('readResult').innerHTML='';$('readActions').style.display='none';$('photoPreview').style.display='none';$('photoPreview').src='';$('photoInfo').textContent='';$('blocksView').innerHTML='<div class="info-text">Brak danych. Odczytaj kartę.</div>';$('blocksUsed').textContent='0';$('blocksFree').textContent='0';$('blocksPct').textContent='0%';$('blocksSize').textContent='0 B';$('tlvDiagram').textContent='Czeka na odczyt karty…';$('byteInspector').textContent='Kliknij bajt w widoku bloków, aby zobaczyć szczegóły.';S.read=null;S.clone=null;S.hex=new Uint8Array(0);S.photo=null;S.blocks=null;$('hexInput').value='';updateHexView();renderClone();renderCard(null);$('writePhotoBtn').disabled=true;$('log').innerHTML='';log('Aplikacja zresetowana','ok');toast('Reset','ok');document.querySelector('nav button[data-tab="read"]').click();};
 
-/* ===== TOOLS ===== */
-$('formatBtn').onclick = async () => {
-  if(!confirm('Sformatować jako NDEF?')) return;
-  try{
-    showBig('i-unlock', 'Zbliż kartę…', 'Formatowanie');
-    await writeTag([{ recordType:'text', data:'', lang:'pl' }]);
-    hideBig(); showBigSuccess('Sformatowano'); log('Format OK','ok');
-  }catch(e){ hideBig(); showBigError('Nie udało się', 'Może mieć niestandardowe klucze'); log(e.message,'err'); }
-};
-$('resetCardBtn').onclick = async () => {
-  if(!confirm('Wyczyścić kartę?')) return;
-  try{
-    showBig('i-refresh', 'Zbliż kartę…', 'Reset');
-    await writeTag([{ recordType:'text', data:'', lang:'pl' }]);
-    hideBig(); showBigSuccess('Zresetowano'); log('Reset karty OK','ok');
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-};
-$('resetAppBtn').onclick = () => {
-  if(!confirm('Reset aplikacji?')) return;
-  $('urlInput').value = 'https://vercode.pl';
-  $('urlDataInput').value = 'https://vercode.pl';
-  $('nameInput').value = ''; $('idInput').value = '';
-  $('editForm').style.display = 'none';
-  $('readResult').innerHTML = ''; $('readActions').style.display = 'none';
-  $('photoPreview').style.display = 'none'; $('photoPreview').src = ''; $('photoInfo').textContent = '';
-  $('blocksView').innerHTML = '';
-  $('blocksUsed').textContent = '0'; $('blocksFree').textContent = '0'; $('blocksPct').textContent = '0%';
-  state.read = null; state.clone = null; state.hex = new Uint8Array(0); state.photo = null;
-  $('hexInput').value = ''; updateHexView(); renderClone(); renderCard(null);
-  $('writePhotoBtn').disabled = true; $('log').innerHTML = '';
-  log('Aplikacja zresetowana','ok'); toast('Reset','ok');
-  document.querySelector('nav button[data-tab="read"]').click();
-};
+$('logToggle').onclick=()=>$('logPanel').classList.toggle('open');
+$('logClear').onclick=()=>{$('log').innerHTML='';log('Log wyczyszczony','info');};
 
-$('logToggle').onclick = () => $('logPanel').classList.toggle('open');
-$('logClear').onclick = () => { $('log').innerHTML = ''; log('Log wyczyszczony','info'); };
-
+loadSettings();
+applyCardSettings();
 log('Gotowe','ok');
 log('Dotknij ekranu by włączyć fullscreen','info');
 </script>
