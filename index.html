@@ -1,381 +1,621 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>NFC Master – vercode.pl</title>
-    <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; margin: 0; }
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-            color: #fff; min-height: 100vh; display: flex; flex-direction: column;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-        }
-        header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 16px; background: rgba(0,0,0,0.4);
-            border-bottom: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
-        }
-        header h1 { font-size: 18px; margin: 0; }
-        .badges { display: flex; gap: 8px; align-items: center; }
-        .badge {
-            padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold;
-            background: rgba(255,255,255,0.15);
-        }
-        .badge.ok { background: #2ecc71; color: #000; }
-        .badge.err { background: #e74c3c; color: #fff; }
-        .badge.wait { background: #f39c12; color: #000; }
-        button {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white; border: none; padding: 12px 20px; border-radius: 10px;
-            font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.15s;
-            font-family: inherit;
-        }
-        button:hover:not(:disabled) { transform: scale(1.03); }
-        button:active:not(:disabled) { transform: scale(0.97); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        button.secondary { background: rgba(255,255,255,0.12); }
-        button.danger { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-        nav {
-            display: flex; gap: 4px; padding: 10px; overflow-x: auto;
-            background: rgba(0,0,0,0.3); scrollbar-width: none;
-        }
-        nav::-webkit-scrollbar { display: none; }
-        nav button {
-            flex-shrink: 0; padding: 10px 16px; font-size: 13px;
-            background: rgba(255,255,255,0.08);
-        }
-        nav button.active { background: linear-gradient(135deg, #667eea, #764ba2); }
-        main { flex: 1; padding: 16px; overflow-y: auto; }
-        .tab { display: none; max-width: 600px; margin: 0 auto; }
-        .tab.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-        .card {
-            background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px; padding: 20px; margin-bottom: 16px;
-        }
-        .card h2 { margin-top: 0; font-size: 16px; color: #a8b8ff; }
-        label { display: block; font-size: 13px; margin-bottom: 6px; color: #a8b8ff; font-weight: 600; }
-        input, textarea {
-            width: 100%; padding: 12px; margin-bottom: 12px;
-            background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.15);
-            border-radius: 10px; color: white; font-size: 15px; font-family: inherit;
-        }
-        input:focus, textarea:focus { outline: none; border-color: #667eea; }
-        .row { display: flex; gap: 8px; margin-bottom: 12px; }
-        .row > * { flex: 1; }
-        #photoPreview {
-            max-width: 100%; max-height: 200px; border-radius: 10px;
-            display: none; margin: 10px auto;
-        }
-        #log {
-            background: rgba(0,0,0,0.6); padding: 10px 16px; font-family: monospace;
-            font-size: 12px; max-height: 120px; overflow-y: auto; border-top: 1px solid rgba(255,255,255,0.1);
-            white-space: pre-wrap;
-        }
-        #log div { padding: 2px 0; color: #8a9bb8; }
-        #log div.ok { color: #2ecc71; }
-        #log div.err { color: #e74c3c; }
-        #log div.info { color: #f39c12; }
-        .kbd {
-            display: inline-block; padding: 2px 8px; background: rgba(255,255,255,0.15);
-            border-radius: 4px; font-family: monospace; font-size: 12px;
-        }
-        .big-status {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-            display: none; align-items: center; justify-content: center;
-            flex-direction: column; z-index: 999; backdrop-filter: blur(10px);
-        }
-        .big-status.show { display: flex; }
-        .big-status .icon { font-size: 100px; margin-bottom: 20px; animation: bounce 1s infinite; }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-        .big-status .text { font-size: 24px; font-weight: bold; text-align: center; padding: 0 20px; }
-        .photo-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .photo-btns button { padding: 14px; font-size: 14px; }
-        .info-text { font-size: 12px; color: #8a9bb8; margin-top: 8px; line-height: 1.5; }
-        .uid-display {
-            font-family: monospace; font-size: 18px; padding: 10px;
-            background: rgba(0,0,0,0.4); border-radius: 8px; text-align: center;
-            letter-spacing: 2px; color: #a8b8ff; margin: 10px 0;
-        }
-        .result-item {
-            padding: 8px 12px; background: rgba(0,0,0,0.3); border-radius: 8px;
-            margin-bottom: 6px; font-size: 13px; word-break: break-all;
-        }
-        .result-item strong { color: #a8b8ff; }
-        #editLocked { color: #f39c12; font-size: 13px; text-align: center; padding: 10px; }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>📡 NFC Master</h1>
-        <div class="badges">
-            <span id="nfcBadge" class="badge wait">Sprawdzam...</span>
-            <button id="fsBtn" class="secondary" style="padding:8px 12px;font-size:13px;">⛶ Full</button>
-        </div>
-    </header>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#18181b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>NFC Master – vercode.pl</title>
+<style>
+:root{
+  --bg:#18181b; --card:#27272a; --card2:#1f1f23; --border:#3f3f46;
+  --text:#f4f4f5; --muted:#a1a1aa; --primary:#3b82f6; --primary-h:#2563eb;
+  --success:#22c55e; --error:#ef4444; --warning:#f59e0b; --info:#06b6d4;
+  --radius:12px; --touch:44px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  display:flex;flex-direction:column;font-size:15px;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overflow-x:hidden;
+}
+.icon{width:20px;height:20px;flex-shrink:0;display:inline-block;vertical-align:middle}
+.icon-lg{width:32px;height:32px}
+.icon-xl{width:96px;height:96px}
 
-    <nav>
-        <button data-tab="read" class="active">🔍 Odczyt</button>
-        <button data-tab="writeUrl">🌐 URL</button>
-        <button data-tab="writeData">📝 Dane</button>
-        <button data-tab="photo">📷 Zdjęcie</button>
-        <button data-tab="edit">✏️ Edycja</button>
-    </nav>
+/* HEADER */
+header{
+  display:flex;align-items:center;gap:12px;padding:12px 16px;
+  background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;
+}
+header h1{font-size:17px;margin:0;font-weight:700;flex:1;display:flex;align-items:center;gap:8px}
+.badge{
+  padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;
+  background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;gap:5px;
+}
+.badge .icon{width:14px;height:14px}
+.badge.ok{background:var(--success);color:#000;border-color:var(--success)}
+.badge.err{background:var(--error);color:#fff;border-color:var(--error)}
+.badge.wait{background:var(--warning);color:#000;border-color:var(--warning)}
+.hbtn{
+  background:var(--card2);border:1px solid var(--border);color:var(--text);
+  width:38px;height:38px;border-radius:10px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background .15s;
+}
+.hbtn:active{background:var(--border)}
+.hbtn.active{background:var(--primary);border-color:var(--primary)}
 
-    <main>
-        <!-- ODCZYT -->
-        <section id="tab-read" class="tab active">
-            <div class="card">
-                <h2>Odczyt karty</h2>
-                <button id="readBtn" style="width:100%;">🔍 Odczytaj kartę</button>
-                <div id="readResult" style="margin-top:16px;"></div>
-            </div>
-        </section>
+/* NAV */
+nav{
+  display:flex;gap:6px;padding:10px 12px;overflow-x:auto;
+  background:var(--card2);border-bottom:1px solid var(--border);scrollbar-width:none;
+}
+nav::-webkit-scrollbar{display:none}
+nav button{
+  flex-shrink:0;padding:10px 14px;font-size:13px;font-weight:600;
+  background:var(--card);border:1px solid var(--border);color:var(--muted);
+  border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px;
+  font-family:inherit;transition:all .15s;min-height:var(--touch);
+}
+nav button .icon{width:16px;height:16px}
+nav button.active{background:var(--primary);border-color:var(--primary);color:#fff}
+nav button:active{transform:scale(.97)}
 
-        <!-- ZAPIS URL -->
-        <section id="tab-writeUrl" class="tab">
-            <div class="card">
-                <h2>Zapisz adres URL</h2>
-                <label>Adres strony</label>
-                <input type="url" id="urlInput" value="https://vercode.pl" placeholder="https://...">
-                <button id="writeUrlBtn" style="width:100%;">💾 Zapisz URL na karcie</button>
-                <p class="info-text">Po przyłożeniu karty telefon otworzy tę stronę automatycznie.</p>
-            </div>
-        </section>
+/* MAIN */
+main{flex:1;padding:16px;overflow-y:auto}
+.tab{display:none;max-width:600px;margin:0 auto;padding-bottom:32px}
+.tab.active{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;margin-bottom:14px;
+}
+.card h2{margin:0 0 14px;font-size:15px;color:var(--primary);font-weight:700;display:flex;align-items:center;gap:8px}
+.card.danger h2{color:var(--error)}
+.card.warn h2{color:var(--warning)}
+.card.ok h2{color:var(--success)}
 
-        <!-- ZAPIS DANYCH (Arduino) -->
-        <section id="tab-writeData" class="tab">
-            <div class="card">
-                <h2>Dane czytelne dla Arduino</h2>
-                <label>Imię / Nazwa (np. Jan)</label>
-                <input type="text" id="nameInput" placeholder="Jan Kowalski">
-                <label>ID / Numer karty (opcjonalnie)</label>
-                <input type="text" id="idInput" placeholder="np. Pracownik #42">
-                <label>Adres URL (dla telefonu)</label>
-                <input type="url" id="urlDataInput" value="https://vercode.pl">
-                <button id="writeDataBtn" style="width:100%;">💾 Zapisz dane + URL</button>
-                <p class="info-text">
-                    Na karcie zostaną zapisane 2 rekordy:<br>
-                    1️⃣ URL – otworzy stronę na telefonie.<br>
-                    2️⃣ Tekst: <span class="kbd">NAME=...;ID=...;URL=...;</span> – łatwy do parsowania w Arduino (np. przez bibliotekę <b>Adafruit PN532</b> lub <b>Seeed-NDEF</b>).
-                </p>
-            </div>
-        </section>
+label{display:block;font-size:12px;margin-bottom:6px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+input,textarea,select{
+  width:100%;padding:12px;margin-bottom:12px;
+  background:var(--card2);border:2px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:15px;font-family:inherit;
+  min-height:var(--touch);
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)}
+textarea{resize:vertical;min-height:80px}
+select{cursor:pointer}
 
-        <!-- ZDJĘCIE -->
-        <section id="tab-photo" class="tab">
-            <div class="card">
-                <h2>Zdjęcie na kartę</h2>
-                <div class="photo-btns">
-                    <button id="cameraBtn">📸 Aparat</button>
-                    <button id="galleryBtn" class="secondary">🖼️ Galeria</button>
-                </div>
-                <input type="file" id="fileInput" accept="image/*" style="display:none;">
-                <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
-                <img id="photoPreview" alt="Podgląd">
-                <div id="photoInfo" class="info-text"></div>
-                <div style="margin-top:12px;">
-                    <label>Rozmiar kompresji</label>
-                    <select id="compressSelect" style="width:100%;padding:12px;background:rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.15);border-radius:10px;color:white;font-size:15px;margin-bottom:12px;">
-                        <option value="100">Mały (~100 B) – tylko miniatura</option>
-                        <option value="300" selected>Średni (~300 B) – dobra miniatura</option>
-                        <option value="600">Duży (~600 B) – wyraźna miniatura</option>
-                    </select>
-                </div>
-                <button id="writePhotoBtn" style="width:100%;" disabled>💾 Zapisz zdjęcie na karcie</button>
-                <p class="info-text">
-                    ⚠️ MIFARE Classic 1K ma tylko ~750 B miejsca. Zdjęcie zostanie zapisane jako <b>base64 w rekordzie MIME</b> – tylko miniatura. Dla pełnego zdjęcia użyj karty NTAG215 lub zapisz URL do zdjęcia.
-                </p>
-            </div>
-        </section>
+button.btn{
+  background:var(--primary);color:#fff;border:none;padding:14px 20px;
+  border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;
+  font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:var(--touch);transition:background .15s;width:100%;
+}
+button.btn:active:not(:disabled){transform:scale(.98)}
+button.btn:disabled{opacity:.4;cursor:not-allowed}
+button.btn.secondary{background:var(--card2);color:var(--text);border:2px solid var(--border)}
+button.btn.success{background:var(--success);color:#000}
+button.btn.danger{background:var(--error)}
+button.btn.warning{background:var(--warning);color:#000}
+button.btn.sm{padding:10px 14px;font-size:13px;width:auto;min-height:38px}
+.row{display:flex;gap:8px;margin-bottom:10px}
+.row > *{flex:1}
+.row > .btn{width:auto}
 
-        <!-- EDYCJA -->
-        <section id="tab-edit" class="tab">
-            <div class="card">
-                <h2>Edycja istniejącej karty</h2>
-                <button id="editLoadBtn" style="width:100%;">📖 Wczytaj dane z karty</button>
-                <div id="editLocked" style="display:none;">🔒 Najpierw wczytaj dane z karty</div>
-                <div id="editForm" style="display:none;margin-top:16px;">
-                    <div class="uid-display" id="editUid">UID: ---</div>
-                    <label>Adres URL</label>
-                    <input type="url" id="editUrl" placeholder="https://...">
-                    <label>Imię / Nazwa</label>
-                    <input type="text" id="editName" placeholder="Jan">
-                    <label>ID</label>
-                    <input type="text" id="editId" placeholder="...">
-                    <div class="row">
-                        <button id="editSaveBtn">💾 Zapisz zmiany</button>
-                        <button id="editClearBtn" class="danger">🗑️ Wyczyść kartę</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
+.uid-display{
+  font-family:'SF Mono',Consolas,monospace;font-size:17px;padding:12px;
+  background:var(--card2);border:1px solid var(--border);border-radius:10px;
+  text-align:center;letter-spacing:2px;color:var(--primary);margin:10px 0;font-weight:600;
+}
+.result-item{
+  padding:10px 12px;background:var(--card2);border-radius:8px;
+  margin-bottom:6px;font-size:13px;word-break:break-all;border-left:3px solid var(--primary);
+}
+.result-item strong{color:var(--primary);font-weight:700;display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.info-text{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6}
+.info-text kbd{background:var(--card2);padding:2px 6px;border-radius:4px;border:1px solid var(--border);font-family:monospace;font-size:11px}
+.alert{
+  padding:12px 14px;border-radius:10px;margin-bottom:12px;font-size:13px;
+  display:flex;gap:10px;align-items:flex-start;line-height:1.5;
+}
+.alert .icon{flex-shrink:0;margin-top:2px}
+.alert.info{background:rgba(6,182,212,.12);border:1px solid var(--info);color:#67e8f9}
+.alert.warn{background:rgba(245,158,11,.12);border:1px solid var(--warning);color:#fcd34d}
+.alert.error{background:rgba(239,68,68,.12);border:1px solid var(--error);color:#fca5a5}
+.alert.success{background:rgba(34,197,94,.12);border:1px solid var(--success);color:#86efac}
 
-    <div id="log"></div>
+#photoPreview{max-width:100%;max-height:220px;border-radius:10px;display:none;margin:10px auto;border:2px solid var(--border)}
+.photo-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 
-    <div class="big-status" id="bigStatus">
-        <div class="icon" id="bigIcon">📡</div>
-        <div class="text" id="bigText">Zbliż kartę do telefonu...</div>
-    </div>
+/* LOG */
+#logPanel{background:var(--card2);border-top:1px solid var(--border);max-height:140px;overflow:hidden;transition:max-height .2s}
+#logPanel.open{max-height:200px}
+#logHeader{
+  display:flex;align-items:center;padding:6px 12px;font-size:11px;
+  text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;cursor:pointer;
+  background:var(--card);
+}
+#logHeader .icon{width:14px;height:14px;margin-right:6px}
+#logHeader .spacer{flex:1}
+#logHeader button{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;display:flex}
+#logHeader button:hover{color:var(--error)}
+#log{background:#000;padding:8px 12px;font-family:'SF Mono',Consolas,monospace;font-size:11px;max-height:140px;overflow-y:auto;line-height:1.6}
+#log div{padding:2px 0;color:#9ca3af;word-break:break-all}
+#log div.ok{color:var(--success)}
+#log div.err{color:var(--error)}
+#log div.info{color:var(--warning)}
 
-<script>
-// ============ LOG ============
-const logEl = document.getElementById('log');
-function log(msg, type = '') {
-    const div = document.createElement('div');
-    if (type) div.className = type;
-    div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-    logEl.appendChild(div);
-    logEl.scrollTop = logEl.scrollHeight;
-    if (logEl.children.length > 100) logEl.removeChild(logEl.firstChild);
+/* TOAST */
+#toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 32px);max-width:400px}
+.toast{
+  background:var(--card);border:2px solid var(--border);border-radius:12px;
+  padding:12px 16px;display:flex;gap:10px;align-items:center;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);font-size:14px;font-weight:600;
+  animation:slideUp .25s;pointer-events:auto;
+}
+.toast.ok{border-color:var(--success);color:#86efac}
+.toast.err{border-color:var(--error);color:#fca5a5}
+.toast.info{border-color:var(--info);color:#67e8f9}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* BIG STATUS OVERLAY */
+#bigStatus{
+  position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:999;
+  display:none;align-items:center;justify-content:center;flex-direction:column;
+  padding:32px;text-align:center;backdrop-filter:blur(6px);
+}
+#bigStatus.show{display:flex;animation:fade .2s}
+#bigStatus .icon-xl{color:var(--primary);margin-bottom:24px;animation:pulse 1.5s ease-in-out infinite}
+#bigStatus.ok .icon-xl{color:var(--success);animation:none}
+#bigStatus.err .icon-xl{color:var(--error);animation:none}
+#bigStatus .text{font-size:20px;font-weight:700;line-height:1.4;max-width:400px}
+#bigStatus .sub{font-size:14px;color:var(--muted);margin-top:12px;max-width:400px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.08)}}
+#bigStatus button{
+  margin-top:24px;background:var(--card2);color:var(--text);border:2px solid var(--border);
+  padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;
+  font-family:inherit;display:flex;align-items:center;gap:8px;
 }
 
-// ============ BADGE ============
-const nfcBadge = document.getElementById('nfcBadge');
+/* ANIMATIONS */
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ===== SVG SPRITE ===== -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="i-nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+<symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
+<symbol id="i-unlock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+<symbol id="i-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+<symbol id="i-chip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></symbol>
+<symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+</svg>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <h1><svg class="icon icon-lg"><use href="#i-nfc"/></svg> NFC Master</h1>
+  <span id="nfcBadge" class="badge wait"><svg class="icon"><use href="#i-scan"/></svg> Sprawdzam</span>
+  <button class="hbtn" id="fsBtn" title="Pełny ekran"><svg class="icon"><use href="#i-full"/></svg></button>
+</header>
+
+<!-- ===== NAV ===== -->
+<nav>
+  <button data-tab="read" class="active"><svg class="icon"><use href="#i-search"/></svg> Odczyt</button>
+  <button data-tab="writeUrl"><svg class="icon"><use href="#i-globe"/></svg> URL</button>
+  <button data-tab="writeData"><svg class="icon"><use href="#i-doc"/></svg> Dane</button>
+  <button data-tab="photo"><svg class="icon"><use href="#i-camera"/></svg> Zdjęcie</button>
+  <button data-tab="edit"><svg class="icon"><use href="#i-edit"/></svg> Edycja</button>
+  <button data-tab="tools"><svg class="icon"><use href="#i-settings"/></svg> Narzędzia</button>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main>
+
+<!-- ODCZYT -->
+<section id="tab-read" class="tab active">
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-search"/></svg> Odczyt karty</h2>
+    <button class="btn" id="readBtn"><svg class="icon"><use href="#i-scan"/></svg> Odczytaj kartę</button>
+    <div id="readResult" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<!-- ZAPIS URL -->
+<section id="tab-writeUrl" class="tab">
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-globe"/></svg> Zapisz URL</h2>
+    <label>Adres strony</label>
+    <input type="url" id="urlInput" value="https://vercode.pl" placeholder="https://...">
+    <button class="btn" id="writeUrlBtn"><svg class="icon"><use href="#i-save"/></svg> Zapisz URL</button>
+    <p class="info-text">Telefon otworzy tę stronę po przyłożeniu karty.</p>
+  </div>
+</section>
+
+<!-- ZAPIS DANYCH -->
+<section id="tab-writeData" class="tab">
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-doc"/></svg> Dane dla Arduino</h2>
+    <label>Imię / Nazwa</label>
+    <input type="text" id="nameInput" placeholder="Jan Kowalski">
+    <label>ID / Numer</label>
+    <input type="text" id="idInput" placeholder="np. Pracownik 42">
+    <label>URL</label>
+    <input type="url" id="urlDataInput" value="https://vercode.pl">
+    <button class="btn" id="writeDataBtn"><svg class="icon"><use href="#i-save"/></svg> Zapisz dane + URL</button>
+    <div class="alert info">
+      <svg class="icon"><use href="#i-info"/></svg>
+      <div>Zapisywane są 2 rekordy: URL (telefon) oraz <kbd>NAME=...;ID=...;URL=...;</kbd> (czytelne dla Arduino po sparsowaniu).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ZDJĘCIE -->
+<section id="tab-photo" class="tab">
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-camera"/></svg> Zdjęcie na kartę</h2>
+    <div class="photo-btns">
+      <button class="btn secondary" id="cameraBtn"><svg class="icon"><use href="#i-camera"/></svg> Aparat</button>
+      <button class="btn secondary" id="galleryBtn"><svg class="icon"><use href="#i-image"/></svg> Galeria</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+    <img id="photoPreview" alt="">
+    <div id="photoInfo" class="info-text"></div>
+    <label style="margin-top:12px">Kompresja</label>
+    <select id="compressSelect">
+      <option value="100">Bardzo mała (~100 B)</option>
+      <option value="300" selected>Mała (~300 B)</option>
+      <option value="600">Średnia (~600 B)</option>
+    </select>
+    <button class="btn" id="writePhotoBtn" disabled><svg class="icon"><use href="#i-save"/></svg> Zapisz zdjęcie</button>
+    <div class="alert warn">
+      <svg class="icon"><use href="#i-warn"/></svg>
+      <div>Karta MIFARE 1K ma ~750 B na NDEF. Zdjęcie zapisze się jako <b>miniatura</b> base64. Dla pełnego zdjęcia użyj NTAG215.</div>
+    </div>
+  </div>
+</section>
+
+<!-- EDYCJA -->
+<section id="tab-edit" class="tab">
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-edit"/></svg> Edycja karty</h2>
+    <button class="btn secondary" id="editLoadBtn"><svg class="icon"><use href="#i-search"/></svg> Wczytaj dane z karty</button>
+    <div id="editForm" style="display:none;margin-top:16px">
+      <div class="uid-display" id="editUid">UID: ---</div>
+      <label>URL</label>
+      <input type="url" id="editUrl">
+      <label>Imię / Nazwa</label>
+      <input type="text" id="editName">
+      <label>ID</label>
+      <input type="text" id="editId">
+      <div class="row">
+        <button class="btn" id="editSaveBtn"><svg class="icon"><use href="#i-save"/></svg> Zapisz</button>
+        <button class="btn danger" id="editClearBtn"><svg class="icon"><use href="#i-trash"/></svg> Wyczyść</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NARZĘDZIA -->
+<section id="tab-tools" class="tab">
+
+  <div class="card ok">
+    <h2><svg class="icon"><use href="#i-unlock"/></svg> Odblokowanie / format</h2>
+    <p class="info-text" style="margin-top:0">Przywraca kartę do stanu NDEF (formatuje puste/nieobsługiwane karty). Działa na kartach z domyślnymi kluczami.</p>
+    <button class="btn success" id="formatBtn"><svg class="icon"><use href="#i-unlock"/></svg> Formatuj jako NDEF (odblokuj)</button>
+  </div>
+
+  <div class="card warn">
+    <h2><svg class="icon"><use href="#i-refresh"/></svg> Reset karty</h2>
+    <p class="info-text" style="margin-top:0">Usuwa wszystkie rekordy NDEF z karty – karta zostaje pusta, ale sformatowana.</p>
+    <button class="btn warning" id="resetCardBtn"><svg class="icon"><use href="#i-refresh"/></svg> Wyczyść kartę (reset NDEF)</button>
+  </div>
+
+  <div class="card danger">
+    <h2><svg class="icon"><use href="#i-lock"/></svg> Zablokuj kartę permanentnie</h2>
+    <p class="info-text" style="margin-top:0"><b>Operacja nieodwracalna.</b> Karta po zablokowaniu nigdy nie pozwoli na zapis. Używaj tylko na kartach, które mają być stałe (np. wizytówki, ulotki).</p>
+    <button class="btn danger" id="lockCardBtn"><svg class="icon"><use href="#i-lock"/></svg> Zablokuj (nieodwracalne)</button>
+  </div>
+
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-refresh"/></svg> Reset aplikacji</h2>
+    <p class="info-text" style="margin-top:0">Czyści wszystkie formularze, log i przywraca stan początkowy.</p>
+    <button class="btn secondary" id="resetAppBtn"><svg class="icon"><use href="#i-refresh"/></svg> Zresetuj aplikację</button>
+  </div>
+
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-info"/></svg> Informacje</h2>
+    <div class="alert info">
+      <svg class="icon"><use href="#i-info"/></svg>
+      <div>
+        <b>Web NFC</b> wymaga:<br>
+        • Chrome / Edge / Samsung Internet na Androidzie<br>
+        • Połączenie HTTPS (nie HTTP)<br>
+        • Włączonego NFC w telefonie
+      </div>
+    </div>
+    <div class="alert warn">
+      <svg class="icon"><use href="#i-warn"/></svg>
+      <div><b>Ograniczenia:</b> Web NFC nie potrafi złamać niestandardowych kluczy MIFARE Classic. Karty zablokowane kluczami wymagają aplikacji <b>MIFARE Classic Tool</b>.</div>
+    </div>
+    <div class="alert success">
+      <svg class="icon"><use href="#i-check"/></svg>
+      <div><b>Współpraca z Arduino:</b> zapisujesz tekst <kbd>NAME=X;ID=Y;URL=Z;</kbd>, Arduino odczytuje przez NDEF + split po <kbd>;</kbd> i <kbd>=</kbd>.</div>
+    </div>
+  </div>
+
+</section>
+
+</main>
+
+<!-- LOG -->
+<div id="logPanel">
+  <div id="logHeader">
+    <svg class="icon"><use href="#i-doc"/></svg> Log
+    <span class="spacer"></span>
+    <button id="logToggle" title="Rozwiń"><svg class="icon"><use href="#i-chevron"/></svg></button>
+    <button id="logClear" title="Wyczyść"><svg class="icon"><use href="#i-trash"/></svg></button>
+  </div>
+  <div id="log"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toasts"></div>
+
+<!-- BIG STATUS -->
+<div id="bigStatus">
+  <svg class="icon-xl" id="bigIcon"><use href="#i-scan"/></svg>
+  <div class="text" id="bigText">Zbliż kartę do telefonu…</div>
+  <div class="sub" id="bigSub"></div>
+  <button id="bigCancel" style="display:none"><svg class="icon"><use href="#i-x"/></svg> Anuluj</button>
+</div>
+
+<script>
+'use strict';
+
+// ============ LOG ============
+const logEl = document.getElementById('log');
+function log(msg, type=''){
+  const d = document.createElement('div');
+  if(type) d.className = type;
+  d.textContent = `[${new Date().toLocaleTimeString('pl')}] ${msg}`;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+  while(logEl.children.length > 120) logEl.removeChild(logEl.firstChild);
+}
+document.getElementById('logClear').onclick = () => { logEl.innerHTML = ''; log('Log wyczyszczony', 'info'); };
+document.getElementById('logToggle').onclick = () => {
+  document.getElementById('logPanel').classList.toggle('open');
+};
+
+// ============ TOAST ============
+function toast(msg, type='info'){
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  const iconId = type === 'ok' ? 'i-check' : type === 'err' ? 'i-x' : 'i-info';
+  t.innerHTML = `<svg class="icon"><use href="#${iconId}"/></svg><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+// ============ VIBRATE ============
+function vibrate(pattern){ if(navigator.vibrate) navigator.vibrate(pattern); }
+
+// ============ NFC SUPPORT ============
 const hasNfc = 'NDEFReader' in window;
-if (hasNfc) {
-    nfcBadge.className = 'badge ok';
-    nfcBadge.textContent = '✅ NFC OK';
-    log('Web NFC dostępne', 'ok');
-} else {
-    nfcBadge.className = 'badge err';
-    nfcBadge.textContent = '❌ Brak NFC';
-    log('Web NFC NIE jest wspierane. Użyj Chrome na Androidzie + HTTPS.', 'err');
-    document.querySelectorAll('button').forEach(b => { if (b.id !== 'fsBtn') b.disabled = true; });
+const nfcBadge = document.getElementById('nfcBadge');
+if(hasNfc){
+  nfcBadge.className = 'badge ok';
+  nfcBadge.innerHTML = '<svg class="icon"><use href="#i-check"/></svg> NFC OK';
+  log('Web NFC dostępne', 'ok');
+}else{
+  nfcBadge.className = 'badge err';
+  nfcBadge.innerHTML = '<svg class="icon"><use href="#i-x"/></svg> Brak NFC';
+  log('Web NFC NIE wspierane – użyj Chrome na Androidzie + HTTPS', 'err');
+  document.querySelectorAll('main button').forEach(b => b.disabled = true);
 }
 
 // ============ FULLSCREEN ============
-async function enterFullscreen() {
-    try {
-        if (document.documentElement.requestFullscreen) {
-            await document.documentElement.requestFullscreen();
-        } else if (document.documentElement.webkitRequestFullscreen) {
-            await document.documentElement.webkitRequestFullscreen();
-        }
-        log('Pełny ekran włączony', 'ok');
-    } catch (e) { log('Nie można włączyć pełnego ekranu: ' + e.message, 'err'); }
+async function enterFullscreen(){
+  try{
+    const el = document.documentElement;
+    if(el.requestFullscreen) await el.requestFullscreen();
+    else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+    log('Pełny ekran włączony', 'ok');
+    toast('Pełny ekran', 'ok');
+    vibrate(20);
+  }catch(e){ log('Nie można wejść w pełny ekran: ' + e.message, 'err'); }
 }
-document.getElementById('fsBtn').addEventListener('click', enterFullscreen);
-// Automatyczna próba przy pierwszym dotknięciu (wymagane przez przeglądarki)
-document.body.addEventListener('click', function autoFs() {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        enterFullscreen();
-    }
-    document.body.removeEventListener('click', autoFs);
+document.getElementById('fsBtn').onclick = enterFullscreen;
+// auto at first touch
+document.body.addEventListener('click', function autoFs(){
+  if(!document.fullscreenElement && !document.webkitFullscreenElement) enterFullscreen();
+  document.body.removeEventListener('click', autoFs);
 }, { once: true });
+
+// ============ WAKE LOCK ============
+let wakeLock = null;
+async function keepAwake(){
+  try{
+    if('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') keepAwake();
+});
+keepAwake();
 
 // ============ TABS ============
 document.querySelectorAll('nav button').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-    });
+  btn.onclick = () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    vibrate(10);
+  };
 });
 
 // ============ BIG STATUS ============
 const bigStatus = document.getElementById('bigStatus');
 const bigIcon = document.getElementById('bigIcon');
 const bigText = document.getElementById('bigText');
-function showBig(icon, text) {
-    bigIcon.textContent = icon;
-    bigText.textContent = text;
-    bigStatus.classList.add('show');
+const bigSub = document.getElementById('bigSub');
+const bigCancel = document.getElementById('bigCancel');
+let cancelBigFn = null;
+
+function showBig(iconId, text, sub='', cancelFn=null){
+  bigIcon.innerHTML = `<use href="#${iconId}"/>`;
+  bigStatus.className = 'show';
+  bigText.textContent = text;
+  bigSub.textContent = sub;
+  if(cancelFn){ bigCancel.style.display = 'flex'; cancelBigFn = cancelFn; }
+  else { bigCancel.style.display = 'none'; cancelBigFn = null; }
 }
-function hideBig() { bigStatus.classList.remove('show'); }
+function showBigSuccess(text, sub=''){
+  bigIcon.innerHTML = `<use href="#i-check"/>`;
+  bigStatus.className = 'show ok';
+  bigText.textContent = text;
+  bigSub.textContent = sub;
+  bigCancel.style.display = 'none';
+  vibrate([40, 30, 40]);
+  setTimeout(hideBig, 1800);
+}
+function showBigError(text, sub=''){
+  bigIcon.innerHTML = `<use href="#i-x"/>`;
+  bigStatus.className = 'show err';
+  bigText.textContent = text;
+  bigSub.textContent = sub;
+  bigCancel.style.display = 'flex';
+  cancelBigFn = hideBig;
+  vibrate([80, 40, 80]);
+  setTimeout(hideBig, 3500);
+}
+function hideBig(){ bigStatus.className = ''; bigCancel.style.display = 'none'; cancelBigFn = null; }
+bigCancel.onclick = () => { if(cancelBigFn) cancelBigFn(); hideBig(); };
 
 // ============ READ ============
-document.getElementById('readBtn').addEventListener('click', async () => {
-    if (!hasNfc) return;
-    const result = document.getElementById('readResult');
-    result.innerHTML = '';
-    try {
-        showBig('📡', 'Zbliż kartę do telefonu...');
-        const ndef = new NDEFReader();
-        await ndef.scan();
-        log('Skanowanie rozpoczęte', 'ok');
+document.getElementById('readBtn').onclick = async () => {
+  if(!hasNfc) return;
+  const result = document.getElementById('readResult');
+  result.innerHTML = '';
+  try{
+    showBig('i-scan', 'Zbliż kartę do telefonu…', 'Odczyt w toku');
+    const ndef = new NDEFReader();
+    const controller = new AbortController();
+    let done = false;
 
-        const controller = new AbortController();
-        ndef.addEventListener('reading', ({ serialNumber, message }) => {
-            controller.abort();
-            hideBig();
-            log(`UID: ${serialNumber}`, 'ok');
-            let html = `<div class="uid-display">UID: ${serialNumber}</div>`;
-            if (message.records.length === 0) {
-                html += '<div class="result-item">Karta pusta (brak NDEF)</div>';
-            } else {
-                for (const r of message.records) {
-                    const decoded = new TextDecoder(r.encoding || 'utf-8').decode(r.data);
-                    let display = decoded;
-                    if (r.recordType === 'url') display = decoded;
-                    else if (r.recordType === 'mime') display = `[${r.mediaType}] ${r.data.byteLength} bajtów`;
-                    html += `<div class="result-item"><strong>${r.recordType}</strong>: ${display}</div>`;
-                }
-            }
-            result.innerHTML = html;
-        }, { signal: controller.signal, once: false });
+    const timeout = setTimeout(() => {
+      if(!done){ controller.abort(); hideBig(); log('Timeout odczytu', 'err'); toast('Nie wykryto karty (10s)', 'err'); }
+    }, 10000);
 
-        // timeout
-        setTimeout(() => {
-            if (bigStatus.classList.contains('show')) {
-                controller.abort();
-                hideBig();
-                log('Timeout – nie przyłożono karty', 'err');
-                result.innerHTML = '<div class="result-item">⏱️ Nie wykryto karty (10 s)</div>';
-            }
-        }, 10000);
-    } catch (e) {
-        hideBig();
-        log('Błąd: ' + e.message, 'err');
-    }
-});
+    await ndef.scan({ signal: controller.signal });
+    log('Skanowanie rozpoczęte', 'ok');
+
+    ndef.onreading = ({ serialNumber, message }) => {
+      done = true;
+      clearTimeout(timeout);
+      controller.abort();
+      hideBig();
+      vibrate(30);
+      log(`Odczytano UID: ${serialNumber}`, 'ok');
+
+      let html = `<div class="uid-display">UID: ${serialNumber}</div>`;
+      if(!message || message.records.length === 0){
+        html += '<div class="result-item"><strong>Zawartość</strong>Karta pusta (brak NDEF)</div>';
+      } else {
+        for(const r of message.records){
+          let content = '';
+          try{
+            const decoded = new TextDecoder(r.encoding || 'utf-8').decode(r.data);
+            if(r.recordType === 'url') content = decoded;
+            else if(r.recordType === 'text') content = decoded;
+            else if(r.recordType === 'mime') content = `[${r.mediaType}] ${r.data.byteLength} B`;
+            else content = decoded.slice(0, 120);
+          }catch(e){ content = '(binarne)'; }
+          html += `<div class="result-item"><strong>${r.recordType}</strong>${content}</div>`;
+        }
+      }
+      result.innerHTML = html;
+    };
+
+    ndef.onreadingerror = () => {
+      done = true;
+      clearTimeout(timeout);
+      hideBig();
+      showBigError('Błąd odczytu karty');
+      log('Błąd odczytu', 'err');
+    };
+  }catch(e){
+    hideBig();
+    log('Błąd: ' + e.message, 'err');
+    toast('Błąd: ' + e.message, 'err');
+  }
+};
 
 // ============ WRITE HELPER ============
-async function writeRecords(records, successMsg) {
-    if (!hasNfc) return;
-    try {
-        showBig('✍️', 'Zbliż kartę do zapisu...');
-        const ndef = new NDEFReader();
-        await ndef.write({ records });
-        hideBig();
-        log(successMsg, 'ok');
-        showBig('✅', 'Zapisano!');
-        setTimeout(hideBig, 1500);
-    } catch (e) {
-        hideBig();
-        log('Błąd zapisu: ' + e.message, 'err');
-        showBig('❌', 'Błąd: ' + e.message);
-        setTimeout(hideBig, 3000);
-    }
+async function writeRecords(records, successMsg){
+  if(!hasNfc) return;
+  try{
+    showBig('i-save', 'Zbliż kartę do zapisu…', 'Nie odsuwaj karty', hideBig);
+    const ndef = new NDEFReader();
+    await ndef.write({ records });
+    hideBig();
+    log(successMsg, 'ok');
+    showBigSuccess('Zapisano!', successMsg);
+    toast(successMsg, 'ok');
+  }catch(e){
+    hideBig();
+    log('Błąd zapisu: ' + e.message, 'err');
+    showBigError('Błąd zapisu', e.message);
+    toast('Błąd: ' + e.message, 'err');
+  }
 }
 
 // ============ WRITE URL ============
-document.getElementById('writeUrlBtn').addEventListener('click', () => {
-    const url = document.getElementById('urlInput').value.trim();
-    if (!url) return log('Podaj URL', 'err');
-    writeRecords([{ recordType: 'url', data: url }], `Zapisano URL: ${url}`);
-});
+document.getElementById('writeUrlBtn').onclick = () => {
+  const url = document.getElementById('urlInput').value.trim();
+  if(!url) return toast('Podaj URL', 'err');
+  writeRecords([{ recordType: 'url', data: url }], `URL zapisany: ${url}`);
+};
 
-// ============ WRITE DATA (Arduino) ============
-document.getElementById('writeDataBtn').addEventListener('click', () => {
-    const name = document.getElementById('nameInput').value.trim();
-    const id = document.getElementById('idInput').value.trim();
-    const url = document.getElementById('urlDataInput').value.trim();
-    if (!url) return log('Podaj URL', 'err');
-    const textPayload = `NAME=${name};ID=${id};URL=${url};`;
-    writeRecords([
-        { recordType: 'url', data: url },
-        { recordType: 'text', data: textPayload, lang: 'pl' }
-    ], `Zapisano dane: ${textPayload}`);
-});
+// ============ WRITE DATA ============
+document.getElementById('writeDataBtn').onclick = () => {
+  const name = document.getElementById('nameInput').value.trim();
+  const id = document.getElementById('idInput').value.trim();
+  const url = document.getElementById('urlDataInput').value.trim();
+  if(!url) return toast('Podaj URL', 'err');
+  const payload = `NAME=${name};ID=${id};URL=${url};`;
+  writeRecords([
+    { recordType: 'url', data: url },
+    { recordType: 'text', data: payload, lang: 'pl' }
+  ], `Dane zapisane: ${payload}`);
+};
 
 // ============ PHOTO ============
 let photoBase64 = null;
@@ -385,163 +625,240 @@ const photoPreview = document.getElementById('photoPreview');
 const photoInfo = document.getElementById('photoInfo');
 const writePhotoBtn = document.getElementById('writePhotoBtn');
 
-document.getElementById('galleryBtn').addEventListener('click', () => fileInput.click());
-document.getElementById('cameraBtn').addEventListener('click', () => cameraInput.click());
+document.getElementById('galleryBtn').onclick = () => fileInput.click();
+document.getElementById('cameraBtn').onclick = () => cameraInput.click();
 
-async function processPhoto(file, targetBytes) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let w = img.width, h = img.height;
-            const ratio = Math.sqrt((w * h) / (targetBytes * 3.5));
-            if (ratio > 1) { w = Math.round(w / ratio); h = Math.round(h / ratio); }
-            canvas.width = w; canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-            let quality = 0.7;
-            let dataUrl = canvas.toDataURL('image/jpeg', quality);
-            while (dataUrl.length > targetBytes * 1.4 && quality > 0.1) {
-                quality -= 0.1;
-                dataUrl = canvas.toDataURL('image/jpeg', quality);
-            }
-            resolve({ dataUrl, size: dataUrl.length });
-        };
-        const reader = new FileReader();
-        reader.onload = (e) => { img.src = e.target.result; };
-        reader.readAsDataURL(file);
-    });
+async function compressImage(file, targetBytes){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      const ratio = Math.sqrt((w * h) / (targetBytes * 3.5));
+      if(ratio > 1){ w = Math.round(w / ratio); h = Math.round(h / ratio); }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      let q = 0.75;
+      let dataUrl = canvas.toDataURL('image/jpeg', q);
+      while(dataUrl.length > targetBytes * 1.4 && q > 0.1){
+        q -= 0.1;
+        dataUrl = canvas.toDataURL('image/jpeg', q);
+      }
+      resolve({ dataUrl, size: dataUrl.length, w, h });
+    };
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; };
+    reader.readAsDataURL(file);
+  });
 }
 
-async function handlePhotoFile(file) {
-    if (!file) return;
-    const target = parseInt(document.getElementById('compressSelect').value);
-    const result = await processPhoto(file, target);
-    photoBase64 = result.dataUrl;
-    photoPreview.src = result.dataUrl;
-    photoPreview.style.display = 'block';
-    photoInfo.textContent = `Rozmiar base64: ${result.size} B (limit karty ~750 B)`;
-    writePhotoBtn.disabled = false;
-    log(`Zdjęcie przetworzone: ${result.size} B`, 'ok');
+async function handlePhoto(file){
+  if(!file) return;
+  const target = parseInt(document.getElementById('compressSelect').value, 10);
+  toast('Kompresja…', 'info');
+  const r = await compressImage(file, target);
+  photoBase64 = r.dataUrl;
+  photoPreview.src = r.dataUrl;
+  photoPreview.style.display = 'block';
+  photoInfo.textContent = `${r.w}×${r.h} px • ${r.size} B base64`;
+  writePhotoBtn.disabled = false;
+  log(`Zdjęcie: ${r.size} B`, 'ok');
+  toast('Zdjęcie gotowe', 'ok');
 }
+fileInput.onchange = e => handlePhoto(e.target.files[0]);
+cameraInput.onchange = e => handlePhoto(e.target.files[0]);
 
-fileInput.addEventListener('change', (e) => handlePhotoFile(e.target.files[0]));
-cameraInput.addEventListener('change', (e) => handlePhotoFile(e.target.files[0]));
-
-writePhotoBtn.addEventListener('click', async () => {
-    if (!photoBase64) return;
-    // base64 -> ArrayBuffer
-    const b64 = photoBase64.split(',')[1];
-    const binary = atob(b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    // jako rekord MIME
-    try {
-        showBig('✍️', 'Zbliż kartę (zdjęcie)...');
-        const ndef = new NDEFReader();
-        await ndef.write({
-            records: [{
-                recordType: 'mime',
-                mediaType: 'image/jpeg',
-                data: bytes.buffer
-            }]
-        });
-        hideBig();
-        log('Zdjęcie zapisane na karcie', 'ok');
-        showBig('✅', 'Zdjęcie zapisane!');
-        setTimeout(hideBig, 1500);
-    } catch (e) {
-        hideBig();
-        log('Błąd zapisu zdjęcia: ' + e.message, 'err');
-        showBig('❌', 'Za duże na kartę!');
-        setTimeout(hideBig, 3000);
-    }
-});
+writePhotoBtn.onclick = async () => {
+  if(!photoBase64) return;
+  const b64 = photoBase64.split(',')[1];
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0; i<bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  try{
+    showBig('i-save', 'Zbliż kartę (zdjęcie)…', `${bytes.length} B`, hideBig);
+    const ndef = new NDEFReader();
+    await ndef.write({ records: [{ recordType: 'mime', mediaType: 'image/jpeg', data: bytes.buffer }] });
+    hideBig();
+    log('Zdjęcie zapisane', 'ok');
+    showBigSuccess('Zdjęcie zapisane!', `${bytes.length} B`);
+  }catch(e){
+    hideBig();
+    log('Błąd: ' + e.message, 'err');
+    showBigError('Błąd zapisu zdjęcia', 'Karta może być za mała');
+  }
+};
 
 // ============ EDIT ============
-const editLocked = document.getElementById('editLocked');
-const editForm = document.getElementById('editForm');
-let loadedData = null;
+document.getElementById('editLoadBtn').onclick = async () => {
+  if(!hasNfc) return;
+  try{
+    showBig('i-search', 'Wczytuję kartę…', 'Zbliż kartę', hideBig);
+    const ndef = new NDEFReader();
+    const controller = new AbortController();
+    await ndef.scan({ signal: controller.signal });
+    const timeout = setTimeout(() => { controller.abort(); hideBig(); toast('Timeout', 'err'); }, 10000);
 
-document.getElementById('editLoadBtn').addEventListener('click', async () => {
-    if (!hasNfc) return;
-    try {
-        showBig('📖', 'Wczytuję dane z karty...');
-        const ndef = new NDEFReader();
-        await ndef.scan();
-        const controller = new AbortController();
-        
-        ndef.addEventListener('reading', ({ serialNumber, message }) => {
-            controller.abort();
-            hideBig();
-            loadedData = { uid: serialNumber, url: '', name: '', id: '' };
-            document.getElementById('editUid').textContent = 'UID: ' + serialNumber;
-            
-            for (const r of message.records) {
-                const text = new TextDecoder(r.encoding || 'utf-8').decode(r.data);
-                if (r.recordType === 'url') {
-                    loadedData.url = text;
-                } else if (r.recordType === 'text') {
-                    // parsuj NAME=...;ID=...;URL=...
-                    text.split(';').forEach(part => {
-                        const [k, v] = part.split('=');
-                        if (k === 'NAME') loadedData.name = v || '';
-                        if (k === 'ID') loadedData.id = v || '';
-                        if (k === 'URL') loadedData.url = loadedData.url || v || '';
-                    });
-                }
-            }
-            document.getElementById('editUrl').value = loadedData.url;
-            document.getElementById('editName').value = loadedData.name;
-            document.getElementById('editId').value = loadedData.id;
-            
-            editLocked.style.display = 'none';
-            editForm.style.display = 'block';
-            log(`Wczytano kartę ${serialNumber}`, 'ok');
-        }, { signal: controller.signal });
+    ndef.onreading = ({ serialNumber, message }) => {
+      clearTimeout(timeout);
+      controller.abort();
+      hideBig();
+      vibrate(30);
 
-        setTimeout(() => {
-            if (bigStatus.classList.contains('show')) {
-                controller.abort(); hideBig();
-                log('Timeout', 'err');
-            }
-        }, 10000);
-    } catch (e) {
+      const data = { uid: serialNumber, url: '', name: '', id: '' };
+      for(const r of message.records){
+        try{
+          const t = new TextDecoder(r.encoding || 'utf-8').decode(r.data);
+          if(r.recordType === 'url') data.url = t;
+          else if(r.recordType === 'text'){
+            t.split(';').forEach(part => {
+              const [k, v] = part.split('=');
+              if(k === 'NAME') data.name = v || '';
+              if(k === 'ID') data.id = v || '';
+              if(k === 'URL' && !data.url) data.url = v || '';
+            });
+          }
+        }catch(e){}
+      }
+      document.getElementById('editUid').textContent = 'UID: ' + serialNumber;
+      document.getElementById('editUrl').value = data.url;
+      document.getElementById('editName').value = data.name;
+      document.getElementById('editId').value = data.id;
+      document.getElementById('editForm').style.display = 'block';
+      log(`Wczytano kartę ${serialNumber}`, 'ok');
+      toast('Karta wczytana', 'ok');
+    };
+    ndef.onreadingerror = () => { clearTimeout(timeout); hideBig(); toast('Błąd odczytu', 'err'); };
+  }catch(e){
+    hideBig();
+    log('Błąd: ' + e.message, 'err');
+    toast('Błąd: ' + e.message, 'err');
+  }
+};
+
+document.getElementById('editSaveBtn').onclick = () => {
+  const url = document.getElementById('editUrl').value.trim();
+  const name = document.getElementById('editName').value.trim();
+  const id = document.getElementById('editId').value.trim();
+  if(!url) return toast('Podaj URL', 'err');
+  const payload = `NAME=${name};ID=${id};URL=${url};`;
+  writeRecords([
+    { recordType: 'url', data: url },
+    { recordType: 'text', data: payload, lang: 'pl' }
+  ], 'Karta zaktualizowana');
+};
+
+document.getElementById('editClearBtn').onclick = async () => {
+  if(!confirm('Wyczyścić całą zawartość NDEF z karty?')) return;
+  try{
+    showBig('i-trash', 'Czyszczę kartę…', '', hideBig);
+    const ndef = new NDEFReader();
+    await ndef.write({ records: [{ recordType: 'text', data: '', lang: 'pl' }] });
+    hideBig();
+    log('Karta wyczyszczona', 'ok');
+    showBigSuccess('Karta wyczyszczona');
+  }catch(e){
+    hideBig();
+    log('Błąd: ' + e.message, 'err');
+    showBigError('Błąd czyszczenia', e.message);
+  }
+};
+
+// ============ TOOLS ============
+document.getElementById('formatBtn').onclick = async () => {
+  if(!hasNfc) return;
+  if(!confirm('Sformatować kartę jako NDEF? Próba na kartach z domyślnymi kluczami.')) return;
+  try{
+    showBig('i-unlock', 'Formatuję kartę…', 'Zbliż kartę', hideBig);
+    const ndef = new NDEFReader();
+    // Zapis pustej wiadomości NDEF wymusza format
+    await ndef.write({ records: [{ recordType: 'text', data: '', lang: 'pl' }] });
+    hideBig();
+    log('Karta sformatowana jako NDEF', 'ok');
+    showBigSuccess('Karta sformatowana!', 'Można teraz zapisać URL');
+  }catch(e){
+    hideBig();
+    log('Formatowanie nieudane: ' + e.message, 'err');
+    showBigError('Nie można sformatować', 'Karta może mieć niestandardowe klucze – użyj MCT');
+  }
+};
+
+document.getElementById('resetCardBtn').onclick = async () => {
+  if(!hasNfc) return;
+  if(!confirm('Zresetować kartę? Usunie wszystkie rekordy NDEF.')) return;
+  try{
+    showBig('i-refresh', 'Resetuję kartę…', '', hideBig);
+    const ndef = new NDEFReader();
+    await ndef.write({ records: [{ recordType: 'text', data: '', lang: 'pl' }] });
+    hideBig();
+    log('Karta zresetowana', 'ok');
+    showBigSuccess('Karta zresetowana!');
+  }catch(e){
+    hideBig();
+    log('Reset nieudany: ' + e.message, 'err');
+    showBigError('Nie można zresetować', e.message);
+  }
+};
+
+document.getElementById('lockCardBtn').onclick = async () => {
+  if(!hasNfc) return;
+  if(!confirm('UWAGA: Zablokujesz kartę NA STAŁE. Nie będzie można jej już nigdy edytować. Kontynuować?')) return;
+  if(!confirm('Ostatnie ostrzeżenie – operacja NIEODWRACALNA. Kontynuować?')) return;
+  try{
+    showBig('i-lock', 'Blokuję kartę na stałe…', 'Nie odsuwaj!', hideBig);
+    const ndef = new NDEFReader();
+    await ndef.scan();
+    const controller = new AbortController();
+    let done = false;
+    ndef.onreading = async ({ message }) => {
+      if(done) return;
+      done = true;
+      controller.abort();
+      try{
+        await message.makeReadOnly();
         hideBig();
-        log('Błąd: ' + e.message, 'err');
-    }
-});
-
-document.getElementById('editSaveBtn').addEventListener('click', () => {
-    const url = document.getElementById('editUrl').value.trim();
-    const name = document.getElementById('editName').value.trim();
-    const id = document.getElementById('editId').value.trim();
-    if (!url) return log('Podaj URL', 'err');
-    const text = `NAME=${name};ID=${id};URL=${url};`;
-    writeRecords([
-        { recordType: 'url', data: url },
-        { recordType: 'text', data: text, lang: 'pl' }
-    ], 'Zaktualizowano kartę');
-});
-
-document.getElementById('editClearBtn').addEventListener('click', async () => {
-    if (!confirm('Wyczyścić kartę? (nadpisze puste rekordy)')) return;
-    try {
-        showBig('🗑️', 'Czyszczę kartę...');
-        const ndef = new NDEFReader();
-        await ndef.write({
-            records: [{ recordType: 'text', data: '', lang: 'pl' }]
-        });
+        log('Karta ZABLOKOWANA na stałe', 'ok');
+        showBigSuccess('Karta zablokowana!', 'Nieodwracalne');
+      }catch(e){
         hideBig();
-        log('Karta wyczyszczona', 'ok');
-    } catch (e) {
-        hideBig();
-        log('Błąd czyszczenia: ' + e.message, 'err');
-    }
-});
+        log('Błąd blokady: ' + e.message, 'err');
+        showBigError('Błąd blokady', e.message);
+      }
+    };
+    setTimeout(() => { if(!done){ controller.abort(); hideBig(); toast('Timeout', 'err'); } }, 10000);
+  }catch(e){
+    hideBig();
+    log('Błąd: ' + e.message, 'err');
+    showBigError('Błąd', e.message);
+  }
+};
+
+document.getElementById('resetAppBtn').onclick = () => {
+  if(!confirm('Zresetować aplikację? Wyczyszczone zostaną formularze i log.')) return;
+  document.getElementById('urlInput').value = 'https://vercode.pl';
+  document.getElementById('urlDataInput').value = 'https://vercode.pl';
+  document.getElementById('nameInput').value = '';
+  document.getElementById('idInput').value = '';
+  document.getElementById('editForm').style.display = 'none';
+  document.getElementById('editUrl').value = '';
+  document.getElementById('editName').value = '';
+  document.getElementById('editId').value = '';
+  document.getElementById('readResult').innerHTML = '';
+  document.getElementById('photoInfo').textContent = '';
+  photoPreview.style.display = 'none';
+  photoPreview.src = '';
+  photoBase64 = null;
+  writePhotoBtn.disabled = true;
+  logEl.innerHTML = '';
+  log('Aplikacja zresetowana', 'ok');
+  toast('Reset aplikacji', 'ok');
+  vibrate([20, 20, 20]);
+  // switch to first tab
+  document.querySelector('nav button[data-tab="read"]').click();
+};
 
 // ============ INIT ============
 log('Gotowe. Wybierz zakładkę i przyłóż kartę.', 'ok');
-log('Tip: naciśnij ⛶ Full, aby wejść w tryb pełnoekranowy.', 'info');
+log('Wskazówka: dotknij ekranu, aby włączyć pełny ekran.', 'info');
 </script>
 </body>
 </html>
