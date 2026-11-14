@@ -6,15 +6,7 @@
 <meta name="theme-color" content="#0a0a0a">
 <title>NFC Master Pro</title>
 <style>
-:root{
---bg:#0a0a0a;--s1:#141414;--s2:#1a1a1a;--s3:#222;--s4:#2a2a2a;
---b1:#262626;--b2:#333;--b3:#444;
---tx:#f5f5f5;--mu:#8a8a8a;--dm:#555;
---pr:#3b82f6;--pr-h:#2563eb;--su:#10b981;--wa:#f59e0b;--er:#ef4444;--in:#06b6d4;--go:#d4af37;
---r-sm:6px;--r:10px;--r-lg:16px;
---sh:0 2px 8px rgba(0,0,0,.4);--sh-lg:0 12px 40px rgba(0,0,0,.6);
---t:44px;--mo:'SF Mono',Consolas,monospace
-}
+:root{--bg:#0a0a0a;--s1:#141414;--s2:#1a1a1a;--s3:#222;--s4:#2a2a2a;--b1:#262626;--b2:#333;--b3:#444;--tx:#f5f5f5;--mu:#8a8a8a;--dm:#555;--pr:#3b82f6;--su:#10b981;--wa:#f59e0b;--er:#ef4444;--in:#06b6d4;--go:#d4af37;--r-sm:6px;--r:10px;--r-lg:16px;--sh:0 2px 8px rgba(0,0,0,.4);--sh-lg:0 12px 40px rgba(0,0,0,.6);--t:44px;--mo:'SF Mono',Consolas,monospace}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;display:flex;flex-direction:column;font-size:15px;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);overflow-x:hidden}
@@ -28,6 +20,7 @@ header h1{font-size:15px;margin:0;font-weight:700;flex:1;display:flex;align-item
 .bd.ok{background:var(--su);color:#000;border-color:var(--su)}
 .bd.err{background:var(--er);color:#fff;border-color:var(--er)}
 .bd.wait{background:var(--wa);color:#000;border-color:var(--wa)}
+.bd.serial{background:var(--in);color:#000;border-color:var(--in)}
 .hb{background:var(--s2);border:1px solid var(--b1);color:var(--tx);width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
 .hb:active{background:var(--b2)}
 nav{display:flex;gap:4px;padding:8px 10px;overflow-x:auto;background:var(--s1);border-bottom:1px solid var(--b1);scrollbar-width:none}
@@ -61,8 +54,10 @@ select{cursor:pointer}
 .btn.warning{background:var(--wa);color:#000}
 .btn.sm{padding:8px 11px;font-size:11px;width:auto;min-height:34px}
 .btn.ghost{background:transparent;border:1px solid var(--b2);color:var(--tx)}
-.row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:flex-end}
 .row>*{flex:1;min-width:100px}
+.row>label{flex:0 0 auto;min-width:auto;margin-bottom:5px}
+.row>input,.row>select{margin-bottom:0}
 .uid-display{font-family:var(--mo);font-size:15px;padding:11px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;text-align:center;letter-spacing:2px;color:var(--pr);margin:8px 0;font-weight:700}
 .result-item{padding:10px 12px;background:var(--s2);border-radius:8px;margin-bottom:6px;font-size:13px;word-break:break-all;border-left:2px solid var(--pr)}
 .result-item strong{color:var(--pr);font-weight:800;display:block;margin-bottom:5px;font-size:10px;text-transform:uppercase;letter-spacing:.6px}
@@ -150,7 +145,7 @@ select{cursor:pointer}
 .card-footer{display:flex;justify-content:space-between;align-items:center;z-index:3;position:relative;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);font-weight:800}
 .card-viz.active .card-footer{color:var(--tx)}
 .preset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
-.preset-btn{aspect-ratio:1.586;border-radius:8px;cursor:pointer;border:2px solid var(--b1);transition:all .15s;position:relative}
+.preset-btn{aspect-ratio:1.586;border-radius:8px;cursor:pointer;border:2px solid var(--b1);transition:all .15s}
 .preset-btn.active{border-color:var(--pr);transform:scale(1.02)}
 .preset-btn.dark{background:#1a1a1a}
 .preset-btn.blue{background:#1e3a5f}
@@ -181,7 +176,6 @@ select{cursor:pointer}
 .block-row.ndef-used{background:rgba(34,197,94,.05)}
 .block-row.empty{color:#3a3a3a}
 .block-row.tlv-head{background:rgba(6,182,212,.08)}
-.block-row.ndef-rec{background:rgba(59,130,246,.08)}
 .block-row.selected{outline:2px solid var(--pr);outline-offset:-2px}
 .block-addr{color:var(--pr);font-weight:800;text-align:right}
 .block-row.trailer .block-addr{color:var(--er)}
@@ -190,7 +184,7 @@ select{cursor:pointer}
 .block-row.empty .block-hex{color:#3a3a3a}
 .block-ascii{color:var(--mu);font-size:9px;opacity:.8}
 .block-row.trailer .block-hex{color:#fca5a5}
-.tlv-diagram{background:#000;border:1px solid var(--b1);border-radius:8px;padding:10px;font-family:var(--mo);font-size:10px;line-height:1.7;overflow-x:auto;white-space:pre;color:#9ca3af}
+.tlv-diagram{background:#000;border:1px solid var(--b1);border-radius:8px;padding:10px;font-family:var(--mo);font-size:10px;line-height:1.7;overflow-x:auto;white-space:pre-wrap;color:#9ca3af;word-break:break-all}
 .tlv-diagram .tag{color:var(--in);font-weight:800}
 .tlv-diagram .len{color:var(--wa);font-weight:800}
 .tlv-diagram .ndef-h{color:var(--pr);font-weight:800}
@@ -223,6 +217,22 @@ select{cursor:pointer}
 .crop-footer{display:flex;gap:8px;padding:10px 16px;background:var(--s1);border-top:1px solid var(--b1)}
 .crop-footer .btn{flex:1}
 .img-preview{width:100%;max-width:200px;aspect-ratio:1.586;border-radius:8px;border:1px solid var(--b1);object-fit:cover;display:block;margin:0 auto 10px;background:var(--s2)}
+.console{background:#000;border:1px solid var(--b1);border-radius:8px;padding:10px;font-family:var(--mo);font-size:11px;color:#9ca3af;height:200px;overflow-y:auto;line-height:1.5;white-space:pre-wrap;word-break:break-all}
+.console .tx{color:var(--pr);font-weight:700}
+.console .rx{color:var(--su)}
+.console .err{color:var(--er)}
+.console .sys{color:var(--wa);font-style:italic}
+.block-editor{display:grid;grid-template-columns:38px 1fr 34px;gap:6px;align-items:center;margin-bottom:4px;font-family:var(--mo);font-size:11px}
+.block-editor .be-addr{color:var(--pr);font-weight:800;text-align:right}
+.block-editor input{margin:0;padding:6px 8px;font-size:11px;min-height:0;font-family:var(--mo);letter-spacing:.5px}
+.block-editor input.dirty{border-color:var(--wa)}
+.block-editor button{padding:0;width:34px;height:28px;min-height:0;font-size:13px;background:var(--s3);color:var(--tx);border:1px solid var(--b1);border-radius:6px;cursor:pointer}
+.block-editor button:active{background:var(--b2)}
+.block-editor button:disabled{opacity:.3;cursor:not-allowed}
+.ard-status{display:flex;align-items:center;gap:8px;padding:10px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;font-size:12px;margin-bottom:10px;font-weight:600}
+.ard-status .dot{width:10px;height:10px;border-radius:50%;background:var(--dm);flex-shrink:0}
+.ard-status.on .dot{background:var(--su);box-shadow:0 0 8px var(--su)}
+.ard-status.err .dot{background:var(--er)}
 </style>
 </head>
 <body>
@@ -259,16 +269,20 @@ select{cursor:pointer}
 <symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
 <symbol id="i-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></symbol>
 <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
+<symbol id="i-usb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="1"/><circle cx="4" cy="20" r="1"/><path d="M4.7 19.3 19 5"/><path d="m21 3-3 1 2 2Z"/><path d="M9.26 7.68 5 12l2 5"/><path d="m10 14 5 2 3.5-3.5"/><path d="m18 12 1-1 1 1-1 1Z"/></symbol>
+<symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>
+<symbol id="i-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
 </svg>
 
 <header>
   <h1><svg class="ic ic-lg"><use href="#i-nfc"/></svg> NFC Master Pro</h1>
   <span id="nfcBadge" class="bd wait"><svg><use href="#i-scan"/></svg> <span>Sprawdzam</span></span>
-  <button class="hb" id="fsBtn" title="Pełny ekran"><svg class="ic"><use href="#i-full"/></svg></button>
+  <button class="hb" id="fsBtn"><svg class="ic"><use href="#i-full"/></svg></button>
 </header>
 
 <nav>
   <button data-tab="read" class="active"><svg class="ic"><use href="#i-search"/></svg> Odczyt</button>
+  <button data-tab="arduino"><svg class="ic"><use href="#i-usb"/></svg> Arduino</button>
   <button data-tab="blocks"><svg class="ic"><use href="#i-grid"/></svg> Bloki</button>
   <button data-tab="write"><svg class="ic"><use href="#i-globe"/></svg> URL</button>
   <button data-tab="data"><svg class="ic"><use href="#i-doc"/></svg> Dane</button>
@@ -299,16 +313,14 @@ select{cursor:pointer}
     </div>
   </div>
   <div class="card">
-    <h2><svg><use href="#i-search"/></svg> Odczyt karty</h2>
+    <h2><svg><use href="#i-search"/></svg> Odczyt karty (Web NFC)</h2>
     <button class="btn" id="readBtn"><svg><use href="#i-scan"/></svg> Odczytaj kartę</button>
     <div id="readResult" style="margin-top:12px"></div>
     <div id="readActions" style="display:none;margin-top:10px">
       <div class="row">
-        <button class="btn sm secondary" id="readToClone"><svg><use href="#i-clone"/></svg> Do klonowania</button>
-        <button class="btn sm secondary" id="readToHex"><svg><use href="#i-hex"/></svg> Do HEX</button>
-      </div>
-      <div class="row">
-        <button class="btn sm secondary" id="readToBlocks"><svg><use href="#i-grid"/></svg> Do bloków</button>
+        <button class="btn sm secondary" id="readToClone"><svg><use href="#i-clone"/></svg> Klonuj</button>
+        <button class="btn sm secondary" id="readToHex"><svg><use href="#i-hex"/></svg> HEX</button>
+        <button class="btn sm secondary" id="readToBlocks"><svg><use href="#i-grid"/></svg> Bloki</button>
         <button class="btn sm secondary" id="readExportJson"><svg><use href="#i-download"/></svg> JSON</button>
         <button class="btn sm secondary" id="readExportBin"><svg><use href="#i-download"/></svg> BIN</button>
       </div>
@@ -316,13 +328,91 @@ select{cursor:pointer}
   </div>
 </section>
 
+<section id="tab-arduino" class="tab">
+  <div class="alert warn">
+    <svg><use href="#i-warn"/></svg>
+    <div><b>Web Serial API</b> – łączy się z Arduino przez USB. Wymaga <b>Chrome / Edge na PC</b> (nie działa na telefonie). To jedyny sposób na <b>prawdziwy odczyt bloków MIFARE</b> z przeglądarki.</div>
+  </div>
+  <div class="card">
+    <h2><svg><use href="#i-plug"/></svg> Połączenie</h2>
+    <div class="ard-status" id="ardStatus"><div class="dot"></div><span id="ardStatusTxt">Nie połączono</span></div>
+    <label>Baudrate</label>
+    <select id="ardBaud">
+      <option value="9600">9600</option>
+      <option value="19200">19200</option>
+      <option value="38400">38400</option>
+      <option value="57600">57600</option>
+      <option value="115200" selected>115200</option>
+    </select>
+    <button class="btn" id="ardConnect"><svg><use href="#i-plug"/></svg> Połącz z Arduino</button>
+    <button class="btn danger" id="ardDisconnect" style="display:none"><svg><use href="#i-x"/></svg> Rozłącz</button>
+  </div>
+  <div class="card" id="ardConnectedCard" style="display:none">
+    <h2><svg><use href="#i-terminal"/></svg> Szybkie akcje</h2>
+    <div class="row">
+      <button class="btn sm secondary" id="ardPing">PING</button>
+      <button class="btn sm secondary" id="ardUid"><svg><use href="#i-search"/></svg> UID</button>
+      <button class="btn sm secondary" id="ardDump"><svg><use href="#i-download"/></svg> DUMP</button>
+    </div>
+    <label style="margin-top:10px">Odczytaj sektor</label>
+    <div class="row">
+      <select id="ardSector">
+        <option value="0">Sektor 0</option><option value="1">Sektor 1</option><option value="2">Sektor 2</option><option value="3">Sektor 3</option><option value="4">Sektor 4</option><option value="5">Sektor 5</option><option value="6">Sektor 6</option><option value="7">Sektor 7</option><option value="8">Sektor 8</option><option value="9">Sektor 9</option><option value="10">Sektor 10</option><option value="11">Sektor 11</option><option value="12">Sektor 12</option><option value="13">Sektor 13</option><option value="14">Sektor 14</option><option value="15">Sektor 15</option>
+      </select>
+      <button class="btn sm" id="ardReadSector">Odczytaj</button>
+    </div>
+    <label style="margin-top:10px">Klucz sektora (Key A)</label>
+    <div class="row">
+      <select id="ardKeySector" style="max-width:120px">
+        <option value="0">S0</option><option value="1">S1</option><option value="2">S2</option><option value="3">S3</option><option value="4">S4</option><option value="5">S5</option><option value="6">S6</option><option value="7">S7</option><option value="8">S8</option><option value="9">S9</option><option value="10">S10</option><option value="11">S11</option><option value="12">S12</option><option value="13">S13</option><option value="14">S14</option><option value="15">S15</option>
+      </select>
+      <input id="ardKeyHex" value="FFFFFFFFFFFF" placeholder="FFFFFFFFFFFF" style="margin-bottom:0;font-family:var(--mo);text-transform:uppercase" maxlength="12">
+      <button class="btn sm" id="ardSetKey">Ustaw</button>
+    </div>
+    <button class="btn sm secondary" id="ardSetAllKeys" style="margin-top:8px">Ustaw klucz dla wszystkich sektorów</button>
+  </div>
+  <div class="card" id="ardConsoleCard" style="display:none">
+    <h2><svg><use href="#i-terminal"/></svg> Konsola</h2>
+    <div class="row">
+      <input id="ardCmd" placeholder="np. UID, DUMP, READ 4" style="margin-bottom:0;font-family:var(--mo)">
+      <button class="btn sm" id="ardSend">Wyślij</button>
+    </div>
+    <div class="console" id="ardOutput" style="margin-top:8px">Gotowe do wysłania komendy.\n</div>
+  </div>
+  <div class="card" id="ardBlocksCard" style="display:none">
+    <h2><svg><use href="#i-grid"/></svg> Prawdziwe bloki MIFARE</h2>
+    <div class="row">
+      <button class="btn sm secondary" id="ardReadAll"><svg><use href="#i-scan"/></svg> Odczytaj wszystko</button>
+      <button class="btn sm success" id="ardWriteDirty"><svg><use href="#i-save"/></svg> Zapisz zmiany</button>
+    </div>
+    <div class="row">
+      <button class="btn sm secondary" id="ardExportBin"><svg><use href="#i-download"/></svg> .bin</button>
+      <button class="btn sm secondary" id="ardExportMfd"><svg><use href="#i-download"/></svg> .mfd</button>
+      <button class="btn sm secondary" id="ardCopyHex"><svg><use href="#i-copy"/></svg> HEX</button>
+      <button class="btn sm secondary" id="ardLoadToBlocks"><svg><use href="#i-grid"/></svg> Do bloków</button>
+    </div>
+    <div id="ardBlockEditor" style="margin-top:10px">
+      <div class="info-text">Brak danych. Naciśnij „Odczytaj wszystko”.</div>
+    </div>
+  </div>
+  <div class="card">
+    <h2><svg><use href="#i-chip"/></svg> Szkic Arduino</h2>
+    <div class="info-text" style="margin-bottom:8px">Wgraj ten szkic do Arduino (RC522 na pinach <kbd>SS=10</kbd>, <kbd>RST=9</kbd>, <kbd>MOSI=11</kbd>, <kbd>MISO=12</kbd>, <kbd>SCK=13</kbd>).</div>
+    <div class="row">
+      <button class="btn sm secondary" id="ardCopySketch"><svg><use href="#i-copy"/></svg> Kopiuj kod</button>
+      <button class="btn sm secondary" id="ardDownloadSketch"><svg><use href="#i-download"/></svg> Pobierz .ino</button>
+    </div>
+    <div class="hex-block" id="ardSketch" style="max-height:400px;font-size:10px;overflow:auto;white-space:pre"></div>
+  </div>
+</section>
+
 <section id="tab-blocks" class="tab">
   <div class="alert error">
     <svg><use href="#i-warn"/></svg>
-    <div><b>Ograniczenie Web NFC:</b> API przeglądarki <u>nie udostępnia</u> surowych bloków MIFARE. Poniżej widzisz <b>rekonstrukcję</b> opartą na rzeczywistych bajtach NDEF + strukturze TLV. Prawdziwy odczyt bloków (Key A/B, access bits, sektory surowe) wymaga <b>MIFARE Classic Tool</b> lub <b>Proxmark3</b>.</div>
+    <div><b>Uwaga:</b> to <b>rekonstrukcja</b> NDEF, nie prawdziwe bloki. <b>Prawdziwy odczyt bloków</b> → zakładka <b>Arduino</b> (Web Serial API + RC522).</div>
   </div>
   <div class="card">
-    <h2><svg><use href="#i-grid"/></svg> Odczyt i rekonstrukcja</h2>
+    <h2><svg><use href="#i-grid"/></svg> Rekonstrukcja z NDEF</h2>
     <button class="btn" id="blocksRead"><svg><use href="#i-scan"/></svg> Odczytaj kartę</button>
     <div class="stats">
       <div class="stat"><div class="v" id="blocksUsed">0</div><div class="l">Zajęte</div></div>
@@ -338,34 +428,15 @@ select{cursor:pointer}
   <div class="card">
     <h2><svg><use href="#i-grid"/></svg> Widok bloków</h2>
     <div class="view-controls">
-      <select id="blockViewMode">
-        <option value="mixed">HEX + ASCII</option>
-        <option value="hex">Tylko HEX</option>
-        <option value="ascii">Tylko ASCII</option>
-        <option value="annotated">Z adnotacjami</option>
-      </select>
+      <select id="blockViewMode"><option value="mixed">HEX + ASCII</option><option value="hex">HEX</option><option value="ascii">ASCII</option><option value="annotated">Adnotacje</option></select>
       <button class="btn sm secondary" id="toggleTrailer">Trailer</button>
       <button class="btn sm secondary" id="toggleEmpty">Puste</button>
     </div>
-    <div id="blocksView"><div class="info-text">Brak danych. Odczytaj kartę.</div></div>
+    <div id="blocksView"><div class="info-text">Brak danych.</div></div>
   </div>
   <div class="card">
-    <h2><svg><use href="#i-info"/></svg> Inspektor bajtu</h2>
-    <div id="byteInspector" class="info-text">Kliknij bajt w widoku bloków, aby zobaczyć szczegóły.</div>
-  </div>
-  <div class="card">
-    <h2><svg><use href="#i-download"/></svg> Eksport</h2>
-    <div class="row">
-      <button class="btn sm secondary" id="exportMfd"><svg><use href="#i-download"/></svg> .mfd</button>
-      <button class="btn sm secondary" id="exportBinBlocks"><svg><use href="#i-download"/></svg> .bin</button>
-      <button class="btn sm secondary" id="exportHexBlocks"><svg><use href="#i-download"/></svg> .hex</button>
-      <button class="btn sm secondary" id="exportTxtBlocks"><svg><use href="#i-download"/></svg> .txt</button>
-    </div>
-    <div class="row">
-      <button class="btn sm secondary" id="copyHexAll"><svg><use href="#i-copy"/></svg> Kopiuj HEX</button>
-      <button class="btn sm secondary" id="copyCArray"><svg><use href="#i-copy"/></svg> Kopiuj C</button>
-      <button class="btn sm secondary" id="copyPyBytes"><svg><use href="#i-copy"/></svg> Kopiuj Python</button>
-    </div>
+    <h2><svg><use href="#i-info"/></svg> Inspektor</h2>
+    <div id="byteInspector" class="info-text">Kliknij blok.</div>
   </div>
 </section>
 
@@ -388,13 +459,12 @@ select{cursor:pointer}
     <label>URL</label>
     <input type="url" id="urlDataInput" value="https://vercode.pl">
     <button class="btn" id="writeDataBtn"><svg><use href="#i-save"/></svg> Zapisz dane + URL</button>
-    <div class="alert info"><svg><use href="#i-info"/></svg><div>Format: <kbd>NAME=X;ID=Y;URL=Z;</kbd></div></div>
   </div>
 </section>
 
 <section id="tab-photo" class="tab">
   <div class="card">
-    <h2><svg><use href="#i-camera"/></svg> Zdjęcie (kadrowane)</h2>
+    <h2><svg><use href="#i-camera"/></svg> Zdjęcie</h2>
     <div class="photo-btns">
       <button class="btn secondary" id="cameraBtn"><svg><use href="#i-camera"/></svg> Aparat</button>
       <button class="btn secondary" id="galleryBtn"><svg><use href="#i-image"/></svg> Galeria</button>
@@ -405,9 +475,9 @@ select{cursor:pointer}
     <div id="photoInfo" class="info-text"></div>
     <label style="margin-top:8px">Kompresja</label>
     <select id="compressSelect">
-      <option value="100">Bardzo mała (~100 B)</option>
-      <option value="300" selected>Mała (~300 B)</option>
-      <option value="600">Średnia (~600 B)</option>
+      <option value="100">~100 B</option>
+      <option value="300" selected>~300 B</option>
+      <option value="600">~600 B</option>
     </select>
     <button class="btn" id="writePhotoBtn" disabled><svg><use href="#i-save"/></svg> Zapisz zdjęcie</button>
   </div>
@@ -450,7 +520,7 @@ select{cursor:pointer}
     </div>
   </div>
   <div class="card">
-    <h2><svg><use href="#i-hex"/></svg> Podgląd HEX</h2>
+    <h2><svg><use href="#i-hex"/></svg> HEX</h2>
     <div class="hex-block" id="cloneHex" style="min-height:60px">—</div>
   </div>
 </section>
@@ -470,7 +540,7 @@ select{cursor:pointer}
       <button class="btn sm secondary" id="hexLoadTag"><svg><use href="#i-scan"/></svg> Z karty</button>
     </div>
     <div class="row">
-      <button class="btn success" id="hexWriteTag"><svg><use href="#i-save"/></svg> Zapisz na kartę</button>
+      <button class="btn success" id="hexWriteTag"><svg><use href="#i-save"/></svg> Zapisz</button>
       <button class="btn danger" id="hexClear"><svg><use href="#i-trash"/></svg> Wyczyść</button>
     </div>
     <input type="file" id="hexFile" accept=".bin,.dat,application/octet-stream" style="display:none">
@@ -484,7 +554,7 @@ select{cursor:pointer}
 <section id="tab-settings" class="tab">
   <div class="card">
     <h2><svg><use href="#i-palette"/></svg> Wizualizacja karty</h2>
-    <label>Kolor / motyw</label>
+    <label>Motyw</label>
     <div class="preset-grid" id="presetGrid">
       <div class="preset-btn dark active" data-preset="dark"></div>
       <div class="preset-btn blue" data-preset="blue"></div>
@@ -498,51 +568,33 @@ select{cursor:pointer}
     <label>Obraz tła</label>
     <img id="cardImagePreview" class="img-preview" style="display:none">
     <div class="row">
-      <button class="btn sm secondary" id="uploadCardImage"><svg><use href="#i-upload"/></svg> Wybierz obraz</button>
+      <button class="btn sm secondary" id="uploadCardImage"><svg><use href="#i-upload"/></svg> Wybierz</button>
       <button class="btn sm secondary" id="clearCardImage"><svg><use href="#i-trash"/></svg> Usuń</button>
     </div>
     <input type="file" id="cardImageInput" accept="image/*" style="display:none">
-    <label style="margin-top:12px">Zaokrąglenie narożników</label>
+    <label style="margin-top:12px">Zaokrąglenie</label>
     <div class="slider-row">
       <input type="range" id="cardRadius" min="0" max="28" value="16">
       <span class="val" id="cardRadiusVal">16</span>
     </div>
-    <div class="toggle">
-      <span>Animacja unoszenia</span>
-      <label class="toggle-switch"><input type="checkbox" id="cardFloat" checked><span></span></label>
-    </div>
-    <div class="toggle">
-      <span>Pokaż UID</span>
-      <label class="toggle-switch"><input type="checkbox" id="showUid" checked><span></span></label>
-    </div>
-    <div class="toggle">
-      <span>Pokaż rekordy</span>
-      <label class="toggle-switch"><input type="checkbox" id="showRecords" checked><span></span></label>
-    </div>
-    <div class="toggle">
-      <span>Pokaż rozmiar</span>
-      <label class="toggle-switch"><input type="checkbox" id="showSize" checked><span></span></label>
-    </div>
-    <div class="toggle">
-      <span>Pokaż logo NFC</span>
-      <label class="toggle-switch"><input type="checkbox" id="showWave" checked><span></span></label>
-    </div>
-    <div class="toggle">
-      <span>Pokaż chip</span>
-      <label class="toggle-switch"><input type="checkbox" id="showChip" checked><span></span></label>
-    </div>
-    <button class="btn secondary" id="resetCardSettings" style="margin-top:12px"><svg><use href="#i-refresh"/></svg> Reset ustawień</button>
+    <div class="toggle"><span>Animacja</span><label class="toggle-switch"><input type="checkbox" id="cardFloat" checked><span></span></label></div>
+    <div class="toggle"><span>UID</span><label class="toggle-switch"><input type="checkbox" id="showUid" checked><span></span></label></div>
+    <div class="toggle"><span>Rekordy</span><label class="toggle-switch"><input type="checkbox" id="showRecords" checked><span></span></label></div>
+    <div class="toggle"><span>Rozmiar</span><label class="toggle-switch"><input type="checkbox" id="showSize" checked><span></span></label></div>
+    <div class="toggle"><span>NFC wave</span><label class="toggle-switch"><input type="checkbox" id="showWave" checked><span></span></label></div>
+    <div class="toggle"><span>Chip</span><label class="toggle-switch"><input type="checkbox" id="showChip" checked><span></span></label></div>
+    <button class="btn secondary" id="resetCardSettings" style="margin-top:12px"><svg><use href="#i-refresh"/></svg> Reset</button>
   </div>
 </section>
 
 <section id="tab-tools" class="tab">
   <div class="card ok">
-    <h2><svg><use href="#i-unlock"/></svg> Formatuj / odblokuj</h2>
-    <button class="btn success" id="formatBtn"><svg><use href="#i-unlock"/></svg> Format NDEF</button>
+    <h2><svg><use href="#i-unlock"/></svg> Format NDEF</h2>
+    <button class="btn success" id="formatBtn"><svg><use href="#i-unlock"/></svg> Format</button>
   </div>
   <div class="card warn">
     <h2><svg><use href="#i-refresh"/></svg> Reset karty</h2>
-    <button class="btn warning" id="resetCardBtn"><svg><use href="#i-refresh"/></svg> Wyczyść kartę</button>
+    <button class="btn warning" id="resetCardBtn"><svg><use href="#i-refresh"/></svg> Wyczyść</button>
   </div>
   <div class="card">
     <h2><svg><use href="#i-refresh"/></svg> Reset aplikacji</h2>
@@ -550,8 +602,8 @@ select{cursor:pointer}
   </div>
   <div class="card">
     <h2><svg><use href="#i-info"/></svg> Info</h2>
-    <div class="alert info"><svg><use href="#i-info"/></svg><div><b>Web NFC</b> wymaga Chrome / Edge na Androidzie + HTTPS + NFC.</div></div>
-    <div class="alert warn"><svg><use href="#i-warn"/></svg><div>Niestandardowe klucze MIFARE Classic → MIFARE Classic Tool.</div></div>
+    <div class="alert info"><svg><use href="#i-info"/></svg><div><b>Web NFC</b> – Chrome/Edge Android + HTTPS.</div></div>
+    <div class="alert success"><svg><use href="#i-check"/></svg><div><b>Web Serial</b> – Chrome/Edge PC + Arduino.</div></div>
   </div>
 </section>
 
@@ -586,10 +638,7 @@ select{cursor:pointer}
     <div class="crop-frame" id="cropFrame"></div>
   </div>
   <div class="crop-controls">
-    <div class="ctrl-row">
-      <label>Skala</label>
-      <input type="range" id="cropZoom" min="10" max="400" value="100">
-    </div>
+    <div class="ctrl-row"><label>Skala</label><input type="range" id="cropZoom" min="10" max="400" value="100"></div>
     <div class="crop-aspects">
       <button data-aspect="1" class="active">1:1</button>
       <button data-aspect="1.333">4:3</button>
@@ -610,24 +659,193 @@ select{cursor:pointer}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
-const S={clone:null,hex:new Uint8Array(0),read:null,photo:null,blocks:null,blockView:'mixed',showTrailer:false,showEmpty:true,cardSettings:{preset:'dark',image:null,radius:16,float:true,showUid:true,showRecords:true,showSize:true,showWave:true,showChip:true}};
-
+const S={clone:null,hex:new Uint8Array(0),read:null,photo:null,blocks:null,ardBlocks:new Array(64).fill(null).map(()=>new Uint8Array(16)),ardDirty:new Set(),blockView:'mixed',showTrailer:false,showEmpty:true,ardConnected:false,ardPort:null,ardWriter:null,ardKeys:new Array(16).fill('FFFFFFFFFFFF'),cardSettings:{preset:'dark',image:null,radius:16,float:true,showUid:true,showRecords:true,showSize:true,showWave:true,showChip:true}};
 const PRESET_COLORS={dark:'#1a1a1a',blue:'#1e3a5f',green:'#1a4f3a',purple:'#3a1e5f',red:'#5f1e2a',gold:'#5f4a1e',cyan:'#1e4f5f',pink:'#5f1e4a'};
+
+const ARD_SKETCH=`#include <SPI.h>
+#include <MFRC522.h>
+
+#define SS_PIN 10
+#define RST_PIN 9
+MFRC522 rfid(SS_PIN, RST_PIN);
+MFRC522::MIFARE_Key key;
+byte sectorKeys[16][6];
+
+void printHex(byte* b, byte len) {
+  for(byte i=0; i<len; i++) {
+    if(b[i] < 0x10) Serial.print("0");
+    Serial.print(b[i], HEX);
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  SPI.begin();
+  rfid.PCD_Init();
+  SPI.setClockDivider(SPI_CLOCK_DIV8);
+  for(int s=0; s<16; s++)
+    for(int i=0; i<6; i++) sectorKeys[s][i] = 0xFF;
+  delay(200);
+  Serial.println("READY");
+}
+
+bool waitCard() {
+  for(int i=0; i<30; i++) {
+    if(rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) return true;
+    delay(100);
+  }
+  return false;
+}
+
+bool authBlock(byte block) {
+  byte sector = block / 4;
+  memcpy(key.keyByte, sectorKeys[sector], 6);
+  return rfid.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(rfid.uid)) == MFRC522::STATUS_OK;
+}
+
+void cmdUid() {
+  if(!waitCard()) { Serial.println("ERR no_card"); return; }
+  Serial.print("UID ");
+  printHex(rfid.uid.uidByte, rfid.uid.size);
+  Serial.println();
+  Serial.print("SAK ");
+  Serial.println(rfid.uid.sak, HEX);
+  Serial.println("END");
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+}
+
+void cmdRead(int sector) {
+  if(sector < 0 || sector > 15) { Serial.println("ERR bad_sector"); return; }
+  if(!waitCard()) { Serial.println("ERR no_card"); return; }
+  if(!authBlock(sector*4)) { Serial.println("ERR auth"); rfid.PICC_HaltA(); rfid.PCD_StopCrypto1(); return; }
+  Serial.print("SECTOR ");
+  Serial.println(sector);
+  for(int i=0; i<4; i++) {
+    byte block = sector*4 + i;
+    byte buf[18];
+    byte size = sizeof(buf);
+    if(rfid.MIFARE_Read(block, buf, &size) == MFRC522::STATUS_OK) {
+      Serial.print("BLK ");
+      Serial.print(block);
+      Serial.print(" ");
+      printHex(buf, 16);
+      Serial.println();
+    }
+  }
+  Serial.println("END");
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+}
+
+void cmdDump() {
+  if(!waitCard()) { Serial.println("ERR no_card"); return; }
+  Serial.print("UID ");
+  printHex(rfid.uid.uidByte, rfid.uid.size);
+  Serial.println();
+  for(int s=0; s<16; s++) {
+    Serial.print("SEC ");
+    Serial.println(s);
+    if(authBlock(s*4)) {
+      for(int i=0; i<4; i++) {
+        byte block = s*4 + i;
+        byte buf[18];
+        byte size = sizeof(buf);
+        if(rfid.MIFARE_Read(block, buf, &size) == MFRC522::STATUS_OK) {
+          Serial.print("BLK ");
+          Serial.print(block);
+          Serial.print(" ");
+          printHex(buf, 16);
+          Serial.println();
+        }
+      }
+      rfid.PCD_StopCrypto1();
+    } else {
+      Serial.println("LOCKED");
+    }
+    delay(20);
+    if(!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
+      if(!waitCard()) { Serial.println("ERR card_lost"); break; }
+    }
+  }
+  Serial.println("END");
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+}
+
+void cmdWrite(int block, String hexData) {
+  if(block < 0 || block > 63) { Serial.println("ERR bad_block"); return; }
+  if(hexData.length() != 32) { Serial.println("ERR bad_len"); return; }
+  byte data[16];
+  for(int i=0; i<16; i++) {
+    char c1 = hexData[i*2];
+    char c2 = hexData[i*2+1];
+    data[i] = 0;
+    if(c1 >= '0' && c1 <= '9') data[i] = (c1 - '0') << 4;
+    else if(c1 >= 'A' && c1 <= 'F') data[i] = (c1 - 'A' + 10) << 4;
+    else if(c1 >= 'a' && c1 <= 'f') data[i] = (c1 - 'a' + 10) << 4;
+    if(c2 >= '0' && c2 <= '9') data[i] |= c2 - '0';
+    else if(c2 >= 'A' && c2 <= 'F') data[i] |= c2 - 'A' + 10;
+    else if(c2 >= 'a' && c2 <= 'f') data[i] |= c2 - 'a' + 10;
+  }
+  if(!waitCard()) { Serial.println("ERR no_card"); return; }
+  if(!authBlock(block)) { Serial.println("ERR auth"); rfid.PICC_HaltA(); rfid.PCD_StopCrypto1(); return; }
+  if(rfid.MIFARE_Write(block, data, 16) == MFRC522::STATUS_OK) Serial.println("OK");
+  else Serial.println("ERR write");
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+}
+
+void cmdKey(int sector, String hexKey) {
+  if(sector < 0 || sector > 15) { Serial.println("ERR bad_sector"); return; }
+  if(hexKey.length() != 12) { Serial.println("ERR bad_key"); return; }
+  for(int i=0; i<6; i++) {
+    char c1 = hexKey[i*2];
+    char c2 = hexKey[i*2+1];
+    byte b = 0;
+    if(c1 >= '0' && c1 <= '9') b = (c1 - '0') << 4;
+    else if(c1 >= 'A' && c1 <= 'F') b = (c1 - 'A' + 10) << 4;
+    else if(c1 >= 'a' && c1 <= 'f') b = (c1 - 'a' + 10) << 4;
+    if(c2 >= '0' && c2 <= '9') b |= c2 - '0';
+    else if(c2 >= 'A' && c2 <= 'F') b |= c2 - 'A' + 10;
+    else if(c2 >= 'a' && c2 <= 'f') b |= c2 - 'a' + 10;
+    sectorKeys[sector][i] = b;
+  }
+  Serial.println("OK");
+}
+
+void loop() {
+  if(!Serial.available()) return;
+  String cmd = Serial.readStringUntil('\\n');
+  cmd.trim();
+  if(!cmd.length()) return;
+  int sp = cmd.indexOf(' ');
+  String op = sp > 0 ? cmd.substring(0, sp) : cmd;
+  String rest = sp > 0 ? cmd.substring(sp+1) : "";
+  op.toUpperCase();
+  if(op == "PING") Serial.println("PONG");
+  else if(op == "UID") cmdUid();
+  else if(op == "READ") cmdRead(rest.toInt());
+  else if(op == "DUMP") cmdDump();
+  else if(op == "WRITE") { int sp2 = rest.indexOf(' '); int blk = rest.substring(0, sp2).toInt(); String hex = rest.substring(sp2+1); cmdWrite(blk, hex); }
+  else if(op == "KEY") { int sp2 = rest.indexOf(' '); int sec = rest.substring(0, sp2).toInt(); String hex = rest.substring(sp2+1); cmdKey(sec, hex); }
+  else Serial.println("ERR unknown");
+}`;
+
+$('ardSketch').textContent=ARD_SKETCH;
 
 function log(m,t=''){const el=$('log');const d=document.createElement('div');if(t)d.className=t;d.textContent=`[${new Date().toLocaleTimeString('pl')}] ${m}`;el.appendChild(d);el.scrollTop=el.scrollHeight;while(el.children.length>120)el.removeChild(el.firstChild);}
 function toast(m,t='info'){const el=document.createElement('div');el.className='toast '+t;const ic=t==='ok'?'i-check':t==='err'?'i-x':'i-info';el.innerHTML=`<svg class="ic"><use href="#${ic}"/></svg><span>${m}</span>`;$('toasts').appendChild(el);setTimeout(()=>{el.style.transition='opacity .3s';el.style.opacity='0';setTimeout(()=>el.remove(),300);},2800);}
 function vibrate(p){if(navigator.vibrate)navigator.vibrate(p);}
-
 function showBig(icon,text,sub='',cancel=null){$('bigIcon').innerHTML=`<use href="#${icon}"/>`;$('bigStatus').className='show';$('bigText').textContent=text;$('bigSub').textContent=sub;const b=$('bigCancel');if(cancel){b.style.display='flex';b.onclick=()=>{cancel();hideBig();};}else b.style.display='none';}
-function showBigSuccess(text,sub=''){$('bigIcon').innerHTML=`<use href="#i-check"/>`;$('bigStatus').className='show ok';$('bigText').textContent=text;$('bigSub').textContent=sub;$('bigCancel').style.display='none';vibrate([40,30,40]);setTimeout(hideBig,1500);}
-function showBigError(text,sub=''){$('bigIcon').innerHTML=`<use href="#i-x"/>`;$('bigStatus').className='show err';$('bigText').textContent=text;$('bigSub').textContent=sub;$('bigCancel').style.display='none';vibrate([80,40,80]);setTimeout(hideBig,3000);}
+function showBigSuccess(t,s=''){$('bigIcon').innerHTML=`<use href="#i-check"/>`;$('bigStatus').className='show ok';$('bigText').textContent=t;$('bigSub').textContent=s;$('bigCancel').style.display='none';vibrate([40,30,40]);setTimeout(hideBig,1500);}
+function showBigError(t,s=''){$('bigIcon').innerHTML=`<use href="#i-x"/>`;$('bigStatus').className='show err';$('bigText').textContent=t;$('bigSub').textContent=s;$('bigCancel').style.display='none';vibrate([80,40,80]);setTimeout(hideBig,3000);}
 function hideBig(){$('bigStatus').className='';}
 
-function loadSettings(){try{const s=localStorage.getItem('nfcCardSettings');if(s){const parsed=JSON.parse(s);Object.assign(S.cardSettings,parsed);}}catch(e){}}
+function loadSettings(){try{const s=localStorage.getItem('nfcCardSettings');if(s){const p=JSON.parse(s);Object.assign(S.cardSettings,p);}}catch(e){}}
 function saveSettings(){try{localStorage.setItem('nfcCardSettings',JSON.stringify(S.cardSettings));}catch(e){}}
 function applyCardSettings(){
-  const c=S.cardSettings;
-  const inner=$('cardInner');
+  const c=S.cardSettings;const inner=$('cardInner');
   inner.style.backgroundImage=c.image?`url('${c.image}')`:'';
   inner.style.backgroundColor=c.image?'#000':(PRESET_COLORS[c.preset]||'#1a1a1a');
   inner.style.borderRadius=c.radius+'px';
@@ -639,21 +857,19 @@ function applyCardSettings(){
   $('cardRecords').style.display=c.showRecords?'':'none';
   $('cardSize').style.display=c.showSize?'':'none';
   document.querySelectorAll('.preset-btn').forEach(b=>b.classList.toggle('active',b.dataset.preset===c.preset));
-  $('cardRadius').value=c.radius;
-  $('cardRadiusVal').textContent=c.radius;
-  $('cardFloat').checked=c.float;
-  $('showUid').checked=c.showUid;
-  $('showRecords').checked=c.showRecords;
-  $('showSize').checked=c.showSize;
-  $('showWave').checked=c.showWave;
-  $('showChip').checked=c.showChip;
+  $('cardRadius').value=c.radius;$('cardRadiusVal').textContent=c.radius;
+  $('cardFloat').checked=c.float;$('showUid').checked=c.showUid;
+  $('showRecords').checked=c.showRecords;$('showSize').checked=c.showSize;
+  $('showWave').checked=c.showWave;$('showChip').checked=c.showChip;
   const prev=$('cardImagePreview');
   if(c.image){prev.src=c.image;prev.style.display='block';}else{prev.style.display='none';prev.src='';}
 }
 
 const hasNfc='NDEFReader' in window;
+const hasSerial='serial' in navigator;
 if(hasNfc){$('nfcBadge').className='bd ok';$('nfcBadge').innerHTML='<svg><use href="#i-check"/></svg> <span>NFC OK</span>';log('Web NFC dostępne','ok');}
-else{$('nfcBadge').className='bd err';$('nfcBadge').innerHTML='<svg><use href="#i-x"/></svg> <span>Brak NFC</span>';log('Web NFC NIE wspierane','err');document.querySelectorAll('main button').forEach(b=>b.disabled=true);}
+else{$('nfcBadge').className='bd err';$('nfcBadge').innerHTML='<svg><use href="#i-x"/></svg> <span>Brak NFC</span>';log('Web NFC brak','err');}
+if(!hasSerial){log('Web Serial niedostępne – Arduino tylko na PC z Chrome','warn');}
 
 async function enterFs(){try{const el=document.documentElement;if(el.requestFullscreen)await el.requestFullscreen();else if(el.webkitRequestFullscreen)await el.webkitRequestFullscreen();}catch(e){}}
 $('fsBtn').onclick=enterFs;
@@ -666,15 +882,14 @@ document.querySelectorAll('nav button').forEach(btn=>{btn.onclick=()=>{document.
 
 function recData(r){if(r.data instanceof DataView)return new Uint8Array(r.data.buffer,r.data.byteOffset,r.data.byteLength);if(r.data instanceof ArrayBuffer)return new Uint8Array(r.data);if(r.data instanceof Uint8Array)return r.data;if(typeof r.data==='string')return new TextEncoder().encode(r.data);return new Uint8Array(0);}
 function bytesToHex(b,sep=' '){return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join(sep);}
-function hexToBytes(h){h=h.replace(/\s+/g,'').replace(/0x/gi,'').replace(/[^0-9a-f]/gi,'');if(h.length%2)throw new Error('Nieparzysta długość HEX');const a=new Uint8Array(h.length/2);for(let i=0;i<a.length;i++)a[i]=parseInt(h.substr(i*2,2),16);return a;}
+function hexToBytes(h){h=h.replace(/\s+/g,'').replace(/0x/gi,'').replace(/[^0-9a-f]/gi,'');if(h.length%2)throw new Error('Nieparzysta');const a=new Uint8Array(h.length/2);for(let i=0;i<a.length;i++)a[i]=parseInt(h.substr(i*2,2),16);return a;}
 function hexDump(b){const lines=[];for(let i=0;i<b.length;i+=16){const c=b.slice(i,i+16);const hex=Array.from(c).map(x=>x.toString(16).padStart(2,'0')).join(' ').padEnd(47,' ');const asc=Array.from(c).map(x=>x>=32&&x<127?String.fromCharCode(x):'.').join('');lines.push(`${i.toString(16).padStart(4,'0')}  ${hex}  ${asc}`);}return lines.join('\n')||'—';}
+function downloadBlob(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 
 function renderCard(tag){
-  const v=$('cardViz');
-  v.classList.remove('scanning','error');
+  const v=$('cardViz');v.classList.remove('scanning','error');
   if(!tag){v.classList.remove('active');$('cardUid').textContent='---- ---- ---- ----';$('cardRecords').innerHTML='<span class="card-empty">Czeka na kartę…</span>';$('cardType').textContent='NFC TAG';$('cardSize').textContent='0 B';return;}
-  v.classList.add('active');
-  $('cardUid').textContent=tag.serialNumber||'---- ---- ---- ----';
+  v.classList.add('active');$('cardUid').textContent=tag.serialNumber||'---- ---- ---- ----';
   const chips=[];let totalB=0;
   for(const r of tag.records){const bytes=new Uint8Array(r.data);totalB+=bytes.length;const cls=r.recordType==='mime'?'mime':r.recordType==='text'?'text':r.recordType==='url'?'url':'';chips.push(`<span class="card-chip-tag ${cls}">${r.recordType}</span>`);}
   if(!chips.length)chips.push('<span class="card-empty">Pusty NDEF</span>');
@@ -686,10 +901,9 @@ function renderCard(tag){
 async function captureTag(){
   return new Promise((resolve,reject)=>{
     if(!hasNfc)return reject(new Error('Brak Web NFC'));
-    const ndef=new NDEFReader();
-    const ctrl=new AbortController();
-    const to=setTimeout(()=>{ctrl.abort();reject(new Error('Timeout (30s)'));},30000);
-    ndef.onreading=({serialNumber,message})=>{clearTimeout(to);ctrl.abort();const records=[];if(message&&message.records){for(const r of message.records){const copy={recordType:r.recordType};if(r.mediaType)copy.mediaType=r.mediaType;if(r.id)copy.id=r.id;if(r.encoding)copy.encoding=r.encoding;if(r.lang)copy.lang=r.lang;const bytes=recData(r);copy.data=bytes.buffer.slice(0);records.push(copy);}}resolve({serialNumber,records});};
+    const ndef=new NDEFReader();const ctrl=new AbortController();
+    const to=setTimeout(()=>{ctrl.abort();reject(new Error('Timeout'));},30000);
+    ndef.onreading=({serialNumber,message})=>{clearTimeout(to);ctrl.abort();const records=[];if(message&&message.records){for(const r of message.records){const cp={recordType:r.recordType};if(r.mediaType)cp.mediaType=r.mediaType;if(r.id)cp.id=r.id;if(r.encoding)cp.encoding=r.encoding;if(r.lang)cp.lang=r.lang;const bytes=recData(r);cp.data=bytes.buffer.slice(0);records.push(cp);}}resolve({serialNumber,records});};
     ndef.onreadingerror=()=>{clearTimeout(to);reject(new Error('Błąd odczytu'));};
     ndef.scan({signal:ctrl.signal}).catch(e=>{clearTimeout(to);reject(e);});
   });
@@ -706,303 +920,355 @@ function recForWrite(r){
 }
 
 async function writeTag(records){if(!hasNfc)throw new Error('Brak Web NFC');const ndef=new NDEFReader();await ndef.write({records});}
-function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 
 function recordPreview(r){const bytes=new Uint8Array(r.data);const head=bytes.slice(0,32);let txt;try{txt=new TextDecoder(r.encoding||'utf-8').decode(head);}catch(e){txt='';}if(/[\x00-\x08\x0e-\x1f]/.test(txt))return hexDump(head);return txt+(bytes.length>32?'…':'');}
 
 $('readBtn').onclick=async()=>{
-  if(!hasNfc)return;
-  $('readResult').innerHTML='';
-  $('readActions').style.display='none';
-  $('cardViz').classList.add('scanning');
-  $('cardViz').classList.remove('active','error');
+  if(!hasNfc)return toast('Brak Web NFC','err');
+  $('readResult').innerHTML='';$('readActions').style.display='none';
+  $('cardViz').classList.add('scanning');$('cardViz').classList.remove('active','error');
   try{
-    showBig('i-scan','Zbliż kartę…','Odczyt w toku');
-    const tag=await captureTag();
-    hideBig();vibrate(30);S.read=tag;renderCard(tag);
-    log(`Odczyt ${tag.records.length} rekordów z ${tag.serialNumber}`,'ok');
+    showBig('i-scan','Zbliż kartę…','Odczyt');
+    const tag=await captureTag();hideBig();vibrate(30);S.read=tag;renderCard(tag);
+    log(`Odczyt ${tag.records.length} rekordów`,'ok');
     let html=`<div class="uid-display">UID: ${tag.serialNumber}</div>`;
-    if(!tag.records.length){html+=`<div class="result-item"><strong>Zawartość</strong><div class="preview">Karta pusta (brak NDEF)</div></div>`;}
+    if(!tag.records.length){html+=`<div class="result-item"><strong>Zawartość</strong><div class="preview">Pusta</div></div>`;}
     else{tag.records.forEach(r=>{const cls=r.recordType==='mime'?'mime':r.recordType;const bytes=new Uint8Array(r.data);const prev=recordPreview(r);html+=`<div class="result-item"><strong><span class="chip ${cls}">${r.recordType}</span>${r.mediaType?' '+r.mediaType:''}</strong><div class="preview">${prev.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><details><summary>HEX (${bytes.length} B)</summary><div class="hex-block">${hexDump(bytes).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div></details></div>`;});}
-    $('readResult').innerHTML=html;
-    $('readActions').style.display='block';
+    $('readResult').innerHTML=html;$('readActions').style.display='block';
   }catch(e){hideBig();$('cardViz').classList.remove('scanning');$('cardViz').classList.add('error');log('Błąd: '+e.message,'err');toast('Błąd: '+e.message,'err');}
 };
 
+$('readToClone').onclick=()=>{if(!S.read)return;S.clone=S.read;renderClone();document.querySelector('nav button[data-tab="clone"]').click();toast('Do klonowania','ok');};
+$('readToHex').onclick=()=>{if(!S.read)return;const chunks=S.read.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}S.hex=buf;$('hexInput').value=bytesToHex(buf);updateHexView();document.querySelector('nav button[data-tab="hex"]').click();};
+$('readToBlocks').onclick=()=>{if(!S.read)return;renderBlocks(S.read);document.querySelector('nav button[data-tab="blocks"]').click();};
+$('readExportJson').onclick=()=>{if(!S.read)return;const obj={serialNumber:S.read.serialNumber,records:S.read.records.map(r=>({recordType:r.recordType,mediaType:r.mediaType,id:r.id,encoding:r.encoding,lang:r.lang,dataHex:bytesToHex(new Uint8Array(r.data),'')}))};downloadBlob(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),`tag.json`);};
+$('readExportBin').onclick=()=>{if(!S.read)return;const chunks=S.read.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}downloadBlob(new Blob([buf],{type:'application/octet-stream'}),`tag.bin`);};
+
 function encodeNDEFRecord(r,isFirst,isLast){
   const t=r.recordType;let type,payload;
-  if(t==='text'){
-    type=new Uint8Array([0x54]);
-    const txt=new TextDecoder().decode(new Uint8Array(r.data));
-    const lang=r.lang||'en';
-    const langB=new TextEncoder().encode(lang);
-    const txtB=new TextEncoder().encode(txt);
-    payload=new Uint8Array(1+langB.length+txtB.length);
-    payload[0]=(langB.length)&0x3F;
-    payload.set(langB,1);
-    payload.set(txtB,1+langB.length);
-  }else if(t==='url'){
-    type=new Uint8Array([0x55]);
-    const url=new TextDecoder().decode(new Uint8Array(r.data));
-    let prefix=0x00,rest=url;
-    if(url.startsWith('https://www.')){prefix=0x02;rest=url.substring(12);}
-    else if(url.startsWith('http://www.')){prefix=0x01;rest=url.substring(11);}
-    else if(url.startsWith('https://')){prefix=0x04;rest=url.substring(8);}
-    else if(url.startsWith('http://')){prefix=0x03;rest=url.substring(7);}
-    else if(url.startsWith('tel:')){prefix=0x05;rest=url.substring(4);}
-    else if(url.startsWith('mailto:')){prefix=0x06;rest=url.substring(7);}
-    const restB=new TextEncoder().encode(rest);
-    payload=new Uint8Array(1+restB.length);
-    payload[0]=prefix;
-    payload.set(restB,1);
-  }else if(t==='mime'){
-    type=new TextEncoder().encode(r.mediaType||'application/octet-stream');
-    payload=new Uint8Array(r.data);
-  }else if(t==='empty'){
-    type=new Uint8Array(0);payload=new Uint8Array(0);
-  }else{
-    type=new TextEncoder().encode('application/octet-stream');
-    payload=new Uint8Array(r.data);
-  }
-  const tnf=t==='empty'?0:(t==='mime'?2:(t==='unknown'?5:1));
-  const sr=payload.length<256?1:0;
-  const il=r.id?1:0;
-  const mb=isFirst?1:0;
-  const me=isLast?1:0;
-  const header=(mb<<7)|(me<<6)|(0<<5)|(sr<<4)|(il<<3)|tnf;
+  if(t==='text'){type=new Uint8Array([0x54]);const txt=new TextDecoder().decode(new Uint8Array(r.data));const lang=r.lang||'en';const langB=new TextEncoder().encode(lang);const txtB=new TextEncoder().encode(txt);payload=new Uint8Array(1+langB.length+txtB.length);payload[0]=(langB.length)&0x3F;payload.set(langB,1);payload.set(txtB,1+langB.length);}
+  else if(t==='url'){type=new Uint8Array([0x55]);const url=new TextDecoder().decode(new Uint8Array(r.data));let prefix=0x00,rest=url;if(url.startsWith('https://www.')){prefix=0x02;rest=url.substring(12);}else if(url.startsWith('http://www.')){prefix=0x01;rest=url.substring(11);}else if(url.startsWith('https://')){prefix=0x04;rest=url.substring(8);}else if(url.startsWith('http://')){prefix=0x03;rest=url.substring(7);}const restB=new TextEncoder().encode(rest);payload=new Uint8Array(1+restB.length);payload[0]=prefix;payload.set(restB,1);}
+  else if(t==='mime'){type=new TextEncoder().encode(r.mediaType||'application/octet-stream');payload=new Uint8Array(r.data);}
+  else if(t==='empty'){type=new Uint8Array(0);payload=new Uint8Array(0);}
+  else{type=new TextEncoder().encode('application/octet-stream');payload=new Uint8Array(r.data);}
+  const tnf=t==='empty'?0:(t==='mime'?2:1);
+  const sr=payload.length<256?1:0;const il=r.id?1:0;const mb=isFirst?1:0;const me=isLast?1:0;
+  const header=(mb<<7)|(me<<6)|(sr<<4)|(il<<3)|tnf;
   const parts=[new Uint8Array([header,type.length])];
-  if(sr)parts.push(new Uint8Array([payload.length]));
-  else parts.push(new Uint8Array([(payload.length>>24)&0xFF,(payload.length>>16)&0xFF,(payload.length>>8)&0xFF,payload.length&0xFF]));
+  if(sr)parts.push(new Uint8Array([payload.length]));else parts.push(new Uint8Array([(payload.length>>24)&0xFF,(payload.length>>16)&0xFF,(payload.length>>8)&0xFF,payload.length&0xFF]));
   if(il)parts.push(new Uint8Array([r.id.length]));
-  parts.push(type);
-  if(il)parts.push(new Uint8Array(r.id));
-  parts.push(payload);
-  const total=parts.reduce((a,p)=>a+p.length,0);
-  const buf=new Uint8Array(total);
-  let off=0;for(const p of parts){buf.set(p,off);off+=p.length;}
-  return buf;
+  parts.push(type);if(il)parts.push(new Uint8Array(r.id));parts.push(payload);
+  const total=parts.reduce((a,p)=>a+p.length,0);const buf=new Uint8Array(total);let off=0;for(const p of parts){buf.set(p,off);off+=p.length;}return buf;
 }
-
-function buildNDEFMessage(tag){
-  if(!tag||!tag.records.length)return new Uint8Array(0);
-  const parts=[];
-  tag.records.forEach((r,i)=>parts.push(encodeNDEFRecord(r,i===0,i===tag.records.length-1)));
-  const total=parts.reduce((a,p)=>a+p.length,0);
-  const buf=new Uint8Array(total);
-  let off=0;for(const p of parts){buf.set(p,off);off+=p.length;}
-  return buf;
-}
-
-function buildTLV(ndefMsg){
-  if(!ndefMsg.length)return new Uint8Array(0);
-  if(ndefMsg.length<255){const tlv=new Uint8Array(2+ndefMsg.length+1);tlv[0]=0x03;tlv[1]=ndefMsg.length;tlv.set(ndefMsg,2);tlv[2+ndefMsg.length]=0xFE;return tlv;}
-  const tlv=new Uint8Array(4+ndefMsg.length+1);
-  tlv[0]=0x03;tlv[1]=0xFF;tlv[2]=(ndefMsg.length>>8)&0xFF;tlv[3]=ndefMsg.length&0xFF;
-  tlv.set(ndefMsg,4);tlv[4+ndefMsg.length]=0xFE;
-  return tlv;
-}
-
-function mapTLVToBlocks(tlv,tag){
-  const blocks=new Array(64).fill(null).map(()=>new Uint8Array(16));
-  if(tag&&tag.serialNumber){
-    const parts=tag.serialNumber.split(':').map(x=>parseInt(x,16)).filter(x=>!isNaN(x));
-    const b0=new Uint8Array(16);
-    for(let i=0;i<Math.min(parts.length,4);i++)b0[i]=parts[i];
-    if(parts.length>=4)b0[4]=parts[0]^parts[1]^parts[2]^parts[3];
-    b0[5]=0x08;b0[6]=0x00;b0[7]=0x04;
-    b0[8]=0x62;b0[9]=0x63;b0[10]=0x64;b0[11]=0x65;b0[12]=0x66;b0[13]=0x67;b0[14]=0x68;b0[15]=0x69;
-    blocks[0]=b0;
-  }
-  blocks[1]=new Uint8Array([0x14,0x01,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);
-  blocks[2]=new Uint8Array([0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);
-  let blockNum=4,offset=0;
-  while(offset<tlv.length&&blockNum<64){
-    if(blockNum%4===3){blockNum++;continue;}
-    const chunk=new Uint8Array(16);
-    const remaining=tlv.length-offset;
-    const toCopy=Math.min(16,remaining);
-    chunk.set(tlv.slice(offset,offset+toCopy));
-    blocks[blockNum]=chunk;
-    offset+=toCopy;blockNum++;
-  }
-  for(let b=3;b<64;b+=4){blocks[b]=new Uint8Array([0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x07,0x80,0x69,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]);}
-  return blocks;
-}
-
-function buildTLVDiagram(tlv){
-  if(!tlv.length)return 'Brak danych NDEF';
-  let html='';
-  const isLong=tlv[1]===0xFF;
-  const headerLen=isLong?4:2;
-  const ndefStart=headerLen;
-  const ndefLen=isLong?((tlv[2]<<8)|tlv[3]):tlv[1];
-  html+=`<span class="lbl">// Nagłówek TLV</span>\n`;
-  html+=`<span class="tag">0x03</span> <span class="lbl">(tag: NDEF Message)</span>\n`;
-  if(isLong){html+=`<span class="len">0xFF</span> <span class="len">0x${tlv[2].toString(16).padStart(2,'0')}</span> <span class="len">0x${tlv[3].toString(16).padStart(2,'0')}</span> <span class="lbl">(długość 3-bajtowa: ${ndefLen} B)</span>\n`;}
-  else{html+=`<span class="len">0x${tlv[1].toString(16).padStart(2,'0')}</span> <span class="lbl">(długość: ${ndefLen} B)</span>\n`;}
-  html+=`\n<span class="lbl">// Wiadomość NDEF (${ndefLen} B)</span>\n`;
-  let off=ndefStart;
-  while(off<ndefStart+ndefLen){
-    const h=tlv[off];
-    const mb=(h>>7)&1,me=(h>>6)&1,sr=(h>>4)&1,il=(h>>3)&1,tnf=h&7;
-    const typeLen=tlv[off+1];
-    let pos=off+2;
-    let payLen;
-    if(sr){payLen=tlv[pos];pos++;}
-    else{payLen=(tlv[pos]<<24)|(tlv[pos+1]<<16)|(tlv[pos+2]<<8)|tlv[pos+3];pos+=4;}
-    let idLen=0;
-    if(il){idLen=tlv[pos];pos++;}
-    html+=`<span class="ndef-h">0x${h.toString(16).padStart(2,'0')}</span> <span class="lbl">(MB=${mb} ME=${me} SR=${sr} IL=${il} TNF=${tnf})</span>\n`;
-    html+=`<span class="ndef-h">0x${typeLen.toString(16).padStart(2,'0')}</span> <span class="lbl">(długość typu: ${typeLen})</span>\n`;
-    if(sr){html+=`<span class="ndef-h">0x${payLen.toString(16).padStart(2,'0')}</span> <span class="lbl">(długość ładunku: ${payLen})</span>\n`;}
-    else{html+=`<span class="ndef-h">${[0,1,2,3].map(i=>'0x'+tlv[off+2+i].toString(16).padStart(2,'0')).join(' ')}</span> <span class="lbl">(długość: ${payLen})</span>\n`;}
-    if(il){html+=`<span class="ndef-h">0x${idLen.toString(16).padStart(2,'0')}</span> <span class="lbl">(długość ID: ${idLen})</span>\n`;}
-    const typeBytes=tlv.slice(pos,pos+typeLen);
-    const typeStr=Array.from(typeBytes).map(b=>'0x'+b.toString(16).padStart(2,'0')).join(' ');
-    html+=`<span class="ndef-t">${typeStr}</span> <span class="lbl">(typ: '${String.fromCharCode(...typeBytes)}')</span>\n`;
-    pos+=typeLen;
-    if(il)pos+=idLen;
-    const payBytes=tlv.slice(pos,pos+payLen);
-    const payHex=Array.from(payBytes).map(b=>'0x'+b.toString(16).padStart(2,'0')).join(' ');
-    const payAscii=Array.from(payBytes).map(b=>b>=32&&b<127?String.fromCharCode(b):'.').join('');
-    html+=`<span class="ndef-p">${payHex}</span> <span class="lbl">("${payAscii}")</span>\n`;
-    off=pos+payLen;
-    if(me)break;
-  }
-  html+=`\n<span class="term">0xFE</span> <span class="lbl">(terminator TLV)</span>`;
-  return html;
-}
+function buildNDEFMessage(tag){if(!tag||!tag.records.length)return new Uint8Array(0);const parts=[];tag.records.forEach((r,i)=>parts.push(encodeNDEFRecord(r,i===0,i===tag.records.length-1)));const total=parts.reduce((a,p)=>a+p.length,0);const buf=new Uint8Array(total);let off=0;for(const p of parts){buf.set(p,off);off+=p.length;}return buf;}
+function buildTLV(m){if(!m.length)return new Uint8Array(0);if(m.length<255){const t=new Uint8Array(2+m.length+1);t[0]=0x03;t[1]=m.length;t.set(m,2);t[2+m.length]=0xFE;return t;}const t=new Uint8Array(4+m.length+1);t[0]=0x03;t[1]=0xFF;t[2]=(m.length>>8)&0xFF;t[3]=m.length&0xFF;t.set(m,4);t[4+m.length]=0xFE;return t;}
+function mapTLVToBlocks(tlv,tag){const b=new Array(64).fill(null).map(()=>new Uint8Array(16));if(tag&&tag.serialNumber){const parts=tag.serialNumber.split(':').map(x=>parseInt(x,16)).filter(x=>!isNaN(x));const b0=new Uint8Array(16);for(let i=0;i<Math.min(parts.length,4);i++)b0[i]=parts[i];if(parts.length>=4)b0[4]=parts[0]^parts[1]^parts[2]^parts[3];b0[5]=0x08;b0[6]=0x00;b0[7]=0x04;b0[8]=0x62;b0[9]=0x63;b0[10]=0x64;b0[11]=0x65;b0[12]=0x66;b0[13]=0x67;b0[14]=0x68;b0[15]=0x69;b[0]=b0;}b[1]=new Uint8Array([0x14,0x01,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);b[2]=new Uint8Array([0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);let bn=4,off=0;while(off<tlv.length&&bn<64){if(bn%4===3){bn++;continue;}const ch=new Uint8Array(16);const rem=tlv.length-off;const toC=Math.min(16,rem);ch.set(tlv.slice(off,off+toC));b[bn]=ch;off+=toC;bn++;}for(let i=3;i<64;i+=4){b[i]=new Uint8Array([0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x07,0x80,0x69,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]);}return b;}
+function buildTLVDiagram(tlv){if(!tlv.length)return 'Brak NDEF';let h='';const isLong=tlv[1]===0xFF;const hl=isLong?4:2;const nl=isLong?((tlv[2]<<8)|tlv[3]):tlv[1];h+=`<span class="lbl">// TLV nagłówek</span>\n<span class="tag">0x03</span> <span class="lbl">(NDEF)</span>\n`;if(isLong){h+=`<span class="len">0xFF 0x${tlv[2].toString(16).padStart(2,'0')} 0x${tlv[3].toString(16).padStart(2,'0')}</span> <span class="lbl">(dł: ${nl} B)</span>\n`;}else{h+=`<span class="len">0x${tlv[1].toString(16).padStart(2,'0')}</span> <span class="lbl">(dł: ${nl} B)</span>\n`;}h+=`\n<span class="lbl">// NDEF (${nl} B)</span>\n`;let off=hl;while(off<hl+nl){const hd=tlv[off];const sr=(hd>>4)&1;const il=(hd>>3)&1;const tnf=hd&7;const tLen=tlv[off+1];let pos=off+2;let pLen;if(sr){pLen=tlv[pos];pos++;}else{pLen=(tlv[pos]<<24)|(tlv[pos+1]<<16)|(tlv[pos+2]<<8)|tlv[pos+3];pos+=4;}let idL=0;if(il){idL=tlv[pos];pos++;}h+=`<span class="ndef-h">0x${hd.toString(16).padStart(2,'0')}</span> <span class="lbl">(TNF=${tnf})</span>\n<span class="ndef-h">0x${tLen.toString(16).padStart(2,'0')}</span> <span class="lbl">(type len)</span>\n<span class="ndef-h">0x${pLen.toString(16).padStart(2,'0')}</span> <span class="lbl">(payload len)</span>\n`;const tB=tlv.slice(pos,pos+tLen);h+=`<span class="ndef-t">${Array.from(tB).map(x=>'0x'+x.toString(16).padStart(2,'0')).join(' ')}</span> <span class="lbl">('${String.fromCharCode(...tB)}')</span>\n`;pos+=tLen;if(il)pos+=idL;const pB=tlv.slice(pos,pos+pLen);h+=`<span class="ndef-p">${Array.from(pB).map(x=>'0x'+x.toString(16).padStart(2,'0')).join(' ')}</span>\n`;off=pos+pLen;if((hd>>6)&1)break;}h+=`\n<span class="term">0xFE</span> <span class="lbl">(koniec)</span>`;return h;}
 
 function renderBlocks(tag){
-  let tlv=new Uint8Array(0);
-  let ndefMsg=new Uint8Array(0);
-  if(tag){
-    ndefMsg=buildNDEFMessage(tag);
-    tlv=buildTLV(ndefMsg);
-  }
+  let tlv=new Uint8Array(0),ndefMsg=new Uint8Array(0);
+  if(tag){ndefMsg=buildNDEFMessage(tag);tlv=buildTLV(ndefMsg);}
   S.blocks=mapTLVToBlocks(tlv,tag);
-  $('tlvDiagram').innerHTML=tag?buildTLVDiagram(tlv).replace(/\n/g,'<br>'):'Czeka na odczyt karty…';
+  $('tlvDiagram').innerHTML=tag?buildTLVDiagram(tlv).replace(/\n/g,'<br>'):'Czeka…';
   $('blocksSize').textContent=`${ndefMsg.length} B`;
-  const blocks=S.blocks;
-  let used=0,free=0;
-  const view=$('blocksView');
-  view.innerHTML='';
+  const blocks=S.blocks;let used=0,free=0;
+  const view=$('blocksView');view.innerHTML='';
   for(let s=0;s<16;s++){
-    const sectorDiv=document.createElement('div');
-    sectorDiv.className='sector-block';
-    const head=document.createElement('div');
-    head.className='sector-head';
-    const usedInSector=[];
-    for(let i=0;i<4;i++){if(i===3)continue;const b=s*4+i;const d=blocks[b];if(d&&d.some(x=>x!==0))usedInSector.push(b);}
-    head.innerHTML=`<span>Sektor ${s} (bloki ${s*4}–${s*4+3})</span><span class="badge-sm ${usedInSector.length?'used':''}">${usedInSector.length}/3</span>`;
-    sectorDiv.appendChild(head);
-    let skipSector=false;
+    const sec=document.createElement('div');sec.className='sector-block';
+    const hd=document.createElement('div');hd.className='sector-head';
+    const usedInSector=[];for(let i=0;i<4;i++){if(i===3)continue;const b=s*4+i;const d=blocks[b];if(d&&d.some(x=>x!==0))usedInSector.push(b);}
+    hd.innerHTML=`<span>Sektor ${s}</span><span class="badge-sm ${usedInSector.length?'used':''}">${usedInSector.length}/3</span>`;
+    sec.appendChild(hd);
+    let skip=false;
     for(let i=0;i<4;i++){
-      const b=s*4+i;
-      const d=blocks[b];
-      const isTrailer=(i===3);
-      const isUsed=d&&d.some(x=>x!==0);
-      if(isTrailer&&!S.showTrailer)continue;
-      if(!isUsed&&!S.showEmpty&&!isTrailer){skipSector=true;continue;}
-      const row=document.createElement('div');
-      row.className='block-row';
-      row.dataset.block=b;
-      if(isTrailer)row.classList.add('trailer');
-      else if(isUsed)row.classList.add('ndef-used');
-      else row.classList.add('empty');
+      const b=s*4+i;const d=blocks[b];const isT=(i===3);const isUsed=d&&d.some(x=>x!==0);
+      if(isT&&!S.showTrailer)continue;
+      if(!isUsed&&!S.showEmpty&&!isT){skip=true;continue;}
+      const row=document.createElement('div');row.className='block-row';row.dataset.block=b;
+      if(isT)row.classList.add('trailer');else if(isUsed)row.classList.add('ndef-used');else row.classList.add('empty');
       let hex,asc;
-      const mode=S.blockView;
-      if(isTrailer){hex='•• •• •• •• •• •• FF 07 80 69 •• •• •• •• •• ••';asc='Key A + Access + Key B';}
+      if(isT){hex='•• •• •• •• •• •• FF 07 80 69 •• •• •• •• •• ••';asc='Key A + Access + Key B';}
       else{hex=Array.from(d||new Uint8Array(16)).map(x=>x.toString(16).padStart(2,'0')).join(' ');asc=Array.from(d||new Uint8Array(16)).map(x=>x>=32&&x<127?String.fromCharCode(x):'·').join('');}
-      if(mode==='hex')row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hex}</span></div>`;
-      else if(mode==='ascii')row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${asc}</span></div>`;
-      else if(mode==='annotated'){
-        let annotation='';
-        if(b===0)annotation='Blok producenta (UID + BCC + SAK + ATQA)';
-        else if(b===1||b===2)annotation='MAD (MIFARE Application Directory)';
-        else if(isTrailer)annotation='Sektor trailer (klucze + access bits)';
-        else if(isUsed)annotation='Dane NDEF (TLV)';
-        else annotation='Pusty';
-        row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hex}</span><span class="block-ascii">${annotation}</span></div>`;
-      }else row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hex}</span><span class="block-ascii">${asc}</span></div>`;
-      sectorDiv.appendChild(row);
-      if(!isTrailer){if(isUsed)used++;else free++;}
+      if(S.blockView==='hex')row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hex}</span></div>`;
+      else if(S.blockView==='ascii')row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${asc}</span></div>`;
+      else if(S.blockView==='annotated'){let an='';if(b===0)an='UID+BCC+SAK+ATQA';else if(b===1||b===2)an='MAD';else if(isT)an='Trailer';else if(isUsed)an='NDEF';else an='Pusty';row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hex}</span><span class="block-ascii">${an}</span></div>`;}
+      else row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hex}</span><span class="block-ascii">${asc}</span></div>`;
+      sec.appendChild(row);
+      if(!isT){if(isUsed)used++;else free++;}
     }
-    if(!skipSector)view.appendChild(sectorDiv);
+    if(!skip)view.appendChild(sec);
   }
-  $('blocksUsed').textContent=used;
-  $('blocksFree').textContent=free;
-  $('blocksPct').textContent=Math.round((used/(used+free))*100)+'%';
+  $('blocksUsed').textContent=used;$('blocksFree').textContent=free;$('blocksPct').textContent=Math.round((used/(used+free||1))*100)+'%';
 }
 
 $('blocksView').addEventListener('click',e=>{
-  const row=e.target.closest('.block-row');
-  if(!row)return;
+  const row=e.target.closest('.block-row');if(!row)return;
   document.querySelectorAll('.block-row.selected').forEach(r=>r.classList.remove('selected'));
   row.classList.add('selected');
-  const b=parseInt(row.dataset.block,10);
-  const d=S.blocks[b];
-  if(!d)return;
+  const b=parseInt(row.dataset.block,10);const d=S.blocks[b];if(!d)return;
   let desc='';
-  if(b===0)desc='<b>Blok 0</b>: Dane producenta (UID, BCC, SAK, ATQA). Zwykle tylko do odczytu.';
-  else if(b===1||b===2)desc='<b>MAD</b>: MIFARE Application Directory – informuje telefon, że w sektorze 1 znajduje się NDEF.';
-  else if(b%4===3)desc='<b>Sektor trailer</b>: Klucz A (6B) + access bits (4B) + klucz B (6B). Chroniony przed zapisem.';
-  else if(d.some(x=>x!==0))desc='<b>Dane NDEF</b>: Fragment wiadomości TLV (tag 0x03 + długość + NDEF + terminator 0xFE).';
-  else desc='<b>Pusty blok</b>: Wypełniony zerami.';
-  $('byteInspector').innerHTML=`${desc}<br><br><span style="font-family:var(--mo);font-size:10px">Blok ${b} • Offset ${b*16}–${b*16+15}</span><div class="hex-block" style="margin-top:6px">${Array.from(d).map(x=>x.toString(16).padStart(2,'0')).join(' ')}</div>`;
-  vibrate(15);
+  if(b===0)desc='<b>Blok 0</b>: producent (UID, BCC, SAK, ATQA)';
+  else if(b===1||b===2)desc='<b>MAD</b>';
+  else if(b%4===3)desc='<b>Trailer</b>: Key A + Access + Key B';
+  else if(d.some(x=>x!==0))desc='<b>Dane NDEF</b>';
+  else desc='<b>Pusty</b>';
+  $('byteInspector').innerHTML=`${desc}<br><span style="font-family:var(--mo);font-size:10px">Blok ${b}</span><div class="hex-block" style="margin-top:6px">${Array.from(d).map(x=>x.toString(16).padStart(2,'0')).join(' ')}</div>`;
 });
-
 $('blockViewMode').onchange=e=>{S.blockView=e.target.value;if(S.blocks)renderBlocks(S.read);};
-$('toggleTrailer').onclick=()=>{S.showTrailer=!S.showTrailer;if(S.blocks)renderBlocks(S.read);toast('Trailer: '+(S.showTrailer?'ON':'OFF'),'info');};
-$('toggleEmpty').onclick=()=>{S.showEmpty=!S.showEmpty;if(S.blocks)renderBlocks(S.read);toast('Puste: '+(S.showEmpty?'POKAZANE':'UKRYTE'),'info');};
+$('toggleTrailer').onclick=()=>{S.showTrailer=!S.showTrailer;if(S.blocks)renderBlocks(S.read);};
+$('toggleEmpty').onclick=()=>{S.showEmpty=!S.showEmpty;if(S.blocks)renderBlocks(S.read);};
 
 $('blocksRead').onclick=async()=>{
-  if(!hasNfc)return;
-  try{
-    showBig('i-scan','Zbliż kartę…','Odczyt bloków');
-    const tag=await captureTag();
-    hideBig();vibrate(30);S.read=tag;renderCard(tag);renderBlocks(tag);
-    log(`Bloki: ${tag.serialNumber}`,'ok');
-    toast('Rekonstrukcja bloków gotowa','ok');
-  }catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}
+  if(!hasNfc)return toast('Brak Web NFC','err');
+  try{showBig('i-scan','Zbliż kartę…','');const tag=await captureTag();hideBig();S.read=tag;renderCard(tag);renderBlocks(tag);log('Bloki (rekonstrukcja)','ok');}catch(e){hideBig();showBigError('Błąd',e.message);}
 };
 
-function exportMfd(){if(!S.blocks)return toast('Brak danych','err');const out=new Uint8Array(1024);for(let b=0;b<64;b++){out.set(S.blocks[b],b*16);}downloadBlob(new Blob([out],{type:'application/octet-stream'}),`tag-${(S.read?.serialNumber||'unknown').replace(/:/g,'')}.mfd`);log('Eksport .mfd','ok');toast('Eksport .mfd (rekonstrukcja)','ok');}
-function exportBinBlocks(){if(!S.blocks)return toast('Brak danych','err');const out=new Uint8Array(1024);for(let b=0;b<64;b++){out.set(S.blocks[b],b*16);}downloadBlob(new Blob([out],{type:'application/octet-stream'}),`tag-${(S.read?.serialNumber||'unknown').replace(/:/g,'')}.bin`);log('Eksport BIN','ok');}
-function exportHexBlocks(){if(!S.blocks)return toast('Brak danych','err');const out=new Uint8Array(1024);for(let b=0;b<64;b++){out.set(S.blocks[b],b*16);}downloadBlob(new Blob([hexDump(out)],{type:'text/plain'}),`tag-${(S.read?.serialNumber||'unknown').replace(/:/g,'')}.hex`);log('Eksport HEX','ok');}
-function exportTxtBlocks(){if(!S.blocks)return toast('Brak danych','err');let txt='';for(let b=0;b<64;b++){const d=S.blocks[b];txt+=`Blok ${b.toString().padStart(2,'0')}: ${Array.from(d).map(x=>x.toString(16).padStart(2,'0')).join(' ')}\n`;}downloadBlob(new Blob([txt],{type:'text/plain'}),`tag-${(S.read?.serialNumber||'unknown').replace(/:/g,'')}.txt`);log('Eksport TXT','ok');}
-async function copyHexAll(){if(!S.blocks)return toast('Brak danych','err');let txt='';for(let b=0;b<64;b++){txt+=Array.from(S.blocks[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ')+'\n';}await copyToClipboard(txt);log('Skopiowano HEX','ok');}
-async function copyCArray(){if(!S.blocks)return toast('Brak danych','err');let txt='const uint8_t tag[1024] = {\n  ';const arr=[];for(let b=0;b<64;b++){for(let i=0;i<16;i++)arr.push('0x'+S.blocks[b][i].toString(16).padStart(2,'0'));}for(let i=0;i<arr.length;i++){txt+=arr[i];if(i<arr.length-1)txt+=',';if((i+1)%16===0)txt+='\n  ';}txt+='\n};';await copyToClipboard(txt);log('Skopiowano C array','ok');}
-async function copyPyBytes(){if(!S.blocks)return toast('Brak danych','err');const arr=[];for(let b=0;b<64;b++){for(let i=0;i<16;i++)arr.push('0x'+S.blocks[b][i].toString(16).padStart(2,'0'));}const txt=`tag = bytes([${arr.join(', ')}])`;await copyToClipboard(txt);log('Skopiowano Python','ok');}
-async function copyToClipboard(text){try{await navigator.clipboard.writeText(text);toast('Skopiowano','ok');}catch(e){toast('Błąd kopiowania','err');}}
+// ================== ARDUINO WEB SERIAL ==================
+function ardOut(text,cls='rx'){
+  const el=$('ardOutput');
+  const lines=text.split('\n').filter(l=>l.length);
+  for(const l of lines){
+    const d=document.createElement('div');
+    d.className=cls;
+    d.textContent=l;
+    el.appendChild(d);
+  }
+  el.scrollTop=el.scrollHeight;
+}
 
-$('exportMfd').onclick=exportMfd;
-$('exportBinBlocks').onclick=exportBinBlocks;
-$('exportHexBlocks').onclick=exportHexBlocks;
-$('exportTxtBlocks').onclick=exportTxtBlocks;
-$('copyHexAll').onclick=copyHexAll;
-$('copyCArray').onclick=copyCArray;
-$('copyPyBytes').onclick=copyPyBytes;
+async function ardConnect(){
+  if(!hasSerial){toast('Web Serial niedostępne. Użyj Chrome/Edge na PC.','err');return;}
+  try{
+    S.ardPort=await navigator.serial.requestPort();
+    const baud=parseInt($('ardBaud').value);
+    await S.ardPort.open({baudRate:baud});
+    S.ardWriter=S.ardPort.writable.getWriter();
+    S.ardConnected=true;
+    $('ardConnect').style.display='none';
+    $('ardDisconnect').style.display='';
+    $('ardStatus').className='ard-status on';
+    $('ardStatusTxt').textContent=`Połączono @ ${baud} baud`;
+    $('ardConnectedCard').style.display='';
+    $('ardConsoleCard').style.display='';
+    $('ardBlocksCard').style.display='';
+    log(`Arduino połączone @ ${baud}`,'ok');
+    ardOut(`// Połączono @ ${baud} baud`,'sys');
+    ardReadLoop();
+    setTimeout(()=>ardSend('PING'),500);
+  }catch(e){
+    log('Błąd połączenia: '+e.message,'err');
+    toast('Błąd połączenia: '+e.message,'err');
+    $('ardStatus').className='ard-status err';
+    $('ardStatusTxt').textContent='Błąd: '+e.message;
+  }
+}
 
-$('readToClone').onclick=()=>{if(!S.read)return;S.clone=S.read;renderClone();document.querySelector('nav button[data-tab="clone"]').click();toast('Do klonowania','ok');};
-$('readToHex').onclick=()=>{if(!S.read)return;const chunks=S.read.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}S.hex=buf;$('hexInput').value=bytesToHex(buf);updateHexView();document.querySelector('nav button[data-tab="hex"]').click();toast('Do HEX','ok');};
-$('readToBlocks').onclick=()=>{if(!S.read)return;renderBlocks(S.read);document.querySelector('nav button[data-tab="blocks"]').click();toast('Do bloków','ok');};
-$('readExportJson').onclick=()=>{if(!S.read)return;const obj={serialNumber:S.read.serialNumber,records:S.read.records.map(r=>({recordType:r.recordType,mediaType:r.mediaType,id:r.id,encoding:r.encoding,lang:r.lang,dataHex:bytesToHex(new Uint8Array(r.data),'')}))};downloadBlob(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),`tag-${S.read.serialNumber.replace(/:/g,'')}.json`);log('Eksport JSON','ok');};
-$('readExportBin').onclick=()=>{if(!S.read)return;const chunks=S.read.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}downloadBlob(new Blob([buf],{type:'application/octet-stream'}),`tag-${S.read.serialNumber.replace(/:/g,'')}.bin`);log('Eksport BIN','ok');};
+async function ardReadLoop(){
+  const decoder=new TextDecoder();
+  let buf='';
+  while(S.ardConnected&&S.ardPort&&S.ardPort.readable){
+    const reader=S.ardPort.readable.getReader();
+    try{
+      while(true){
+        const {value,done}=await reader.read();
+        if(done)break;
+        buf+=decoder.decode(value,{stream:true});
+        const lines=buf.split('\n');
+        buf=lines.pop();
+        for(const line of lines){
+          const l=line.trim();
+          if(!l)continue;
+          ardOut(l,'rx');
+          ardHandleLine(l);
+        }
+      }
+    }catch(e){
+      if(S.ardConnected)log('Czytanie: '+e.message,'err');
+    }finally{
+      reader.releaseLock();
+    }
+  }
+}
 
-$('writeUrlBtn').onclick=async()=>{const url=$('urlInput').value.trim();if(!url)return toast('Podaj URL','err');try{showBig('i-save','Zbliż kartę…','Zapis URL',hideBig);await writeTag([{recordType:'url',data:url}]);hideBig();showBigSuccess('URL zapisany',url);log('URL: '+url,'ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
-$('writeDataBtn').onclick=async()=>{const name=$('nameInput').value.trim();const id=$('idInput').value.trim();const url=$('urlDataInput').value.trim();if(!url)return toast('Podaj URL','err');const payload=`NAME=${name};ID=${id};URL=${url};`;try{showBig('i-save','Zbliż kartę…','Zapis danych',hideBig);await writeTag([{recordType:'url',data:url},{recordType:'text',data:payload,lang:'pl'}]);hideBig();showBigSuccess('Dane zapisane',payload);log('Dane: '+payload,'ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
+function ardHandleLine(line){
+  if(line.startsWith('READY')){ardOut('// Arduino gotowe','sys');}
+  else if(line==='PONG'){ardOut('// PONG – połączenie OK','sys');}
+  else if(line.startsWith('UID ')){
+    const uid=line.substring(4);
+    $('ardBlockEditor').dataset.uid=uid;
+    ardOut('// UID: '+uid,'sys');
+  }
+  else if(line.startsWith('SAK ')){}
+  else if(line.startsWith('BLK ')||line.startsWith('BLOCK ')){
+    const parts=line.split(' ');
+    const b=parseInt(parts[1]);
+    const hex=parts[2];
+    if(!isNaN(b)&&hex&&hex.length===32){
+      const bytes=new Uint8Array(16);
+      for(let i=0;i<16;i++)bytes[i]=parseInt(hex.substr(i*2,2),16);
+      S.ardBlocks[b]=bytes;
+      S.ardDirty.delete(b);
+      renderArdBlock(b);
+    }
+  }
+  else if(line==='END'){
+    ardOut('// Koniec odpowiedzi','sys');
+    ardRenderEditor();
+  }
+  else if(line==='OK'){ardOut('// OK','sys');toast('Operacja OK','ok');}
+  else if(line==='LOCKED'){ardOut('// Sektor zablokowany','err');}
+  else if(line.startsWith('ERR ')){ardOut('// '+line,'err');}
+}
+
+async function ardSend(cmd){
+  if(!S.ardConnected||!S.ardWriter){toast('Nie połączono','err');return;}
+  try{
+    ardOut('> '+cmd,'tx');
+    const data=new TextEncoder().encode(cmd+'\n');
+    await S.ardWriter.write(data);
+  }catch(e){log('Błąd wysyłania: '+e.message,'err');}
+}
+
+$('ardConnect').onclick=ardConnect;
+$('ardDisconnect').onclick=async()=>{
+  try{
+    S.ardConnected=false;
+    if(S.ardWriter){S.ardWriter.releaseLock();S.ardWriter=null;}
+    if(S.ardPort){await S.ardPort.close();S.ardPort=null;}
+    $('ardConnect').style.display='';
+    $('ardDisconnect').style.display='none';
+    $('ardStatus').className='ard-status';
+    $('ardStatusTxt').textContent='Nie połączono';
+    $('ardConnectedCard').style.display='none';
+    $('ardConsoleCard').style.display='none';
+    $('ardBlocksCard').style.display='none';
+    log('Rozłączono Arduino','info');
+    ardOut('// Rozłączono','sys');
+  }catch(e){log('Błąd: '+e.message,'err');}
+};
+
+$('ardPing').onclick=()=>ardSend('PING');
+$('ardUid').onclick=()=>ardSend('UID');
+$('ardDump').onclick=()=>{ardOut('// Puszczam DUMP – przyłóż kartę','sys');ardSend('DUMP');};
+$('ardReadSector').onclick=()=>{const s=$('ardSector').value;ardSend('READ '+s);};
+$('ardSetKey').onclick=()=>{
+  const s=$('ardKeySector').value;
+  const k=$('ardKeyHex').value.trim().toUpperCase();
+  if(k.length!==12||!/^[0-9A-F]{12}$/.test(k))return toast('Klucz musi być 12 hex','err');
+  S.ardKeys[s]=k;
+  ardSend(`KEY ${s} ${k}`);
+};
+$('ardSetAllKeys').onclick=()=>{
+  const k=$('ardKeyHex').value.trim().toUpperCase();
+  if(k.length!==12||!/^[0-9A-F]{12}$/.test(k))return toast('Klucz musi być 12 hex','err');
+  for(let i=0;i<16;i++)S.ardKeys[i]=k;
+  for(let i=0;i<16;i++)ardSend(`KEY ${i} ${k}`);
+};
+$('ardSend').onclick=()=>{const c=$('ardCmd').value.trim();if(c){ardSend(c);$('ardCmd').value='';}};
+$('ardCmd').addEventListener('keydown',e=>{if(e.key==='Enter')$('ardSend').click();});
+
+$('ardReadAll').onclick=()=>{S.ardBlocks=new Array(64).fill(null).map(()=>new Uint8Array(16));S.ardDirty.clear();ardOut('// Odczyt – przyłóż kartę','sys');ardSend('DUMP');};
+$('ardWriteDirty').onclick=async()=>{
+  if(S.ardDirty.size===0)return toast('Brak zmian','err');
+  ardOut(`// Zapis ${S.ardDirty.size} bloków`,'sys');
+  for(const b of S.ardDirty){
+    const hex=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join('');
+    ardSend(`WRITE ${b} ${hex}`);
+    await new Promise(r=>setTimeout(r,200));
+  }
+};
+
+function renderArdBlock(b){
+  const ed=$('ardBlockEditor');
+  let row=ed.querySelector(`[data-b="${b}"]`);
+  const d=S.ardBlocks[b];
+  const hexStr=Array.from(d).map(x=>x.toString(16).padStart(2,'0')).join(' ').toUpperCase();
+  const isTrailer=(b%4===3);
+  if(!row){
+    row=document.createElement('div');
+    row.className='block-editor';
+    row.dataset.b=b;
+    row.innerHTML=`<span class="be-addr">${b}</span><input type="text" value="${hexStr}" maxlength="47" ${isTrailer?'readonly':''}><button title="Zapisz" ${isTrailer?'disabled':''}>💾</button>`;
+    ed.appendChild(row);
+    const inp=row.querySelector('input');
+    const btn=row.querySelector('button');
+    inp.addEventListener('input',()=>{
+      const cur=inp.value.replace(/\s+/g,'').toUpperCase();
+      if(cur.length===32&&/^[0-9A-F]{32}$/.test(cur)){
+        const bytes=new Uint8Array(16);
+        for(let i=0;i<16;i++)bytes[i]=parseInt(cur.substr(i*2,2),16);
+        const old=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join('');
+        const neu=cur.toLowerCase();
+        if(old!==neu){S.ardBlocks[b]=bytes;S.ardDirty.add(b);inp.classList.add('dirty');btn.disabled=false;}
+        else{S.ardDirty.delete(b);inp.classList.remove('dirty');btn.disabled=isTrailer;}
+      }
+    });
+    btn.addEventListener('click',()=>{
+      const cur=inp.value.replace(/\s+/g,'').toUpperCase();
+      if(cur.length===32&&/^[0-9A-F]{32}$/.test(cur)){
+        ardSend(`WRITE ${b} ${cur}`);
+      }
+    });
+  }else{
+    row.querySelector('input').value=hexStr;
+    row.querySelector('input').classList.remove('dirty');
+  }
+}
+
+function ardRenderEditor(){
+  const ed=$('ardBlockEditor');
+  ed.innerHTML='';
+  let hasData=false;
+  for(let b=0;b<64;b++){
+    if(S.ardBlocks[b].some(x=>x!==0)){hasData=true;}
+  }
+  if(!hasData){
+    ed.innerHTML='<div class="info-text">Brak danych. Naciśnij „Odczytaj wszystko” lub zaimportuj.</div>';
+    return;
+  }
+  for(let b=0;b<64;b++){renderArdBlock(b);}
+}
+
+$('ardExportBin').onclick=()=>{
+  const out=new Uint8Array(1024);
+  for(let b=0;b<64;b++)out.set(S.ardBlocks[b],b*16);
+  downloadBlob(new Blob([out],{type:'application/octet-stream'}),'arduino-dump.bin');
+  log('Eksport .bin','ok');
+};
+$('ardExportMfd').onclick=()=>{
+  const out=new Uint8Array(1024);
+  for(let b=0;b<64;b++)out.set(S.ardBlocks[b],b*16);
+  downloadBlob(new Blob([out],{type:'application/octet-stream'}),'arduino-dump.mfd');
+  log('Eksport .mfd','ok');
+};
+$('ardCopyHex').onclick=async()=>{
+  let txt='';
+  for(let b=0;b<64;b++)txt+=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ')+'\n';
+  try{await navigator.clipboard.writeText(txt);toast('HEX skopiowany','ok');}catch(e){toast('Błąd kopiowania','err');}
+};
+$('ardLoadToBlocks').onclick=()=>{
+  S.blocks=S.ardBlocks.map(x=>new Uint8Array(x));
+  renderBlocks(null);
+  document.querySelector('nav button[data-tab="blocks"]').click();
+  toast('Załadowano do widoku bloków','ok');
+};
+
+$('ardCopySketch').onclick=async()=>{try{await navigator.clipboard.writeText(ARD_SKETCH);toast('Szkic skopiowany','ok');}catch(e){toast('Błąd kopiowania','err');}};
+$('ardDownloadSketch').onclick=()=>{downloadBlob(new Blob([ARD_SKETCH],{type:'text/plain'}),'nfc_rc522.ino');log('Szkic pobrany','ok');};
+
+// ================== RESZTA (URL, DANE, FOTO, EDYCJA, KLON, HEX, USTAWIENIA) ==================
+
+$('writeUrlBtn').onclick=async()=>{const url=$('urlInput').value.trim();if(!url)return toast('Podaj URL','err');try{showBig('i-save','Zbliż kartę…','Zapis URL',hideBig);await writeTag([{recordType:'url',data:url}]);hideBig();showBigSuccess('URL zapisany',url);log('URL: '+url,'ok');}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('writeDataBtn').onclick=async()=>{const n=$('nameInput').value.trim();const id=$('idInput').value.trim();const url=$('urlDataInput').value.trim();if(!url)return toast('Podaj URL','err');const p=`NAME=${n};ID=${id};URL=${url};`;try{showBig('i-save','Zbliż kartę…','Zapis',hideBig);await writeTag([{recordType:'url',data:url},{recordType:'text',data:p,lang:'pl'}]);hideBig();showBigSuccess('Dane zapisane',p);log('Dane OK','ok');}catch(e){hideBig();showBigError('Błąd',e.message);}};
 
 const fileInput=$('fileInput'),cameraInput=$('cameraInput');
 $('galleryBtn').onclick=()=>fileInput.click();
 $('cameraBtn').onclick=()=>cameraInput.click();
-
 const crop={img:null,scale:1,offsetX:0,offsetY:0,rotation:0,aspect:1,dragging:false,startX:0,startY:0,startOffX:0,startOffY:0};
-function openCropModal(file){const reader=new FileReader();reader.onload=e=>{const img=new Image();img.onload=()=>{crop.img=img;crop.scale=1;crop.offsetX=0;crop.offsetY=0;crop.rotation=0;crop.aspect=1;document.querySelectorAll('.crop-aspects button').forEach(b=>b.classList.toggle('active',b.dataset.aspect==='1'));$('cropZoom').value=100;$('cropModal').classList.add('show');requestAnimationFrame(()=>{layoutCropFrame();renderCrop();});};img.src=e.target.result;};reader.readAsDataURL(file);}
-function layoutCropFrame(){const stage=$('cropStage');const frame=$('cropFrame');const W=stage.clientWidth-40;const H=stage.clientHeight-40;let fw,fh;if(crop.aspect===0){fw=W;fh=H;}else if(W/H>crop.aspect){fh=H;fw=fh*crop.aspect;}else{fw=W;fh=fw/crop.aspect;}const left=(stage.clientWidth-fw)/2;const top=(stage.clientHeight-fh)/2;frame.style.left=left+'px';frame.style.top=top+'px';frame.style.width=fw+'px';frame.style.height=fh+'px';}
-function renderCrop(){const stage=$('cropStage');const canvas=$('cropCanvas');const W=stage.clientWidth;const H=stage.clientHeight;const dpr=window.devicePixelRatio||1;canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);if(!crop.img)return;ctx.save();ctx.translate(W/2+crop.offsetX,H/2+crop.offsetY);ctx.rotate(crop.rotation*Math.PI/180);const fit=Math.min(W/crop.img.width,H/crop.img.height);const s=fit*crop.scale;ctx.scale(s,s);ctx.drawImage(crop.img,-crop.img.width/2,-crop.img.height/2);ctx.restore();}
-function applyCrop(){const stage=$('cropStage');const canvas=$('cropCanvas');const frame=$('cropFrame');const stageRect=stage.getBoundingClientRect();const frameRect=frame.getBoundingClientRect();const dpr=window.devicePixelRatio||1;const cx=(frameRect.left-stageRect.left)*dpr;const cy=(frameRect.top-stageRect.top)*dpr;const cw=frameRect.width*dpr;const ch=frameRect.height*dpr;const out=document.createElement('canvas');out.width=cw;out.height=ch;const octx=out.getContext('2d');octx.drawImage(canvas,cx,cy,cw,ch,0,0,cw,ch);const target=parseInt($('compressSelect').value,10);let q=0.85;let dataUrl=out.toDataURL('image/jpeg',q);while(dataUrl.length>target*1.5&&q>0.15){q-=0.1;dataUrl=out.toDataURL('image/jpeg',q);}S.photo=dataUrl;$('photoPreview').src=dataUrl;$('photoPreview').style.display='block';const bytes=Math.round((dataUrl.split(',')[1]||'').length*0.75);$('photoInfo').textContent=`${Math.round(frameRect.width)}×${Math.round(frameRect.height)} px • ~${bytes} B`;$('writePhotoBtn').disabled=false;$('cropModal').classList.remove('show');log(`Zdjęcie: ~${bytes} B`,'ok');toast('Zdjęcie gotowe','ok');}
+function openCropModal(file){const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{crop.img=img;crop.scale=1;crop.offsetX=0;crop.offsetY=0;crop.rotation=0;crop.aspect=1;document.querySelectorAll('.crop-aspects button').forEach(b=>b.classList.toggle('active',b.dataset.aspect==='1'));$('cropZoom').value=100;$('cropModal').classList.add('show');requestAnimationFrame(()=>{layoutCropFrame();renderCrop();});};img.src=e.target.result;};r.readAsDataURL(file);}
+function layoutCropFrame(){const s=$('cropStage'),f=$('cropFrame');const W=s.clientWidth-40,H=s.clientHeight-40;let fw,fh;if(crop.aspect===0){fw=W;fh=H;}else if(W/H>crop.aspect){fh=H;fw=fh*crop.aspect;}else{fw=W;fh=fw/crop.aspect;}f.style.left=(s.clientWidth-fw)/2+'px';f.style.top=(s.clientHeight-fh)/2+'px';f.style.width=fw+'px';f.style.height=fh+'px';}
+function renderCrop(){const s=$('cropStage'),c=$('cropCanvas');const W=s.clientWidth,H=s.clientHeight,dpr=window.devicePixelRatio||1;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);if(!crop.img)return;ctx.save();ctx.translate(W/2+crop.offsetX,H/2+crop.offsetY);ctx.rotate(crop.rotation*Math.PI/180);const fit=Math.min(W/crop.img.width,H/crop.img.height);const sc=fit*crop.scale;ctx.scale(sc,sc);ctx.drawImage(crop.img,-crop.img.width/2,-crop.img.height/2);ctx.restore();}
+function applyCrop(){const s=$('cropStage'),c=$('cropCanvas'),f=$('cropFrame');const sr=s.getBoundingClientRect(),fr=f.getBoundingClientRect();const dpr=window.devicePixelRatio||1;const cx=(fr.left-sr.left)*dpr,cy=(fr.top-sr.top)*dpr,cw=fr.width*dpr,ch=fr.height*dpr;const out=document.createElement('canvas');out.width=cw;out.height=ch;const octx=out.getContext('2d');octx.drawImage(c,cx,cy,cw,ch,0,0,cw,ch);const target=parseInt($('compressSelect').value,10);let q=0.85;let du=out.toDataURL('image/jpeg',q);while(du.length>target*1.5&&q>0.15){q-=0.1;du=out.toDataURL('image/jpeg',q);}S.photo=du;$('photoPreview').src=du;$('photoPreview').style.display='block';const bytes=Math.round((du.split(',')[1]||'').length*0.75);$('photoInfo').textContent=`${Math.round(fr.width)}×${Math.round(fr.height)} px • ~${bytes} B`;$('writePhotoBtn').disabled=false;$('cropModal').classList.remove('show');log(`Zdjęcie: ~${bytes} B`,'ok');}
 $('cropClose').onclick=()=>$('cropModal').classList.remove('show');
 $('cropCancel').onclick=()=>$('cropModal').classList.remove('show');
 $('cropApply').onclick=applyCrop;
@@ -1018,32 +1284,32 @@ cropCanvas.addEventListener('pointercancel',()=>{crop.dragging=false;});
 window.addEventListener('resize',()=>{if($('cropModal').classList.contains('show')){layoutCropFrame();renderCrop();}});
 fileInput.onchange=e=>{if(e.target.files[0])openCropModal(e.target.files[0]);e.target.value='';};
 cameraInput.onchange=e=>{if(e.target.files[0])openCropModal(e.target.files[0]);e.target.value='';};
-$('writePhotoBtn').onclick=async()=>{if(!S.photo)return;const b64=S.photo.split(',')[1];const bin=atob(b64);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);try{showBig('i-save','Zbliż kartę…',`${bytes.length} B`,hideBig);await writeTag([{recordType:'mime',mediaType:'image/jpeg',data:bytes}]);hideBig();showBigSuccess('Zdjęcie zapisane',`${bytes.length} B`);log('Zdjęcie OK','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
+$('writePhotoBtn').onclick=async()=>{if(!S.photo)return;const b64=S.photo.split(',')[1];const bin=atob(b64);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);try{showBig('i-save','Zbliż kartę…',`${bytes.length} B`,hideBig);await writeTag([{recordType:'mime',mediaType:'image/jpeg',data:bytes}]);hideBig();showBigSuccess('Zdjęcie zapisane',`${bytes.length} B`);}catch(e){hideBig();showBigError('Błąd',e.message);}};
 
-$('editLoadBtn').onclick=async()=>{if(!hasNfc)return;try{showBig('i-search','Zbliż kartę…','Odczyt');const tag=await captureTag();hideBig();vibrate(30);let url='',name='',id='';for(const r of tag.records){const t=r.recordType;if(t==='url')url=new TextDecoder().decode(new Uint8Array(r.data));else if(t==='text'){new TextDecoder().decode(new Uint8Array(r.data)).split(';').forEach(p=>{const [k,v]=p.split('=');if(k==='NAME')name=v||'';if(k==='ID')id=v||'';if(k==='URL'&&!url)url=v||'';});}}$('editUid').textContent='UID: '+tag.serialNumber;$('editUrl').value=url;$('editName').value=name;$('editId').value=id;$('editForm').style.display='block';renderCard(tag);S.read=tag;log(`Wczytano ${tag.serialNumber}`,'ok');}catch(e){hideBig();toast('Błąd: '+e.message,'err');log(e.message,'err');}};
-$('editSaveBtn').onclick=async()=>{const url=$('editUrl').value.trim();const name=$('editName').value.trim();const id=$('editId').value.trim();if(!url)return toast('Podaj URL','err');const payload=`NAME=${name};ID=${id};URL=${url};`;try{showBig('i-save','Zbliż kartę…','Zapis');await writeTag([{recordType:'url',data:url},{recordType:'text',data:payload,lang:'pl'}]);hideBig();showBigSuccess('Zaktualizowano');log('Edycja OK','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
-$('editClearBtn').onclick=async()=>{if(!confirm('Wyczyścić kartę?'))return;try{showBig('i-trash','Zbliż kartę…','Czyszczenie');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Wyczyszczono');log('Wyczyszczono','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
+$('editLoadBtn').onclick=async()=>{if(!hasNfc)return;try{showBig('i-search','Zbliż kartę…','');const tag=await captureTag();hideBig();let url='',name='',id='';for(const r of tag.records){const t=r.recordType;if(t==='url')url=new TextDecoder().decode(new Uint8Array(r.data));else if(t==='text'){new TextDecoder().decode(new Uint8Array(r.data)).split(';').forEach(p=>{const [k,v]=p.split('=');if(k==='NAME')name=v||'';if(k==='ID')id=v||'';if(k==='URL'&&!url)url=v||'';});}}$('editUid').textContent='UID: '+tag.serialNumber;$('editUrl').value=url;$('editName').value=name;$('editId').value=id;$('editForm').style.display='block';renderCard(tag);S.read=tag;log(`Wczytano`,'ok');}catch(e){hideBig();toast('Błąd: '+e.message,'err');}};
+$('editSaveBtn').onclick=async()=>{const url=$('editUrl').value.trim();const name=$('editName').value.trim();const id=$('editId').value.trim();if(!url)return toast('Podaj URL','err');const p=`NAME=${name};ID=${id};URL=${url};`;try{showBig('i-save','Zbliż kartę…','',hideBig);await writeTag([{recordType:'url',data:url},{recordType:'text',data:p,lang:'pl'}]);hideBig();showBigSuccess('Zaktualizowano');}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('editClearBtn').onclick=async()=>{if(!confirm('Wyczyścić?'))return;try{showBig('i-trash','Zbliż kartę…','');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Wyczyszczono');}catch(e){hideBig();showBigError('Błąd',e.message);}};
 
-function renderClone(){const s=S.clone;if(!s){$('slot').classList.add('empty');$('slotCount').textContent='—';$('slotInfo').textContent='Brak danych.';$('cloneHex').textContent='—';return;}$('slot').classList.remove('empty');$('slotCount').textContent=s.records.length;const totalB=s.records.reduce((a,r)=>a+new Uint8Array(r.data).length,0);$('slotInfo').textContent=`UID: ${s.serialNumber}\nRekordy: ${s.records.length} • ${totalB} B`;const chunks=s.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}$('cloneHex').textContent=hexDump(buf);}
+function renderClone(){const s=S.clone;if(!s){$('slot').classList.add('empty');$('slotCount').textContent='—';$('slotInfo').textContent='Brak danych.';$('cloneHex').textContent='—';return;}$('slot').classList.remove('empty');$('slotCount').textContent=s.records.length;const tb=s.records.reduce((a,r)=>a+new Uint8Array(r.data).length,0);$('slotInfo').textContent=`UID: ${s.serialNumber}\nRekordy: ${s.records.length} • ${tb} B`;const chunks=s.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}$('cloneHex').textContent=hexDump(buf);}
 renderClone();
-$('cloneRead').onclick=async()=>{try{showBig('i-scan','Zbliż kartę źródłową…','');const tag=await captureTag();hideBig();S.clone=tag;renderClone();vibrate(30);log(`Źródło: ${tag.serialNumber}`,'ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
-$('cloneClear').onclick=()=>{S.clone=null;renderClone();log('Bufor wyczyszczony','info');};
-$('cloneCopy').onclick=async()=>{if(!S.clone)return toast('Brak źródła','err');try{showBig('i-save','Zbliż kartę docelową…','Kopiowanie',hideBig);const records=S.clone.records.map(recForWrite).filter(Boolean);await writeTag(records);hideBig();showBigSuccess('Skopiowano!',`${records.length} rekordów`);log('Kopia OK','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
-$('cloneMove').onclick=async()=>{if(!S.clone)return toast('Brak źródła','err');if(!confirm('Przenieść?'))return;try{showBig('i-save','Zbliż kartę docelową…','Kopiowanie',hideBig);const records=S.clone.records.map(recForWrite).filter(Boolean);await writeTag(records);hideBig();showBigSuccess('Skopiowano!','Teraz wyczyścimy źródło');await new Promise(r=>setTimeout(r,1800));if(!confirm('Przyłóż kartę źródłową. Kontynuować?'))return;showBig('i-trash','Zbliż kartę źródłową…','Czyszczenie');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Przeniesiono!','Źródło wyczyszczone');log('Move OK','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
+$('cloneRead').onclick=async()=>{try{showBig('i-scan','Zbliż kartę źródłową…','');const tag=await captureTag();hideBig();S.clone=tag;renderClone();}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('cloneClear').onclick=()=>{S.clone=null;renderClone();};
+$('cloneCopy').onclick=async()=>{if(!S.clone)return toast('Brak','err');try{showBig('i-save','Zbliż kartę docelową…','',hideBig);const rec=S.clone.records.map(recForWrite).filter(Boolean);await writeTag(rec);hideBig();showBigSuccess('Skopiowano!',`${rec.length} rekordów`);}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('cloneMove').onclick=async()=>{if(!S.clone)return toast('Brak','err');if(!confirm('Przenieść?'))return;try{showBig('i-save','Zbliż kartę docelową…','',hideBig);const rec=S.clone.records.map(recForWrite).filter(Boolean);await writeTag(rec);hideBig();showBigSuccess('Skopiowano','Teraz wyczyścimy źródło');await new Promise(r=>setTimeout(r,1800));showBig('i-trash','Zbliż źródło…','');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Przeniesiono!');}catch(e){hideBig();showBigError('Błąd',e.message);}};
 
 function updateHexView(){$('hexView').textContent=hexDump(S.hex);$('hexBytes').textContent=S.hex.length;$('hexBits').textContent=S.hex.length*8;}
-$('hexInput').oninput=()=>{try{S.hex=hexToBytes($('hexInput').value);updateHexView();}catch(e){$('hexView').textContent='Błąd HEX: '+e.message;}};
-$('hexClear').onclick=()=>{S.hex=new Uint8Array(0);$('hexInput').value='';updateHexView();log('HEX wyczyszczony','info');};
+$('hexInput').oninput=()=>{try{S.hex=hexToBytes($('hexInput').value);updateHexView();}catch(e){$('hexView').textContent='Błąd: '+e.message;}};
+$('hexClear').onclick=()=>{S.hex=new Uint8Array(0);$('hexInput').value='';updateHexView();};
 $('hexLoadFile').onclick=()=>$('hexFile').click();
-$('hexFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=new Uint8Array(await f.arrayBuffer());S.hex=buf;$('hexInput').value=bytesToHex(buf);updateHexView();log(`Wczytano ${buf.length} B`,'ok');e.target.value='';};
-$('hexSaveFile').onclick=()=>{if(!S.hex.length)return toast('Bufor pusty','err');downloadBlob(new Blob([S.hex],{type:'application/octet-stream'}),'nfc-buffer.bin');log('Eksport BIN','ok');};
-$('hexLoadTag').onclick=async()=>{try{showBig('i-scan','Zbliż kartę…','');const tag=await captureTag();const chunks=tag.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}S.hex=buf;$('hexInput').value=bytesToHex(buf);updateHexView();hideBig();showBigSuccess('Odczytano do HEX');log(`Karta → HEX (${total} B)`,'ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
-$('hexWriteTag').onclick=async()=>{if(!S.hex.length)return toast('Bufor pusty','err');try{showBig('i-save','Zbliż kartę…',`${S.hex.length} B`);await writeTag([{recordType:'mime',mediaType:'application/octet-stream',data:S.hex}]);hideBig();showBigSuccess('Zapisano',`${S.hex.length} B`);log('HEX → karta','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
+$('hexFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=new Uint8Array(await f.arrayBuffer());S.hex=buf;$('hexInput').value=bytesToHex(buf);updateHexView();e.target.value='';};
+$('hexSaveFile').onclick=()=>{if(!S.hex.length)return toast('Pusty','err');downloadBlob(new Blob([S.hex],{type:'application/octet-stream'}),'buf.bin');};
+$('hexLoadTag').onclick=async()=>{try{showBig('i-scan','Zbliż kartę…','');const tag=await captureTag();const chunks=tag.records.map(r=>new Uint8Array(r.data));const total=chunks.reduce((a,c)=>a+c.length,0);const buf=new Uint8Array(total);let off=0;for(const c of chunks){buf.set(c,off);off+=c.length;}S.hex=buf;$('hexInput').value=bytesToHex(buf);updateHexView();hideBig();showBigSuccess('Gotowe');}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('hexWriteTag').onclick=async()=>{if(!S.hex.length)return toast('Pusty','err');try{showBig('i-save','Zbliż kartę…','',hideBig);await writeTag([{recordType:'mime',mediaType:'application/octet-stream',data:S.hex}]);hideBig();showBigSuccess('Zapisano');}catch(e){hideBig();showBigError('Błąd',e.message);}};
 
-document.querySelectorAll('.preset-btn').forEach(b=>{b.onclick=()=>{S.cardSettings.preset=b.dataset.preset;S.cardSettings.image=null;saveSettings();applyCardSettings();log('Motyw: '+b.dataset.preset,'ok');};});
+document.querySelectorAll('.preset-btn').forEach(b=>{b.onclick=()=>{S.cardSettings.preset=b.dataset.preset;S.cardSettings.image=null;saveSettings();applyCardSettings();};});
 $('uploadCardImage').onclick=()=>$('cardImageInput').click();
-$('cardImageInput').onchange=e=>{const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=ev=>{const dataUrl=ev.target.result;if(dataUrl.length>500000)toast('Duży obraz – nie zapiszę w localStorage','err');else{S.cardSettings.image=dataUrl;saveSettings();}S.cardSettings.image=dataUrl;applyCardSettings();log('Obraz tła załadowany','ok');};reader.readAsDataURL(f);e.target.value='';};
-$('clearCardImage').onclick=()=>{S.cardSettings.image=null;saveSettings();applyCardSettings();log('Obraz usunięty','info');};
+$('cardImageInput').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{S.cardSettings.image=ev.target.result;saveSettings();applyCardSettings();};r.readAsDataURL(f);e.target.value='';};
+$('clearCardImage').onclick=()=>{S.cardSettings.image=null;saveSettings();applyCardSettings();};
 $('cardRadius').oninput=e=>{S.cardSettings.radius=parseInt(e.target.value,10);$('cardRadiusVal').textContent=e.target.value;saveSettings();applyCardSettings();};
 $('cardFloat').onchange=e=>{S.cardSettings.float=e.target.checked;saveSettings();applyCardSettings();};
 $('showUid').onchange=e=>{S.cardSettings.showUid=e.target.checked;saveSettings();applyCardSettings();};
@@ -1051,19 +1317,19 @@ $('showRecords').onchange=e=>{S.cardSettings.showRecords=e.target.checked;saveSe
 $('showSize').onchange=e=>{S.cardSettings.showSize=e.target.checked;saveSettings();applyCardSettings();};
 $('showWave').onchange=e=>{S.cardSettings.showWave=e.target.checked;saveSettings();applyCardSettings();};
 $('showChip').onchange=e=>{S.cardSettings.showChip=e.target.checked;saveSettings();applyCardSettings();};
-$('resetCardSettings').onclick=()=>{S.cardSettings={preset:'dark',image:null,radius:16,float:true,showUid:true,showRecords:true,showSize:true,showWave:true,showChip:true};saveSettings();applyCardSettings();toast('Reset ustawień','ok');};
+$('resetCardSettings').onclick=()=>{S.cardSettings={preset:'dark',image:null,radius:16,float:true,showUid:true,showRecords:true,showSize:true,showWave:true,showChip:true};saveSettings();applyCardSettings();};
 
-$('formatBtn').onclick=async()=>{if(!confirm('Sformatować jako NDEF?'))return;try{showBig('i-unlock','Zbliż kartę…','Formatowanie');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Sformatowano');log('Format OK','ok');}catch(e){hideBig();showBigError('Nie udało się','Może mieć niestandardowe klucze');log(e.message,'err');}};
-$('resetCardBtn').onclick=async()=>{if(!confirm('Wyczyścić kartę?'))return;try{showBig('i-refresh','Zbliż kartę…','Reset');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Zresetowano');log('Reset karty OK','ok');}catch(e){hideBig();showBigError('Błąd',e.message);log(e.message,'err');}};
-$('resetAppBtn').onclick=()=>{if(!confirm('Reset aplikacji?'))return;$('urlInput').value='https://vercode.pl';$('urlDataInput').value='https://vercode.pl';$('nameInput').value='';$('idInput').value='';$('editForm').style.display='none';$('readResult').innerHTML='';$('readActions').style.display='none';$('photoPreview').style.display='none';$('photoPreview').src='';$('photoInfo').textContent='';$('blocksView').innerHTML='<div class="info-text">Brak danych. Odczytaj kartę.</div>';$('blocksUsed').textContent='0';$('blocksFree').textContent='0';$('blocksPct').textContent='0%';$('blocksSize').textContent='0 B';$('tlvDiagram').textContent='Czeka na odczyt karty…';$('byteInspector').textContent='Kliknij bajt w widoku bloków, aby zobaczyć szczegóły.';S.read=null;S.clone=null;S.hex=new Uint8Array(0);S.photo=null;S.blocks=null;$('hexInput').value='';updateHexView();renderClone();renderCard(null);$('writePhotoBtn').disabled=true;$('log').innerHTML='';log('Aplikacja zresetowana','ok');toast('Reset','ok');document.querySelector('nav button[data-tab="read"]').click();};
+$('formatBtn').onclick=async()=>{if(!confirm('Format NDEF?'))return;try{showBig('i-unlock','Zbliż kartę…','',hideBig);await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Sformatowano');}catch(e){hideBig();showBigError('Nie udało się',e.message);}};
+$('resetCardBtn').onclick=async()=>{if(!confirm('Wyczyścić?'))return;try{showBig('i-refresh','Zbliż kartę…','',hideBig);await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Zresetowano');}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('resetAppBtn').onclick=()=>{if(!confirm('Reset?'))return;S.read=null;S.clone=null;S.hex=new Uint8Array(0);S.photo=null;S.blocks=null;S.ardBlocks=new Array(64).fill(null).map(()=>new Uint8Array(16));S.ardDirty.clear();$('ardBlockEditor').innerHTML='';$('ardOutput').textContent='';$('readResult').innerHTML='';$('readActions').style.display='none';$('photoPreview').style.display='none';$('hexInput').value='';$('blocksView').innerHTML='';$('tlvDiagram').textContent='Czeka…';renderClone();renderCard(null);updateHexView();log('Reset','ok');};
 
 $('logToggle').onclick=()=>$('logPanel').classList.toggle('open');
-$('logClear').onclick=()=>{$('log').innerHTML='';log('Log wyczyszczony','info');};
+$('logClear').onclick=()=>{$('log').innerHTML='';};
 
 loadSettings();
 applyCardSettings();
 log('Gotowe','ok');
-log('Dotknij ekranu by włączyć fullscreen','info');
+if(hasSerial)log('Web Serial OK – Arduino dostępne','ok');
 </script>
 </body>
 </html>
