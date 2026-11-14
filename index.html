@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0a">
-<title>NFC Master Pro — Arduino Max</title>
+<title>NFC Master Pro — Arduino + Web NFC</title>
 <style>
 :root{--bg:#0a0a0a;--s1:#141414;--s2:#1a1a1a;--s3:#222;--s4:#2a2a2a;--b1:#262626;--b2:#333;--b3:#444;--tx:#f5f5f5;--mu:#8a8a8a;--dm:#555;--pr:#3b82f6;--su:#10b981;--wa:#f59e0b;--er:#ef4444;--in:#06b6d4;--go:#d4af37;--r-sm:6px;--r:10px;--r-lg:16px;--sh-lg:0 12px 40px rgba(0,0,0,.6);--t:44px;--mo:'SF Mono',Consolas,monospace}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -53,14 +53,29 @@ select{cursor:pointer}
 .row>*{flex:1;min-width:100px}
 .row>label{flex:0 0 auto;min-width:auto;margin-bottom:5px}
 .row>input,.row>select{margin-bottom:0}
+.uid-display{font-family:var(--mo);font-size:15px;padding:11px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;text-align:center;letter-spacing:2px;color:var(--pr);margin:8px 0;font-weight:700}
+.result-item{padding:10px 12px;background:var(--s2);border-radius:8px;margin-bottom:6px;font-size:13px;word-break:break-all;border-left:2px solid var(--pr)}
+.result-item strong{color:var(--pr);font-weight:800;display:block;margin-bottom:5px;font-size:10px;text-transform:uppercase;letter-spacing:.6px}
+.result-item .preview{font-family:var(--mo);font-size:11px;color:var(--mu);word-break:break-all;line-height:1.5}
+.result-item details{margin-top:6px}
+.result-item summary{cursor:pointer;color:var(--in);font-size:10px;font-weight:800;text-transform:uppercase;padding:3px 0}
+.hex-block{font-family:var(--mo);font-size:11px;background:#000;padding:10px;border-radius:6px;color:#9ca3af;white-space:pre;overflow-x:auto;line-height:1.5;border:1px solid var(--b1)}
 .info-text{font-size:11px;color:var(--mu);margin-top:8px;line-height:1.6}
+.info-text kbd{background:var(--s2);padding:1px 5px;border-radius:3px;border:1px solid var(--b1);font-family:var(--mo);font-size:10px;color:var(--pr)}
 .alert{padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:12px;display:flex;gap:10px;line-height:1.55}
 .alert svg{width:18px;height:18px;flex-shrink:0;margin-top:1px}
 .alert.info{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.4);color:#67e8f9}
 .alert.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);color:#fcd34d}
 .alert.error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.4);color:#fca5a5}
 .alert.success{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.4);color:#86efac}
-.hex-block{font-family:var(--mo);font-size:11px;background:#000;padding:10px;border-radius:6px;color:#9ca3af;white-space:pre;overflow-x:auto;line-height:1.5;border:1px solid var(--b1)}
+#photoPreview{max-width:100%;max-height:180px;border-radius:10px;display:none;margin:8px auto;border:1px solid var(--b1)}
+.photo-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.slot{border:1px solid var(--b1);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--s2)}
+.slot.empty{opacity:.5}
+.slot-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.slot-title strong{font-size:11px;text-transform:uppercase;color:var(--pr);letter-spacing:.4px}
+.slot-info{font-family:var(--mo);font-size:11px;color:var(--mu);word-break:break-all;white-space:pre-line}
+.slot-count{padding:2px 8px;background:var(--pr);color:#fff;border-radius:16px;font-size:10px;font-weight:800}
 #logPanel{background:var(--s1);border-top:1px solid var(--b1);max-height:34px;overflow:hidden;transition:max-height .2s}
 #logPanel.open{max-height:180px}
 #logHeader{display:flex;align-items:center;padding:7px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--mu);font-weight:800;cursor:pointer;background:var(--s1);gap:6px}
@@ -86,7 +101,54 @@ select{cursor:pointer}
 #bigStatus .sub{font-size:12px;color:var(--mu);margin-top:10px;max-width:400px}
 @keyframes pl{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(1.06)}}
 #bigStatus button{margin-top:22px;background:var(--s2);color:var(--tx);border:1px solid var(--b2);padding:10px 22px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px}
-/* ARDUINO */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:6px;margin-top:10px}
+.stat{background:var(--s2);padding:9px;border-radius:8px;text-align:center;border:1px solid var(--b1)}
+.stat .v{font-family:var(--mo);font-size:15px;font-weight:800;color:var(--pr)}
+.stat .l{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;font-weight:700}
+.chip{display:inline-block;padding:2px 7px;background:var(--pr);color:#fff;border-radius:12px;font-size:9px;font-weight:800;margin-right:3px;text-transform:uppercase}
+.chip.mime{background:var(--wa);color:#000}
+.chip.text{background:var(--in);color:#000}
+.chip.url{background:var(--su);color:#000}
+.card-viz{perspective:1000px;margin-bottom:14px}
+.card-inner{position:relative;aspect-ratio:1.586;width:100%;max-width:400px;margin:0 auto;border-radius:16px;background:#1a1a1a;border:1px solid #2a2a2a;box-shadow:var(--sh-lg);padding:16px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;background-size:cover;background-position:center}
+.card-inner::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.35);border-radius:inherit;pointer-events:none;opacity:0}
+.card-inner.has-image::after{opacity:1}
+.card-inner.floating{animation:cf 4s ease-in-out infinite}
+@keyframes cf{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.card-viz.active .card-inner{border-color:var(--su)}
+.card-viz.scanning .card-inner{border-color:var(--pr)}
+.card-scanline{position:absolute;left:0;right:0;height:2px;top:-2px;background:var(--in);opacity:0;z-index:2}
+.card-viz.scanning .card-scanline{opacity:1;animation:sm 1.5s ease-in-out infinite}
+@keyframes sm{0%{top:0}100%{top:100%}}
+.card-top{display:flex;justify-content:space-between;z-index:3;position:relative}
+.card-chip{width:34px;height:28px;color:var(--go)}
+.card-wave{width:28px;height:28px;color:rgba(59,130,246,.5)}
+.card-viz.active .card-wave{color:var(--su)}
+.card-uid{font-family:var(--mo);font-size:18px;font-weight:800;letter-spacing:2px;color:var(--mu);text-align:center;z-index:3;position:relative;word-spacing:3px}
+.card-viz.active .card-uid{color:var(--tx)}
+.card-records{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;z-index:3;position:relative;min-height:20px}
+.card-empty{font-size:10px;color:var(--mu);text-transform:uppercase;font-weight:700}
+.card-chip-tag{padding:2px 6px;border-radius:10px;font-size:9px;font-weight:800;background:rgba(59,130,246,.2);color:#93c5fd;border:1px solid rgba(59,130,246,.4);text-transform:uppercase}
+.card-chip-tag.mime{background:rgba(245,158,11,.2);color:#fcd34d;border-color:rgba(245,158,11,.4)}
+.card-chip-tag.text{background:rgba(6,182,212,.2);color:#67e8f9;border-color:rgba(6,182,212,.4)}
+.card-chip-tag.url{background:rgba(34,197,94,.2);color:#86efac;border-color:rgba(34,197,94,.4)}
+.card-footer{display:flex;justify-content:space-between;z-index:3;position:relative;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);font-weight:800}
+.card-viz.active .card-footer{color:var(--tx)}
+.preset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.preset-btn{aspect-ratio:1.586;border-radius:8px;cursor:pointer;border:2px solid var(--b1)}
+.preset-btn.active{border-color:var(--pr);transform:scale(1.02)}
+.preset-btn.dark{background:#1a1a1a}.preset-btn.blue{background:#1e3a5f}.preset-btn.green{background:#1a4f3a}.preset-btn.purple{background:#3a1e5f}.preset-btn.red{background:#5f1e2a}.preset-btn.gold{background:#5f4a1e}.preset-btn.cyan{background:#1e4f5f}.preset-btn.pink{background:#5f1e4a}
+.toggle{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--b1);font-size:13px;font-weight:600}
+.toggle:last-child{border-bottom:none}
+.toggle-switch{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;margin:0;padding:0;min-height:0}
+.toggle-switch span{position:absolute;inset:0;background:var(--s4);border-radius:12px;cursor:pointer}
+.toggle-switch span::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--tx);border-radius:50%;transition:transform .2s}
+.toggle-switch input:checked+span{background:var(--pr)}
+.toggle-switch input:checked+span::before{transform:translateX(20px)}
+.slider-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.slider-row input[type=range]{flex:1;margin:0;padding:0;background:transparent;border:none;min-height:auto}
+.slider-row .val{font-family:var(--mo);font-size:12px;color:var(--pr);font-weight:800;min-width:32px;text-align:right}
 .ard-status{display:flex;align-items:center;gap:10px;padding:12px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;font-size:12px;margin-bottom:10px;font-weight:600;flex-wrap:wrap}
 .ard-status .dot{width:10px;height:10px;border-radius:50%;background:var(--dm);flex-shrink:0}
 .ard-status.on .dot{background:var(--su);box-shadow:0 0 8px var(--su);animation:pu 1.5s infinite}
@@ -96,20 +158,18 @@ select{cursor:pointer}
 .card-info{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px;margin-bottom:10px}
 .card-info-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
 .card-info-header strong{font-size:11px;text-transform:uppercase;color:var(--pr);letter-spacing:.6px}
-.card-info-header .type-badge{padding:3px 10px;background:var(--pr);color:#fff;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.4px}
+.card-info-header .type-badge{padding:3px 10px;background:var(--pr);color:#fff;border-radius:20px;font-size:10px;font-weight:800}
 .card-info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
 .card-info-grid .item{background:var(--s3);padding:8px;border-radius:6px}
-.card-info-grid .lbl{font-size:9px;text-transform:uppercase;color:var(--mu);letter-spacing:.5px;font-weight:800;margin-bottom:3px}
+.card-info-grid .lbl{font-size:9px;text-transform:uppercase;color:var(--mu);font-weight:800;margin-bottom:3px}
 .card-info-grid .v{font-family:var(--mo);font-size:13px;color:var(--tx);font-weight:700;word-break:break-all}
 .sector-map{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:10px 0}
-.sector-box{aspect-ratio:1;border-radius:6px;border:1px solid var(--b1);background:var(--s2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px;position:relative;transition:all .15s;min-height:44px}
-.sector-box:active{transform:scale(.96)}
+.sector-box{aspect-ratio:1;border-radius:6px;border:1px solid var(--b1);background:var(--s2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px;position:relative;min-height:44px}
 .sector-box .num{font-size:10px;font-weight:800;color:var(--mu);font-family:var(--mo)}
-.sector-box .stat{font-size:8px;text-transform:uppercase;color:var(--dm);letter-spacing:.3px;margin-top:1px}
+.sector-box .stat{font-size:8px;color:var(--dm);margin-top:1px}
 .sector-box.locked{background:rgba(239,68,68,.15);border-color:var(--er)}
 .sector-box.locked .num{color:#fca5a5}
 .sector-box.empty{background:var(--s3);border-color:var(--b2)}
-.sector-box.empty .num{color:var(--mu)}
 .sector-box.ndef{background:rgba(34,197,94,.15);border-color:var(--su)}
 .sector-box.ndef .num{color:#86efac}
 .sector-box.data{background:rgba(59,130,246,.15);border-color:var(--pr)}
@@ -123,13 +183,9 @@ select{cursor:pointer}
 .progress-bar{height:100%;background:var(--pr);transition:width .2s;width:0%}
 .progress-text{font-family:var(--mo);font-size:11px;color:var(--mu);margin-bottom:6px;display:none;justify-content:space-between}
 .progress-text.show{display:flex}
-.block-section{margin-top:12px}
-.block-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px}
-.block-section-header strong{font-size:11px;text-transform:uppercase;color:var(--pr);letter-spacing:.6px}
-.block-editor-row{display:grid;grid-template-columns:36px 1fr;gap:8px;align-items:center;margin-bottom:6px;padding:6px;border-radius:6px;border:1px solid transparent;transition:all .15s}
+.block-editor-row{display:grid;grid-template-columns:36px 1fr;gap:8px;align-items:center;margin-bottom:6px;padding:6px;border-radius:6px;border:1px solid transparent}
 .block-editor-row.trailer{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2)}
 .block-editor-row.modified{background:rgba(245,158,11,.1);border-color:var(--wa)}
-.block-editor-row.nddef{background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.2)}
 .block-editor-row.locked{background:rgba(239,68,68,.08);opacity:.7}
 .block-editor-row .be-addr{color:var(--pr);font-weight:800;text-align:center;font-family:var(--mo);font-size:12px}
 .block-editor-row.trailer .be-addr{color:var(--er)}
@@ -138,10 +194,8 @@ select{cursor:pointer}
 .block-editor-row .be-input.modified{border-color:var(--wa);background:rgba(245,158,11,.05)}
 .block-editor-row .be-actions{display:flex;gap:2px}
 .block-editor-row .be-actions button{padding:0;width:28px;height:26px;min-height:0;font-size:11px;background:var(--s3);color:var(--tx);border:1px solid var(--b1);border-radius:4px;cursor:pointer}
-.block-editor-row .be-actions button:hover:not(:disabled){background:var(--b2)}
 .block-editor-row .be-actions button:disabled{opacity:.3;cursor:not-allowed}
 .block-editor-row .be-actions button.save{background:var(--su);color:#000;border-color:var(--su)}
-.block-editor-row .be-actions button.save:not(:disabled):hover{filter:brightness(1.1)}
 .block-editor-row .be-actions button.revert{background:var(--wa);color:#000;border-color:var(--wa)}
 .console{background:#000;border:1px solid var(--b1);border-radius:8px;padding:10px;font-family:var(--mo);font-size:11px;color:#9ca3af;height:220px;overflow-y:auto;line-height:1.5;white-space:pre-wrap;word-break:break-all}
 .console .tx{color:var(--pr);font-weight:700}
@@ -153,55 +207,104 @@ select{cursor:pointer}
 .console-filter button{padding:4px 8px;font-size:10px;background:var(--s2);border:1px solid var(--b1);color:var(--mu);border-radius:6px;cursor:pointer;font-weight:700;text-transform:uppercase}
 .console-filter button.active{background:var(--pr);color:#fff;border-color:var(--pr)}
 .key-preset-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
-.key-preset-row button{padding:6px;font-size:10px;background:var(--s3);color:var(--tx);border:1px solid var(--b1);border-radius:6px;cursor:pointer;font-family:var(--mo);text-transform:uppercase;letter-spacing:.3px}
-.key-preset-row button:hover{background:var(--b2)}
+.key-preset-row button{padding:6px;font-size:10px;background:var(--s3);color:var(--tx);border:1px solid var(--b1);border-radius:6px;cursor:pointer;font-family:var(--mo);text-transform:uppercase}
 .key-preset-row button.active{background:var(--pr);color:#fff;border-color:var(--pr)}
 .diff-view{font-family:var(--mo);font-size:10px;background:#000;padding:8px;border-radius:6px;border:1px solid var(--b1);max-height:200px;overflow-y:auto;line-height:1.6}
-.diff-view .same{color:#52525b}
 .diff-view .old{color:#fca5a5;background:rgba(239,68,68,.1);padding:1px 4px;border-radius:2px}
 .diff-view .new{color:#86efac;background:rgba(34,197,94,.1);padding:1px 4px;border-radius:2px}
-.history-item{padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;margin-bottom:4px;font-size:11px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-.history-item:hover{background:var(--s3)}
+.diff-view .same{color:#52525b}
+.history-item{padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;margin-bottom:4px;font-size:11px;display:flex;justify-content:space-between;align-items:center}
 .history-item .hist-meta{font-family:var(--mo);color:var(--mu);font-size:10px}
 .history-item .hist-uid{color:var(--pr);font-weight:700;font-family:var(--mo)}
 .history-item .hist-actions{display:flex;gap:2px}
 .history-item .hist-actions button{padding:2px 6px;font-size:10px;background:var(--s4);border:1px solid var(--b1);color:var(--tx);border-radius:4px;cursor:pointer}
-.kbd{background:var(--s2);padding:1px 5px;border-radius:3px;border:1px solid var(--b1);font-family:var(--mo);font-size:10px;color:var(--pr)}
+.sector-block{background:var(--s2);border:1px solid var(--b1);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.sector-head{padding:7px 12px;background:var(--s3);display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--pr)}
+.sector-head .badge-sm{background:var(--s2);padding:2px 7px;border-radius:12px;font-size:9px;color:var(--mu);font-weight:700}
+.sector-head .badge-sm.used{background:var(--su);color:#000}
+.block-row{display:grid;grid-template-columns:38px 1fr;gap:8px;padding:6px 10px;font-family:var(--mo);font-size:10px;border-top:1px solid rgba(255,255,255,.03);cursor:pointer}
+.block-row:hover{background:var(--s3)}
+.block-row.trailer{background:rgba(239,68,68,.06);color:#fca5a5}
+.block-row.ndef-used{background:rgba(34,197,94,.05)}
+.block-row.empty{color:#3a3a3a}
+.block-row.selected{outline:2px solid var(--pr);outline-offset:-2px}
+.block-addr{color:var(--pr);font-weight:800;text-align:right}
+.block-row.trailer .block-addr{color:var(--er)}
+.block-data{display:flex;flex-direction:column;gap:2px;word-break:break-all}
+.block-hex{color:var(--tx)}
+.block-row.empty .block-hex{color:#3a3a3a}
+.block-ascii{color:var(--mu);font-size:9px;opacity:.8}
+.tlv-diagram{background:#000;border:1px solid var(--b1);border-radius:8px;padding:10px;font-family:var(--mo);font-size:10px;line-height:1.7;overflow-x:auto;white-space:pre-wrap;color:#9ca3af;word-break:break-all}
+.tlv-diagram .tag{color:var(--in);font-weight:800}
+.tlv-diagram .len{color:var(--wa);font-weight:800}
+.tlv-diagram .ndef-h{color:var(--pr);font-weight:800}
+.tlv-diagram .ndef-t{color:var(--su);font-weight:800}
+.tlv-diagram .ndef-p{color:#93c5fd}
+.tlv-diagram .term{color:var(--er);font-weight:800}
+.tlv-diagram .lbl{color:var(--dm)}
+.view-controls{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.view-controls select{flex:1;min-width:120px;margin:0}
+#cropModal{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:1000;display:none;flex-direction:column}
+#cropModal.show{display:flex}
+.crop-header{display:flex;align-items:center;padding:12px 16px;background:var(--s1);border-bottom:1px solid var(--b1);gap:12px}
+.crop-header h3{margin:0;font-size:14px;flex:1}
+.crop-header button{background:var(--s2);border:1px solid var(--b1);color:var(--tx);width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.crop-stage{flex:1;position:relative;overflow:hidden;touch-action:none;background:#000;display:flex;align-items:center;justify-content:center;margin:10px;border-radius:10px;border:1px solid var(--b1)}
+#cropCanvas{position:absolute;top:0;left:0;width:100%;height:100%;cursor:grab}
+.crop-frame{position:absolute;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.65);border:2px solid #fff;border-radius:2px}
+.crop-controls{padding:10px 16px;background:var(--s1);border-top:1px solid var(--b1);display:flex;flex-direction:column;gap:8px}
+.crop-controls .ctrl-row{display:flex;align-items:center;gap:10px}
+.crop-controls label{font-size:10px;color:var(--mu);font-weight:800;margin:0;min-width:50px}
+.crop-controls input[type=range]{flex:1;margin:0;padding:0;background:transparent;border:none;min-height:auto}
+.crop-aspects{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.crop-aspects button{background:var(--s2);border:1px solid var(--b1);color:var(--tx);padding:8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer}
+.crop-aspects button.active{background:var(--pr);border-color:var(--pr);color:#fff}
+.crop-footer{display:flex;gap:8px;padding:10px 16px;background:var(--s1);border-top:1px solid var(--b1)}
+.crop-footer .btn{flex:1}
+.img-preview{width:100%;max-width:200px;aspect-ratio:1.586;border-radius:8px;border:1px solid var(--b1);object-fit:cover;display:block;margin:0 auto 10px;background:var(--s2)}
 </style>
 </head>
 <body>
 
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
 <symbol id="i-nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/></symbol>
-<symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
-<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></symbol>
-<symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
-<symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
-<symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
-<symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
-<symbol id="i-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
-<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
-<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
-<symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
-<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
-<symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></symbol>
-<symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
-<symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
-<symbol id="i-hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
-<symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
-<symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
-<symbol id="i-chip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></symbol>
-<symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
-<symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
-<symbol id="i-usb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="1"/><circle cx="4" cy="20" r="1"/><path d="M4.7 19.3 19 5"/><path d="m21 3-3 1 2 2Z"/><path d="M9.26 7.68 5 12l2 5"/><path d="m10 14 5 2 3.5-3.5"/><path d="m18 12 1-1 1 1-1 1Z"/></symbol>
-<symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>
-<symbol id="i-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
-<symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
-<symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></symbol>
-<symbol id="i-diff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="15"/></symbol>
-<symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
-<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
-<symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+<symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
+<symbol id="i-unlock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+<symbol id="i-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+<symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+<symbol id="i-clone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M8 22h12a2 2 0 0 0 2-2V8"/><path d="M14 8h4v4"/><path d="M14 12 8 18"/></symbol>
+<symbol id="i-move" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></symbol>
+<symbol id="i-hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+<symbol id="i-chip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
+<symbol id="i-crop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></symbol>
+<symbol id="i-usb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="7" r="1"/><circle cx="4" cy="20" r="1"/><path d="M4.7 19.3 19 5"/><path d="m21 3-3 1 2 2Z"/><path d="M9.26 7.68 5 12l2 5"/><path d="m10 14 5 2 3.5-3.5"/><path d="m18 12 1-1 1 1-1 1Z"/></symbol>
+<symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>
+<symbol id="i-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></symbol>
+<symbol id="i-diff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="15"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
+<symbol id="i-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></symbol>
 </svg>
 
 <header>
@@ -213,45 +316,35 @@ select{cursor:pointer}
 <nav>
   <button data-tab="arduino" class="active"><svg class="ic"><use href="#i-usb"/></svg> Arduino</button>
   <button data-tab="read"><svg class="ic"><use href="#i-search"/></svg> Web NFC</button>
-  <button data-tab="settings"><svg class="ic"><use href="#i-settings"/></svg> Ustawienia</button>
+  <button data-tab="blocks"><svg class="ic"><use href="#i-grid"/></svg> Bloki</button>
+  <button data-tab="write"><svg class="ic"><use href="#i-globe"/></svg> URL</button>
+  <button data-tab="data"><svg class="ic"><use href="#i-doc"/></svg> Dane</button>
+  <button data-tab="photo"><svg class="ic"><use href="#i-camera"/></svg> Zdjęcie</button>
+  <button data-tab="edit"><svg class="ic"><use href="#i-edit"/></svg> Edycja</button>
+  <button data-tab="clone"><svg class="ic"><use href="#i-clone"/></svg> Klonuj</button>
+  <button data-tab="hex"><svg class="ic"><use href="#i-hex"/></svg> HEX</button>
+  <button data-tab="settings"><svg class="ic"><use href="#i-palette"/></svg> Wygląd</button>
+  <button data-tab="tools"><svg class="ic"><use href="#i-settings"/></svg> Narzędzia</button>
 </nav>
 
 <main>
 
-<!-- ============ ARDUINO ============ -->
+<!-- ARDUINO -->
 <section id="tab-arduino" class="tab active">
-
-  <!-- Połączenie -->
   <div class="card">
     <h2><svg><use href="#i-plug"/></svg> Połączenie Arduino</h2>
-    <div class="ard-status" id="ardStatus">
-      <div class="dot"></div>
-      <span id="ardStatusTxt">Nie połączono</span>
-      <span class="meta" id="ardStatusMeta"></span>
-    </div>
+    <div class="ard-status" id="ardStatus"><div class="dot"></div><span id="ardStatusTxt">Nie połączono</span><span class="meta" id="ardStatusMeta"></span></div>
     <div class="row">
-      <select id="ardBaud" style="flex:1">
-        <option value="9600">9600</option>
-        <option value="19200">19200</option>
-        <option value="38400">38400</option>
-        <option value="57600">57600</option>
-        <option value="115200" selected>115200</option>
-      </select>
-      <label class="toggle-switch" style="min-height:auto;display:none"></label>
+      <select id="ardBaud" style="flex:1"><option value="9600">9600</option><option value="19200">19200</option><option value="38400">38400</option><option value="57600">57600</option><option value="115200" selected>115200</option></select>
     </div>
     <button class="btn" id="ardConnect"><svg><use href="#i-plug"/></svg> Połącz (COM5)</button>
     <button class="btn danger" id="ardDisconnect" style="display:none"><svg><use href="#i-x"/></svg> Rozłącz</button>
     <div class="info-text" id="ardPortInfo"></div>
   </div>
-
-  <!-- Info o karcie -->
   <div class="card" id="ardCardInfoCard" style="display:none">
     <h2><svg><use href="#i-chip"/></svg> Informacje o karcie</h2>
     <div class="card-info">
-      <div class="card-info-header">
-        <strong>Wykryta karta</strong>
-        <span class="type-badge" id="ardCardType">—</span>
-      </div>
+      <div class="card-info-header"><strong>Wykryta karta</strong><span class="type-badge" id="ardCardType">—</span></div>
       <div class="card-info-grid">
         <div class="item"><div class="lbl">UID</div><div class="v" id="ardUid">—</div></div>
         <div class="item"><div class="lbl">SAK</div><div class="v" id="ardSak">—</div></div>
@@ -259,171 +352,273 @@ select{cursor:pointer}
         <div class="item"><div class="lbl">Weryfikacja</div><div class="v" id="ardVerify">—</div></div>
       </div>
       <div class="sector-map" id="ardSectorMap"></div>
-      <div class="info-text">Kliknij sektor, aby zobaczyć bloki. Kolor: czerwony = zablokowany, zielony = NDEF, niebieski = dane, szary = pusty.</div>
     </div>
   </div>
-
-  <!-- Akcje -->
   <div class="card" id="ardActionsCard" style="display:none">
     <h2><svg><use href="#i-scan"/></svg> Operacje</h2>
     <div class="progress-text" id="ardProgressText"><span id="ardProgressLabel">Gotowe</span><span id="ardProgressPct">0%</span></div>
     <div class="progress-wrap" id="ardProgressWrap"><div class="progress-bar" id="ardProgressBar"></div></div>
     <div class="row">
-      <button class="btn sm secondary" id="ardPing" title="PING"><svg><use href="#i-terminal"/></svg> PING</button>
-      <button class="btn sm secondary" id="ardUid" title="UID"><svg><use href="#i-search"/></svg> UID</button>
-      <button class="btn sm" id="ardDump" style="flex:2"><svg><use href="#i-download"/></svg> Odczytaj wszystko (DUMP)</button>
+      <button class="btn sm secondary" id="ardPing">PING</button>
+      <button class="btn sm secondary" id="ardUid"><svg><use href="#i-search"/></svg> UID</button>
+      <button class="btn sm" id="ardDump" style="flex:2"><svg><use href="#i-download"/></svg> Odczytaj wszystko</button>
     </div>
     <div class="row">
-      <button class="btn sm secondary" id="ardCancelDump" style="display:none">Anuluj DUMP</button>
+      <button class="btn sm secondary" id="ardCancelDump" style="display:none">Anuluj</button>
       <button class="btn sm warning" id="ardRetryDump" style="display:none">Ponów nieudane</button>
     </div>
     <div class="row" style="margin-top:10px">
-      <label style="flex:0 0 auto;margin:0 4px 0 0;align-self:center;color:var(--mu);font-size:10px">Sektor</label>
-      <select id="ardSector" style="flex:1;margin-bottom:0">
-        <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
-        <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
-        <option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option>
-        <option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
-      </select>
+      <select id="ardSector" style="flex:1;margin-bottom:0"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option></select>
       <button class="btn sm" id="ardReadSector" style="flex:1"><svg><use href="#i-search"/></svg> Odczytaj sektor</button>
     </div>
   </div>
-
-  <!-- Klucze -->
   <div class="card" id="ardKeysCard" style="display:none">
     <h2><svg><use href="#i-key"/></svg> Klucze MIFARE</h2>
     <div class="row">
-      <select id="ardKeySector" style="flex:1;margin-bottom:0">
-        <option value="all">Wszystkie</option>
-        <option value="0">Sektor 0</option><option value="1">Sektor 1</option><option value="2">Sektor 2</option>
-        <option value="3">Sektor 3</option><option value="4">Sektor 4</option><option value="5">Sektor 5</option>
-        <option value="6">Sektor 6</option><option value="7">Sektor 7</option><option value="8">Sektor 8</option>
-        <option value="9">Sektor 9</option><option value="10">Sektor 10</option><option value="11">Sektor 11</option>
-        <option value="12">Sektor 12</option><option value="13">Sektor 13</option><option value="14">Sektor 14</option>
-        <option value="15">Sektor 15</option>
-      </select>
+      <select id="ardKeySector" style="flex:1;margin-bottom:0"><option value="all">Wszystkie</option><option value="0">S0</option><option value="1">S1</option><option value="2">S2</option><option value="3">S3</option><option value="4">S4</option><option value="5">S5</option><option value="6">S6</option><option value="7">S7</option><option value="8">S8</option><option value="9">S9</option><option value="10">S10</option><option value="11">S11</option><option value="12">S12</option><option value="13">S13</option><option value="14">S14</option><option value="15">S15</option></select>
       <input id="ardKeyHex" value="FFFFFFFFFFFF" placeholder="FFFFFFFFFFFF" style="flex:1;margin-bottom:0;font-family:var(--mo);text-transform:uppercase;letter-spacing:1px" maxlength="12">
       <button class="btn sm success" id="ardSetKey"><svg><use href="#i-check"/></svg> Ustaw</button>
     </div>
     <div class="key-preset-row">
-      <button data-key="FFFFFFFFFFFF" class="active">FFFFFF.. (default)</button>
+      <button data-key="FFFFFFFFFFFF" class="active">FFFF.. (default)</button>
       <button data-key="A0A1A2A3A4A5">A0A1A2.. (MAD)</button>
-      <button data-key="D3F7D3F7D3F7">D3F7D3.. (NDEF)</button>
+      <button data-key="D3F7D3F7D3F7">D3F7.. (NDEF)</button>
       <button data-key="000000000000">00.. (zero)</button>
     </div>
-    <div class="info-text">
-      Klucz A per sektor. Ustaw indywidualnie lub dla wszystkich.
-      Status: <span id="ardKeyStatus" style="color:var(--pr);font-family:var(--mo)">—</span>
-    </div>
-    <button class="btn sm secondary" id="ardTestAllKeys" style="margin-top:8px"><svg><use href="#i-search"/></svg> Testuj wszystkie klucze</button>
+    <div class="info-text">Status: <span id="ardKeyStatus" style="color:var(--pr);font-family:var(--mo)">—</span></div>
+    <button class="btn sm secondary" id="ardTestAllKeys" style="margin-top:8px"><svg><use href="#i-search"/></svg> Testuj wszystkie</button>
   </div>
-
-  <!-- Bloki -->
   <div class="card" id="ardBlocksCard" style="display:none">
     <h2><svg><use href="#i-grid"/></svg> Edytor bloków</h2>
-    <div class="block-section-header">
-      <strong>Bloki MIFARE 1K</strong>
-      <div style="display:flex;gap:4px;flex-wrap:wrap">
-        <button class="btn sm secondary" id="ardShowAll" title="Pokaż wszystkie"><svg><use href="#i-eye"/></svg></button>
-        <button class="btn sm secondary" id="ardShowModified" title="Pokaż zmienione"><svg><use href="#i-diff"/></svg></button>
-        <button class="btn sm secondary" id="ardCopyHexAll" title="Kopiuj HEX"><svg><use href="#i-copy"/></svg></button>
-        <button class="btn sm secondary" id="ardExportBin" title="Eksport .bin"><svg><use href="#i-download"/></svg></button>
-        <button class="btn sm secondary" id="ardExportMfd" title="Eksport .mfd">.mfd</button>
-        <button class="btn sm secondary" id="ardImportFile" title="Import .bin/.mfd"><svg><use href="#i-upload"/></svg></button>
-      </div>
+    <div class="row" style="margin-bottom:6px">
+      <button class="btn sm secondary" id="ardShowAll" title="Wszystkie"><svg><use href="#i-eye"/></svg></button>
+      <button class="btn sm secondary" id="ardShowModified" title="Zmienione"><svg><use href="#i-diff"/></svg></button>
+      <button class="btn sm secondary" id="ardCopyHexAll" title="HEX"><svg><use href="#i-copy"/></svg></button>
+      <button class="btn sm secondary" id="ardExportBin" title=".bin"><svg><use href="#i-download"/></svg></button>
+      <button class="btn sm secondary" id="ardExportMfd" title=".mfd">.mfd</button>
+      <button class="btn sm secondary" id="ardImportFile" title="Import"><svg><use href="#i-upload"/></svg></button>
     </div>
-    <div id="ardBlockEditor">
-      <div class="info-text">Brak danych. Naciśnij „Odczytaj wszystko”.</div>
-    </div>
+    <div id="ardBlockEditor"><div class="info-text">Brak danych.</div></div>
     <input type="file" id="ardFileInput" accept=".bin,.mfd,.dat" style="display:none">
     <div class="row" style="margin-top:10px">
-      <button class="btn success" id="ardWriteDirty" disabled><svg><use href="#i-save"/></svg> Zapisz zmiany (<span id="ardDirtyCount">0</span>)</button>
-      <button class="btn secondary" id="ardRevertAll" disabled>Przywróć oryginał</button>
+      <button class="btn success" id="ardWriteDirty" disabled><svg><use href="#i-save"/></svg> Zapisz (<span id="ardDirtyCount">0</span>)</button>
+      <button class="btn secondary" id="ardRevertAll" disabled>Przywróć</button>
     </div>
   </div>
-
-  <!-- Diff -->
   <div class="card" id="ardDiffCard" style="display:none">
     <h2><svg><use href="#i-diff"/></svg> Różnice</h2>
-    <div class="diff-view" id="ardDiffView">Brak zmian</div>
+    <div class="diff-view" id="ardDiffView"></div>
   </div>
-
-  <!-- Historia -->
   <div class="card" id="ardHistoryCard" style="display:none">
-    <h2><svg><use href="#i-history"/></svg> Historia (localStorage)</h2>
-    <div id="ardHistoryList"><div class="info-text">Brak zapisanych zrzutów.</div></div>
+    <h2><svg><use href="#i-history"/></svg> Historia</h2>
+    <div id="ardHistoryList"></div>
     <div class="row" style="margin-top:8px">
       <button class="btn sm secondary" id="ardHistorySave"><svg><use href="#i-save"/></svg> Zapisz zrzut</button>
-      <button class="btn sm danger" id="ardHistoryClear"><svg><use href="#i-trash"/></svg> Wyczyść historię</button>
+      <button class="btn sm danger" id="ardHistoryClear"><svg><use href="#i-trash"/></svg> Wyczyść</button>
     </div>
   </div>
-
-  <!-- Konsola -->
   <div class="card" id="ardConsoleCard" style="display:none">
     <h2><svg><use href="#i-terminal"/></svg> Konsola</h2>
     <div class="console-filter" id="ardConsoleFilter">
-      <button data-f="all" class="active">Wszystko</button>
-      <button data-f="tx">TX</button>
-      <button data-f="rx">RX</button>
-      <button data-f="err">Błędy</button>
-      <button data-f="sys">System</button>
+      <button data-f="all" class="active">Wszystko</button><button data-f="tx">TX</button><button data-f="rx">RX</button><button data-f="err">Błędy</button><button data-f="sys">System</button>
     </div>
-    <div class="row">
-      <input id="ardCmd" placeholder="UID, DUMP, READ 4, WRITE 4 0123.., KEY 0 FFFFFFFFFFFF, PING" style="flex:1;margin-bottom:0;font-family:var(--mo)">
-      <button class="btn sm" id="ardSend">Wyślij</button>
-    </div>
+    <div class="row"><input id="ardCmd" placeholder="UID, DUMP, READ 4, WRITE 4 0123.., KEY 0 FFFFFFFFFFFF" style="flex:1;margin-bottom:0;font-family:var(--mo)"><button class="btn sm" id="ardSend">Wyślij</button></div>
     <div class="console" id="ardOutput" style="margin-top:8px"></div>
-    <div class="info-text">Historia: ↑/↓ w polu komendy • Kliknij RX/TX, aby filtrować</div>
   </div>
-
-  <!-- Szkic -->
   <div class="card">
     <h2><svg><use href="#i-chip"/></svg> Szkic Arduino</h2>
     <div class="row">
       <button class="btn sm secondary" id="ardCopySketch"><svg><use href="#i-copy"/></svg> Kopiuj</button>
-      <button class="btn sm secondary" id="ardDownloadSketch"><svg><use href="#i-download"/></svg> Pobierz .ino</button>
+      <button class="btn sm secondary" id="ardDownloadSketch"><svg><use href="#i-download"/></svg> .ino</button>
     </div>
     <div class="hex-block" id="ardSketch" style="max-height:360px;font-size:10px;overflow:auto;white-space:pre"></div>
   </div>
-
 </section>
 
-<!-- ============ WEB NFC ============ -->
+<!-- WEB NFC READ -->
 <section id="tab-read" class="tab">
-  <div class="alert info"><svg><use href="#i-info"/></svg><div>Web NFC to skrót – Arduino daje pełny dostęp do bloków. Użyj go dla pełnej kontroli.</div></div>
+  <div class="card-viz" id="cardViz">
+    <div class="card-inner floating" id="cardInner">
+      <div class="card-scanline"></div>
+      <div class="card-top"><svg class="card-chip"><use href="#i-chip"/></svg><svg class="card-wave"><use href="#i-nfc"/></svg></div>
+      <div class="card-uid" id="cardUid">---- ---- ---- ----</div>
+      <div class="card-records" id="cardRecords"><span class="card-empty">Czeka na kartę…</span></div>
+      <div class="card-footer"><span id="cardType">NFC TAG</span><span id="cardSize">0 B</span></div>
+    </div>
+  </div>
   <div class="card">
     <h2><svg><use href="#i-search"/></svg> Odczyt Web NFC</h2>
     <button class="btn" id="readBtn"><svg><use href="#i-scan"/></svg> Odczytaj kartę</button>
-    <div id="readResult" style="margin-top:10px"></div>
+    <div id="readResult" style="margin-top:12px"></div>
+    <div id="readActions" style="display:none;margin-top:10px">
+      <div class="row">
+        <button class="btn sm secondary" id="readToClone"><svg><use href="#i-clone"/></svg> Klonuj</button>
+        <button class="btn sm secondary" id="readToHex"><svg><use href="#i-hex"/></svg> HEX</button>
+        <button class="btn sm secondary" id="readToBlocks"><svg><use href="#i-grid"/></svg> Bloki</button>
+        <button class="btn sm secondary" id="readExportJson"><svg><use href="#i-download"/></svg> JSON</button>
+        <button class="btn sm secondary" id="readExportBin"><svg><use href="#i-download"/></svg> BIN</button>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- ============ USTAWIENIA ============ -->
+<!-- BLOCKS (Web NFC reconstruction) -->
+<section id="tab-blocks" class="tab">
+  <div class="alert error"><svg><use href="#i-warn"/></svg><div>Rekonstrukcja NDEF. Prawdziwe bloki → zakładka <b>Arduino</b>.</div></div>
+  <div class="card">
+    <h2><svg><use href="#i-grid"/></svg> Rekonstrukcja</h2>
+    <button class="btn" id="blocksRead"><svg><use href="#i-scan"/></svg> Odczytaj kartę</button>
+    <div class="stats">
+      <div class="stat"><div class="v" id="blocksUsed">0</div><div class="l">Zajęte</div></div>
+      <div class="stat"><div class="v" id="blocksFree">0</div><div class="l">Wolne</div></div>
+      <div class="stat"><div class="v" id="blocksPct">0%</div><div class="l">Użycie</div></div>
+      <div class="stat"><div class="v" id="blocksSize">0 B</div><div class="l">NDEF</div></div>
+    </div>
+  </div>
+  <div class="card"><h2><svg><use href="#i-layers"/></svg> TLV</h2><div class="tlv-diagram" id="tlvDiagram">Czeka…</div></div>
+  <div class="card">
+    <h2><svg><use href="#i-grid"/></svg> Widok bloków</h2>
+    <div class="view-controls">
+      <select id="blockViewMode"><option value="mixed">HEX+ASCII</option><option value="hex">HEX</option><option value="ascii">ASCII</option><option value="annotated">Adnotacje</option></select>
+      <button class="btn sm secondary" id="toggleTrailer">Trailer</button>
+      <button class="btn sm secondary" id="toggleEmpty">Puste</button>
+    </div>
+    <div id="blocksView"><div class="info-text">Brak danych.</div></div>
+  </div>
+  <div class="card"><h2><svg><use href="#i-info"/></svg> Inspektor</h2><div id="byteInspector" class="info-text">Kliknij blok.</div></div>
+</section>
+
+<!-- WRITE URL -->
+<section id="tab-write" class="tab">
+  <div class="card">
+    <h2><svg><use href="#i-globe"/></svg> Zapisz URL</h2>
+    <label>Adres</label>
+    <input type="url" id="urlInput" value="https://vercode.pl">
+    <button class="btn" id="writeUrlBtn"><svg><use href="#i-save"/></svg> Zapisz URL</button>
+  </div>
+</section>
+
+<!-- DATA -->
+<section id="tab-data" class="tab">
+  <div class="card">
+    <h2><svg><use href="#i-doc"/></svg> Dane dla Arduino</h2>
+    <label>Nazwa</label><input type="text" id="nameInput" placeholder="Jan Kowalski">
+    <label>ID</label><input type="text" id="idInput" placeholder="42">
+    <label>URL</label><input type="url" id="urlDataInput" value="https://vercode.pl">
+    <button class="btn" id="writeDataBtn"><svg><use href="#i-save"/></svg> Zapisz dane + URL</button>
+    <div class="alert info"><svg><use href="#i-info"/></svg><div>Format: <kbd>NAME=X;ID=Y;URL=Z;</kbd></div></div>
+  </div>
+</section>
+
+<!-- PHOTO -->
+<section id="tab-photo" class="tab">
+  <div class="card">
+    <h2><svg><use href="#i-camera"/></svg> Zdjęcie</h2>
+    <div class="photo-btns">
+      <button class="btn secondary" id="cameraBtn"><svg><use href="#i-camera"/></svg> Aparat</button>
+      <button class="btn secondary" id="galleryBtn"><svg><use href="#i-image"/></svg> Galeria</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+    <img id="photoPreview" alt="">
+    <div id="photoInfo" class="info-text"></div>
+    <label style="margin-top:8px">Kompresja</label>
+    <select id="compressSelect"><option value="100">~100 B</option><option value="300" selected>~300 B</option><option value="600">~600 B</option></select>
+    <button class="btn" id="writePhotoBtn" disabled><svg><use href="#i-save"/></svg> Zapisz zdjęcie</button>
+  </div>
+</section>
+
+<!-- EDIT -->
+<section id="tab-edit" class="tab">
+  <div class="card">
+    <h2><svg><use href="#i-edit"/></svg> Edycja</h2>
+    <button class="btn secondary" id="editLoadBtn"><svg><use href="#i-search"/></svg> Wczytaj</button>
+    <div id="editForm" style="display:none;margin-top:12px">
+      <div class="uid-display" id="editUid">UID: ---</div>
+      <label>URL</label><input type="url" id="editUrl">
+      <label>Nazwa</label><input type="text" id="editName">
+      <label>ID</label><input type="text" id="editId">
+      <div class="row"><button class="btn" id="editSaveBtn"><svg><use href="#i-save"/></svg> Zapisz</button><button class="btn danger" id="editClearBtn"><svg><use href="#i-trash"/></svg> Wyczyść</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- CLONE -->
+<section id="tab-clone" class="tab">
+  <div class="card">
+    <h2><svg><use href="#i-clone"/></svg> Klonowanie</h2>
+    <div class="slot empty" id="slot"><div class="slot-title"><strong>Bufor źródłowy</strong><span class="slot-count" id="slotCount">—</span></div><div class="slot-info" id="slotInfo">Brak.</div></div>
+    <div class="row"><button class="btn" id="cloneRead"><svg><use href="#i-search"/></svg> Odczytaj źródło</button><button class="btn secondary" id="cloneClear"><svg><use href="#i-trash"/></svg> Wyczyść</button></div>
+    <div class="row"><button class="btn success" id="cloneCopy"><svg><use href="#i-copy"/></svg> Kopiuj</button><button class="btn warning" id="cloneMove"><svg><use href="#i-move"/></svg> Przenieś</button></div>
+  </div>
+  <div class="card"><h2><svg><use href="#i-hex"/></svg> HEX</h2><div class="hex-block" id="cloneHex" style="min-height:60px">—</div></div>
+</section>
+
+<!-- HEX -->
+<section id="tab-hex" class="tab">
+  <div class="card">
+    <h2><svg><use href="#i-hex"/></svg> Bufor binarny</h2>
+    <label>HEX</label>
+    <textarea id="hexInput" placeholder="00 01 02 03 ..."></textarea>
+    <div class="stats"><div class="stat"><div class="v" id="hexBytes">0</div><div class="l">Bajtów</div></div><div class="stat"><div class="v" id="hexBits">0</div><div class="l">Bitów</div></div></div>
+    <div class="row" style="margin-top:10px"><button class="btn sm secondary" id="hexLoadFile"><svg><use href="#i-upload"/></svg> BIN</button><button class="btn sm secondary" id="hexSaveFile"><svg><use href="#i-download"/></svg> BIN</button><button class="btn sm secondary" id="hexLoadTag"><svg><use href="#i-scan"/></svg> Z karty</button></div>
+    <div class="row"><button class="btn success" id="hexWriteTag"><svg><use href="#i-save"/></svg> Zapisz</button><button class="btn danger" id="hexClear"><svg><use href="#i-trash"/></svg> Wyczyść</button></div>
+    <input type="file" id="hexFile" accept=".bin,.dat,application/octet-stream" style="display:none">
+  </div>
+  <div class="card"><h2><svg><use href="#i-doc"/></svg> Podgląd</h2><div class="hex-block" id="hexView" style="min-height:60px">—</div></div>
+</section>
+
+<!-- SETTINGS -->
 <section id="tab-settings" class="tab">
   <div class="card">
-    <h2><svg><use href="#i-settings"/></svg> Ustawienia</h2>
-    <label>Baudrate (domyślnie 115200)</label>
-    <select id="ardBaudGlobal">
-      <option value="9600">9600</option><option value="19200">19200</option>
-      <option value="38400">38400</option><option value="57600">57600</option>
-      <option value="115200" selected>115200</option>
-    </select>
+    <h2><svg><use href="#i-palette"/></svg> Wizualizacja karty</h2>
+    <label>Motyw</label>
+    <div class="preset-grid" id="presetGrid">
+      <div class="preset-btn dark active" data-preset="dark"></div><div class="preset-btn blue" data-preset="blue"></div>
+      <div class="preset-btn green" data-preset="green"></div><div class="preset-btn purple" data-preset="purple"></div>
+      <div class="preset-btn red" data-preset="red"></div><div class="preset-btn gold" data-preset="gold"></div>
+      <div class="preset-btn cyan" data-preset="cyan"></div><div class="preset-btn pink" data-preset="pink"></div>
+    </div>
+    <label>Obraz tła</label>
+    <img id="cardImagePreview" class="img-preview" style="display:none">
+    <div class="row"><button class="btn sm secondary" id="uploadCardImage"><svg><use href="#i-upload"/></svg> Wybierz</button><button class="btn sm secondary" id="clearCardImage"><svg><use href="#i-trash"/></svg> Usuń</button></div>
+    <input type="file" id="cardImageInput" accept="image/*" style="display:none">
+    <label style="margin-top:12px">Zaokrąglenie</label>
+    <div class="slider-row"><input type="range" id="cardRadius" min="0" max="28" value="16"><span class="val" id="cardRadiusVal">16</span></div>
+    <div class="toggle"><span>Animacja</span><label class="toggle-switch"><input type="checkbox" id="cardFloat" checked><span></span></label></div>
+    <div class="toggle"><span>UID</span><label class="toggle-switch"><input type="checkbox" id="showUid" checked><span></span></label></div>
+    <div class="toggle"><span>Rekordy</span><label class="toggle-switch"><input type="checkbox" id="showRecords" checked><span></span></label></div>
+    <div class="toggle"><span>Rozmiar</span><label class="toggle-switch"><input type="checkbox" id="showSize" checked><span></span></label></div>
+    <div class="toggle"><span>NFC wave</span><label class="toggle-switch"><input type="checkbox" id="showWave" checked><span></span></label></div>
+    <div class="toggle"><span>Chip</span><label class="toggle-switch"><input type="checkbox" id="showChip" checked><span></span></label></div>
+    <button class="btn secondary" id="resetCardSettings" style="margin-top:12px"><svg><use href="#i-refresh"/></svg> Reset</button>
+  </div>
+  <div class="card">
+    <h2><svg><use href="#i-usb"/></svg> Arduino</h2>
+    <label>Baudrate globalny</label>
+    <select id="ardBaudGlobal"><option value="9600">9600</option><option value="19200">19200</option><option value="38400">38400</option><option value="57600">57600</option><option value="115200" selected>115200</option></select>
     <div class="toggle"><span>Auto-reconnect</span><label class="toggle-switch"><input type="checkbox" id="ardAutoReconnect" checked><span></span></label></div>
-    <div class="toggle"><span>Auto-odczyt po połączeniu</span><label class="toggle-switch"><input type="checkbox" id="ardAutoDump" checked><span></span></label></div>
+    <div class="toggle"><span>Auto-DUMP po połączeniu</span><label class="toggle-switch"><input type="checkbox" id="ardAutoDump" checked><span></span></label></div>
     <div class="toggle"><span>Wibracje</span><label class="toggle-switch"><input type="checkbox" id="ardVibrate" checked><span></span></label></div>
-    <button class="btn secondary" id="ardResetAll" style="margin-top:10px"><svg><use href="#i-refresh"/></svg> Reset wszystkiego</button>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<section id="tab-tools" class="tab">
+  <div class="card ok"><h2><svg><use href="#i-unlock"/></svg> Format NDEF</h2><button class="btn success" id="formatBtn"><svg><use href="#i-unlock"/></svg> Format</button></div>
+  <div class="card warn"><h2><svg><use href="#i-refresh"/></svg> Reset karty</h2><button class="btn warning" id="resetCardBtn"><svg><use href="#i-refresh"/></svg> Wyczyść</button></div>
+  <div class="card"><h2><svg><use href="#i-refresh"/></svg> Reset aplikacji</h2><button class="btn secondary" id="resetAppBtn"><svg><use href="#i-refresh"/></svg> Reset</button></div>
+  <div class="card">
+    <h2><svg><use href="#i-info"/></svg> Info</h2>
+    <div class="alert info"><svg><use href="#i-info"/></svg><div><b>Web NFC</b> – Chrome/Edge Android + HTTPS.</div></div>
+    <div class="alert success"><svg><use href="#i-check"/></svg><div><b>Web Serial</b> – Chrome/Edge PC + Arduino.</div></div>
   </div>
 </section>
 
 </main>
 
 <div id="logPanel">
-  <div id="logHeader">
-    <svg><use href="#i-doc"/></svg> Log
-    <span class="spacer"></span>
-    <button id="logToggle"><svg><use href="#i-chevron"/></svg></button>
-    <button id="logClear"><svg><use href="#i-trash"/></svg></button>
-  </div>
+  <div id="logHeader"><svg><use href="#i-doc"/></svg> Log<span class="spacer"></span><button id="logToggle"><svg><use href="#i-chevron"/></svg></button><button id="logClear"><svg><use href="#i-trash"/></svg></button></div>
   <div id="log"></div>
 </div>
 
@@ -436,177 +631,57 @@ select{cursor:pointer}
   <button id="bigCancel" style="display:none"><svg class="ic"><use href="#i-x"/></svg> Anuluj</button>
 </div>
 
+<div id="cropModal">
+  <div class="crop-header"><h3>Przytnij zdjęcie</h3><button id="cropClose"><svg class="ic"><use href="#i-x"/></svg></button></div>
+  <div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas><div class="crop-frame" id="cropFrame"></div></div>
+  <div class="crop-controls">
+    <div class="ctrl-row"><label>Skala</label><input type="range" id="cropZoom" min="10" max="400" value="100"></div>
+    <div class="crop-aspects"><button data-aspect="1" class="active">1:1</button><button data-aspect="1.333">4:3</button><button data-aspect="1.778">16:9</button><button data-aspect="0">Free</button></div>
+    <div class="ctrl-row"><button class="btn secondary sm" id="cropRotate"><svg><use href="#i-rotate"/></svg> Obróć</button><button class="btn secondary sm" id="cropReset"><svg><use href="#i-refresh"/></svg> Reset</button></div>
+  </div>
+  <div class="crop-footer"><button class="btn secondary" id="cropCancel">Anuluj</button><button class="btn success" id="cropApply"><svg><use href="#i-crop"/></svg> Zastosuj</button></div>
+</div>
+
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
 const S={
-  ardConnected:false, ardPort:null, ardWriter:null, ardReader:null, ardBuf:'',
+  ardConnected:false,ardPort:null,ardWriter:null,ardReader:null,
   ardBlocks:new Array(64).fill(null).map(()=>new Uint8Array(16)),
   ardOriginal:new Array(64).fill(null).map(()=>new Uint8Array(16)),
-  ardDirty:new Set(),
-  ardKeys:new Array(16).fill('FFFFFFFFFFFF'),
-  ardSectors:new Array(16).fill(null),
-  ardUid:null, ardSak:null, ardAtqa:null, ardCardType:null,
-  ardCmdHistory:[], ardCmdHistoryIdx:-1,
-  ardConsoleFilter:'all',
-  ardDumpInProgress:false, ardDumpCancel:false, ardDumpFailedSectors:[],
-  ardConnTime:0,
+  ardDirty:new Set(),ardKeys:new Array(16).fill('FFFFFFFFFFFF'),
+  ardSectors:new Array(16).fill(null),ardUid:null,ardSak:null,ardAtqa:null,ardCardType:null,
+  ardCmdHistory:[],ardCmdHistoryIdx:-1,ardConsoleFilter:'all',
+  ardDumpInProgress:false,ardDumpFailedSectors:[],ardConnTime:0,
   ardSettings:{autoReconnect:true,autoDump:true,vibrate:true,baud:115200},
-  read:null
+  read:null,clone:null,hex:new Uint8Array(0),photo:null,blocks:null,
+  blockView:'mixed',showTrailer:false,showEmpty:true,
+  cardSettings:{preset:'dark',image:null,radius:16,float:true,showUid:true,showRecords:true,showSize:true,showWave:true,showChip:true}
 };
+const PRESET_COLORS={dark:'#1a1a1a',blue:'#1e3a5f',green:'#1a4f3a',purple:'#3a1e5f',red:'#5f1e2a',gold:'#5f4a1e',cyan:'#1e4f5f',pink:'#5f1e4a'};
 
-const ARD_SKETCH=`// NFC Master Pro – Arduino RC522
-// RC522: SS=10, RST=9, MOSI=11, MISO=12, SCK=13
-#include <SPI.h>
+const ARD_SKETCH=`#include <SPI.h>
 #include <MFRC522.h>
 #define SS_PIN 10
 #define RST_PIN 9
 MFRC522 rfid(SS_PIN, RST_PIN);
 MFRC522::MIFARE_Key key;
 byte sectorKeys[16][6];
-
-void printHex(byte* b, byte len) {
-  for(byte i=0; i<len; i++) {
-    if(b[i] < 0x10) Serial.print("0");
-    Serial.print(b[i], HEX);
-  }
-}
-
+void printHex(byte* b, byte len) { for(byte i=0;i<len;i++){ if(b[i]<0x10)Serial.print("0"); Serial.print(b[i],HEX); } }
 void setup() {
-  Serial.begin(115200);
-  SPI.begin();
-  rfid.PCD_Init();
+  Serial.begin(115200); SPI.begin(); rfid.PCD_Init();
   SPI.setClockDivider(SPI_CLOCK_DIV8);
-  for(int s=0; s<16; s++)
-    for(int i=0; i<6; i++) sectorKeys[s][i] = 0xFF;
-  delay(200);
-  Serial.println("READY");
+  for(int s=0;s<16;s++) for(int i=0;i<6;i++) sectorKeys[s][i]=0xFF;
+  delay(200); Serial.println("READY");
 }
-
-bool waitCard() {
-  for(int i=0; i<50; i++) {
-    if(rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) return true;
-    delay(100);
-  }
-  return false;
-}
-
-bool authBlock(byte block) {
-  byte sector = block / 4;
-  memcpy(key.keyByte, sectorKeys[sector], 6);
-  return rfid.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(rfid.uid)) == MFRC522::STATUS_OK;
-}
-
-void cmdUid() {
-  if(!waitCard()) { Serial.println("ERR no_card"); return; }
-  Serial.print("UID "); printHex(rfid.uid.uidByte, rfid.uid.size); Serial.println();
-  Serial.print("SAK "); if(rfid.uid.sak<0x10)Serial.print("0"); Serial.println(rfid.uid.sak, HEX);
-  Serial.println("END");
-  rfid.PICC_HaltA(); rfid.PCD_StopCrypto1();
-}
-
-void cmdRead(int sector) {
-  if(sector < 0 || sector > 15) { Serial.println("ERR bad_sector"); return; }
-  if(!waitCard()) { Serial.println("ERR no_card"); return; }
-  if(!authBlock(sector*4)) { Serial.println("ERR auth_sector_"+String(sector)); rfid.PICC_HaltA(); rfid.PCD_StopCrypto1(); return; }
-  Serial.print("SECTOR "); Serial.println(sector);
-  for(int i=0; i<4; i++) {
-    byte block = sector*4 + i;
-    byte buf[18]; byte size = sizeof(buf);
-    if(rfid.MIFARE_Read(block, buf, &size) == MFRC522::STATUS_OK) {
-      Serial.print("BLK "); Serial.print(block); Serial.print(" ");
-      printHex(buf, 16); Serial.println();
-    } else Serial.println("ERR read_block_"+String(block));
-  }
-  Serial.println("END");
-  rfid.PICC_HaltA(); rfid.PCD_StopCrypto1();
-}
-
-void cmdDump() {
-  if(!waitCard()) { Serial.println("ERR no_card"); return; }
-  Serial.print("UID "); printHex(rfid.uid.uidByte, rfid.uid.size); Serial.println();
-  Serial.print("SAK "); if(rfid.uid.sak<0x10)Serial.print("0"); Serial.println(rfid.uid.sak, HEX);
-  for(int s=0; s<16; s++) {
-    Serial.print("SEC "); Serial.println(s);
-    if(authBlock(s*4)) {
-      for(int i=0; i<4; i++) {
-        byte block = s*4 + i;
-        byte buf[18]; byte size = sizeof(buf);
-        if(rfid.MIFARE_Read(block, buf, &size) == MFRC522::STATUS_OK) {
-          Serial.print("BLK "); Serial.print(block); Serial.print(" ");
-          printHex(buf, 16); Serial.println();
-        }
-      }
-      Serial.println("SECTOR_END");
-      rfid.PCD_StopCrypto1();
-    } else {
-      Serial.println("LOCKED");
-    }
-    delay(30);
-    if(!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
-      if(!waitCard()) { Serial.println("ERR card_lost"); break; }
-    }
-  }
-  Serial.println("END");
-  rfid.PICC_HaltA(); rfid.PCD_StopCrypto1();
-}
-
-void cmdWrite(int block, String hexData) {
-  if(block < 0 || block > 63) { Serial.println("ERR bad_block"); return; }
-  if(hexData.length() != 32) { Serial.println("ERR bad_len"); return; }
-  if(block % 4 == 3) { Serial.println("ERR trailer_protected"); return; }
-  byte data[16];
-  for(int i=0; i<16; i++) {
-    char c1 = hexData[i*2], c2 = hexData[i*2+1];
-    data[i] = 0;
-    if(c1 >= '0' && c1 <= '9') data[i] = (c1 - '0') << 4;
-    else if(c1 >= 'A' && c1 <= 'F') data[i] = (c1 - 'A' + 10) << 4;
-    else if(c1 >= 'a' && c1 <= 'f') data[i] = (c1 - 'a' + 10) << 4;
-    if(c2 >= '0' && c2 <= '9') data[i] |= c2 - '0';
-    else if(c2 >= 'A' && c2 <= 'F') data[i] |= c2 - 'A' + 10;
-    else if(c2 >= 'a' && c2 <= 'f') data[i] |= c2 - 'a' + 10;
-  }
-  if(!waitCard()) { Serial.println("ERR no_card"); return; }
-  if(!authBlock(block)) { Serial.println("ERR auth"); rfid.PICC_HaltA(); rfid.PCD_StopCrypto1(); return; }
-  if(rfid.MIFARE_Write(block, data, 16) == MFRC522::STATUS_OK) Serial.println("OK");
-  else Serial.println("ERR write");
-  rfid.PICC_HaltA(); rfid.PCD_StopCrypto1();
-}
-
-void cmdKey(int sector, String hexKey) {
-  if(sector < 0 || sector > 15) { Serial.println("ERR bad_sector"); return; }
-  if(hexKey.length() != 12) { Serial.println("ERR bad_key"); return; }
-  for(int i=0; i<6; i++) {
-    char c1 = hexKey[i*2], c2 = hexKey[i*2+1];
-    byte b = 0;
-    if(c1 >= '0' && c1 <= '9') b = (c1 - '0') << 4;
-    else if(c1 >= 'A' && c1 <= 'F') b = (c1 - 'A' + 10) << 4;
-    else if(c1 >= 'a' && c1 <= 'f') b = (c1 - 'a' + 10) << 4;
-    if(c2 >= '0' && c2 <= '9') b |= c2 - '0';
-    else if(c2 >= 'A' && c2 <= 'F') b |= c2 - 'A' + 10;
-    else if(c2 >= 'a' && c2 <= 'f') b |= c2 - 'a' + 10;
-    sectorKeys[sector][i] = b;
-  }
-  Serial.println("OK");
-}
-
-void loop() {
-  if(!Serial.available()) return;
-  String cmd = Serial.readStringUntil('\\n');
-  cmd.trim();
-  if(!cmd.length()) return;
-  int sp = cmd.indexOf(' ');
-  String op = sp > 0 ? cmd.substring(0, sp) : cmd;
-  String rest = sp > 0 ? cmd.substring(sp+1) : "";
-  op.toUpperCase();
-  if(op == "PING") Serial.println("PONG");
-  else if(op == "UID") cmdUid();
-  else if(op == "READ") cmdRead(rest.toInt());
-  else if(op == "DUMP") cmdDump();
-  else if(op == "WRITE") { int sp2 = rest.indexOf(' '); int blk = rest.substring(0, sp2).toInt(); String hex = rest.substring(sp2+1); cmdWrite(blk, hex); }
-  else if(op == "KEY") { int sp2 = rest.indexOf(' '); int sec = rest.substring(0, sp2).toInt(); String hex = rest.substring(sp2+1); cmdKey(sec, hex); }
-  else Serial.println("ERR unknown_cmd");
-}`;
+bool waitCard(){ for(int i=0;i<50;i++){ if(rfid.PICC_IsNewCardPresent()&&rfid.PICC_ReadCardSerial())return true; delay(100); } return false; }
+bool authBlock(byte block){ byte sector=block/4; memcpy(key.keyByte,sectorKeys[sector],6); return rfid.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A,block,&key,&(rfid.uid))==MFRC522::STATUS_OK; }
+void cmdUid(){ if(!waitCard()){Serial.println("ERR no_card");return;} Serial.print("UID ");printHex(rfid.uid.uidByte,rfid.uid.size);Serial.println(); Serial.print("SAK ");if(rfid.uid.sak<0x10)Serial.print("0");Serial.println(rfid.uid.sak,HEX); Serial.println("END"); rfid.PICC_HaltA();rfid.PCD_StopCrypto1(); }
+void cmdRead(int sector){ if(sector<0||sector>15){Serial.println("ERR bad_sector");return;} if(!waitCard()){Serial.println("ERR no_card");return;} if(!authBlock(sector*4)){Serial.println("ERR auth_sector_"+String(sector));rfid.PICC_HaltA();rfid.PCD_StopCrypto1();return;} Serial.print("SECTOR ");Serial.println(sector); for(int i=0;i<4;i++){byte block=sector*4+i;byte buf[18];byte size=sizeof(buf);if(rfid.MIFARE_Read(block,buf,&size)==MFRC522::STATUS_OK){Serial.print("BLK ");Serial.print(block);Serial.print(" ");printHex(buf,16);Serial.println();}} Serial.println("SECTOR_END"); Serial.println("END"); rfid.PICC_HaltA();rfid.PCD_StopCrypto1(); }
+void cmdDump(){ if(!waitCard()){Serial.println("ERR no_card");return;} Serial.print("UID ");printHex(rfid.uid.uidByte,rfid.uid.size);Serial.println(); Serial.print("SAK ");if(rfid.uid.sak<0x10)Serial.print("0");Serial.println(rfid.uid.sak,HEX); for(int s=0;s<16;s++){ Serial.print("SEC ");Serial.println(s); if(authBlock(s*4)){ for(int i=0;i<4;i++){byte block=s*4+i;byte buf[18];byte size=sizeof(buf);if(rfid.MIFARE_Read(block,buf,&size)==MFRC522::STATUS_OK){Serial.print("BLK ");Serial.print(block);Serial.print(" ");printHex(buf,16);Serial.println();}} Serial.println("SECTOR_END"); rfid.PCD_StopCrypto1(); } else { Serial.println("LOCKED"); } delay(30); if(!rfid.PICC_IsNewCardPresent()||!rfid.PICC_ReadCardSerial()){if(!waitCard()){Serial.println("ERR card_lost");break;}} } Serial.println("END"); rfid.PICC_HaltA();rfid.PCD_StopCrypto1(); }
+void cmdWrite(int block,String hexData){ if(block<0||block>63){Serial.println("ERR bad_block");return;} if(hexData.length()!=32){Serial.println("ERR bad_len");return;} if(block%4==3){Serial.println("ERR trailer_protected");return;} byte data[16]; for(int i=0;i<16;i++){char c1=hexData[i*2],c2=hexData[i*2+1];data[i]=0;if(c1>='0'&&c1<='9')data[i]=(c1-'0')<<4;else if(c1>='A'&&c1<='F')data[i]=(c1-'A'+10)<<4;else if(c1>='a'&&c1<='f')data[i]=(c1-'a'+10)<<4;if(c2>='0'&&c2<='9')data[i]|=c2-'0';else if(c2>='A'&&c2<='F')data[i]|=c2-'A'+10;else if(c2>='a'&&c2<='f')data[i]|=c2-'a'+10;} if(!waitCard()){Serial.println("ERR no_card");return;} if(!authBlock(block)){Serial.println("ERR auth");rfid.PICC_HaltA();rfid.PCD_StopCrypto1();return;} if(rfid.MIFARE_Write(block,data,16)==MFRC522::STATUS_OK)Serial.println("OK");else Serial.println("ERR write"); rfid.PICC_HaltA();rfid.PCD_StopCrypto1(); }
+void cmdKey(int sector,String hexKey){ if(sector<0||sector>15){Serial.println("ERR bad_sector");return;} if(hexKey.length()!=12){Serial.println("ERR bad_key");return;} for(int i=0;i<6;i++){char c1=hexKey[i*2],c2=hexKey[i*2+1];byte b=0;if(c1>='0'&&c1<='9')b=(c1-'0')<<4;else if(c1>='A'&&c1<='F')b=(c1-'A'+10)<<4;else if(c1>='a'&&c1<='f')b=(c1-'a'+10)<<4;if(c2>='0'&&c2<='9')b|=c2-'0';else if(c2>='A'&&c2<='F')b|=c2-'A'+10;else if(c2>='a'&&c2<='f')b|=c2-'a'+10;sectorKeys[sector][i]=b;} Serial.println("OK"); }
+void loop(){ if(!Serial.available())return; String cmd=Serial.readStringUntil('\\n'); cmd.trim(); if(!cmd.length())return; int sp=cmd.indexOf(' '); String op=sp>0?cmd.substring(0,sp):cmd; String rest=sp>0?cmd.substring(sp+1):""; op.toUpperCase(); if(op=="PING")Serial.println("PONG"); else if(op=="UID")cmdUid(); else if(op=="READ")cmdRead(rest.toInt()); else if(op=="DUMP")cmdDump(); else if(op=="WRITE"){int sp2=rest.indexOf(' ');int blk=rest.substring(0,sp2).toInt();String hex=rest.substring(sp2+1);cmdWrite(blk,hex);} else if(op=="KEY"){int sp2=rest.indexOf(' ');int sec=rest.substring(0,sp2).toInt();String hex=rest.substring(sp2+1);cmdKey(sec,hex);} else Serial.println("ERR unknown"); }`;
 
 $('ardSketch').textContent=ARD_SKETCH;
 
@@ -617,644 +692,501 @@ function showBig(icon,text,sub='',cancel=null){$('bigIcon').innerHTML=`<use href
 function showBigSuccess(t,s=''){$('bigIcon').innerHTML=`<use href="#i-check"/>`;$('bigStatus').className='show ok';$('bigText').textContent=t;$('bigSub').textContent=s;$('bigCancel').style.display='none';vibrate([40,30,40]);setTimeout(hideBig,1500);}
 function showBigError(t,s=''){$('bigIcon').innerHTML=`<use href="#i-x"/>`;$('bigStatus').className='show err';$('bigText').textContent=t;$('bigSub').textContent=s;$('bigCancel').style.display='none';vibrate([80,40,80]);setTimeout(hideBig,3000);}
 function hideBig(){$('bigStatus').className='';}
+function downloadBlob(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 
+const hasNfc='NDEFReader' in window;
 const hasSerial='serial' in navigator;
-if(hasSerial){
-  $('nfcBadge').className='bd serial';
-  $('nfcBadge').innerHTML='<svg><use href="#i-check"/></svg> <span>Serial OK</span>';
-  log('Web Serial dostępne','ok');
+if(hasNfc||hasSerial){
+  $('nfcBadge').className='bd '+(hasSerial?'serial':'ok');
+  $('nfcBadge').innerHTML=`<svg><use href="#i-check"/></svg> <span>${hasSerial?'Serial OK':(hasNfc?'NFC OK':'OK')}</span>`;
 }else{
   $('nfcBadge').className='bd err';
-  $('nfcBadge').innerHTML='<svg><use href="#i-x"/></svg> <span>Brak Serial</span>';
-  log('Web Serial niedostępne – użyj Chrome/Edge na PC','err');
+  $('nfcBadge').innerHTML='<svg><use href="#i-x"/></svg> <span>Brak</span>';
 }
 
 async function enterFs(){try{if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();}catch(e){}}
 $('fsBtn').onclick=enterFs;
 document.body.addEventListener('click',function a(){if(!document.fullscreenElement)enterFs();document.body.removeEventListener('click',a);},{once:true});
 
-document.querySelectorAll('nav button').forEach(btn=>{
-  btn.onclick=()=>{
-    document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    btn.classList.add('active');
-    $('tab-'+btn.dataset.tab).classList.add('active');
-    vibrate(10);
-  };
-});
+document.querySelectorAll('nav button').forEach(btn=>{btn.onclick=()=>{document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');$('tab-'+btn.dataset.tab).classList.add('active');vibrate(10);};});
 
-// ================== ARDUINO ==================
+// ============ SHARED HELPERS ============
+function recData(r){if(r.data instanceof DataView)return new Uint8Array(r.data.buffer,r.data.byteOffset,r.data.byteLength);if(r.data instanceof ArrayBuffer)return new Uint8Array(r.data);if(r.data instanceof Uint8Array)return r.data;if(typeof r.data==='string')return new TextEncoder().encode(r.data);return new Uint8Array(0);}
+function bytesToHex(b,sep=' '){return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join(sep);}
+function hexToBytes(h){h=h.replace(/\s+/g,'').replace(/0x/gi,'').replace(/[^0-9a-f]/gi,'');if(h.length%2)throw new Error('Nieparzysta');const a=new Uint8Array(h.length/2);for(let i=0;i<a.length;i++)a[i]=parseInt(h.substr(i*2,2),16);return a;}
+function hexDump(b){const lines=[];for(let i=0;i<b.length;i+=16){const c=b.slice(i,i+16);const hex=Array.from(c).map(x=>x.toString(16).padStart(2,'0')).join(' ').padEnd(47,' ');const asc=Array.from(c).map(x=>x>=32&&x<127?String.fromCharCode(x):'.').join('');lines.push(`${i.toString(16).padStart(4,'0')}  ${hex}  ${asc}`);}return lines.join('\n')||'—';}
+
+// ============ ARDUINO ============
 function ardOut(text,cls='rx'){
   const el=$('ardOutput');
   const d=document.createElement('div');
   if(S.ardConsoleFilter!=='all'&&S.ardConsoleFilter!==cls)d.style.display='none';
   d.className=cls;
-  const ts=document.createElement('span');
-  ts.className='ts';
-  ts.textContent=new Date().toLocaleTimeString('pl',{hour12:false})+'.'+(Date.now()%1000).toString().padStart(3,'0');
-  d.appendChild(ts);
-  d.appendChild(document.createTextNode(text));
-  el.appendChild(d);
-  el.scrollTop=el.scrollHeight;
+  const ts=document.createElement('span');ts.className='ts';ts.textContent=new Date().toLocaleTimeString('pl',{hour12:false});
+  d.appendChild(ts);d.appendChild(document.createTextNode(text));
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
   while(el.children.length>500)el.removeChild(el.firstChild);
 }
-
-function ardSetConnected(connected){
-  S.ardConnected=connected;
-  $('ardConnect').style.display=connected?'none':'';
-  $('ardDisconnect').style.display=connected?'':'none';
-  $('ardStatus').className='ard-status '+(connected?'on':'');
-  $('ardStatusTxt').textContent=connected?'Połączono':'Nie połączono';
-  $('ardCardInfoCard').style.display=connected?'':'none';
-  $('ardActionsCard').style.display=connected?'':'none';
-  $('ardKeysCard').style.display=connected?'':'none';
-  $('ardBlocksCard').style.display=connected?'':'none';
-  $('ardConsoleCard').style.display=connected?'':'none';
-  if(connected){
-    S.ardConnTime=Date.now();
-    setInterval(()=>{
-      if(!S.ardConnected){clearInterval(this);return;}
-      const d=Math.floor((Date.now()-S.ardConnTime)/1000);
-      $('ardStatusMeta').textContent=`${Math.floor(d/60)}:${(d%60).toString().padStart(2,'0')}`;
-    },1000);
-  }else{
-    $('ardStatusMeta').textContent='';
-  }
+function ardSetConnected(c){
+  S.ardConnected=c;
+  $('ardConnect').style.display=c?'none':'';
+  $('ardDisconnect').style.display=c?'':'none';
+  $('ardStatus').className='ard-status '+(c?'on':'');
+  $('ardStatusTxt').textContent=c?'Połączono':'Nie połączono';
+  $('ardCardInfoCard').style.display=c?'':'none';
+  $('ardActionsCard').style.display=c?'':'none';
+  $('ardKeysCard').style.display=c?'':'none';
+  $('ardBlocksCard').style.display=c?'':'none';
+  $('ardConsoleCard').style.display=c?'':'none';
+  if(c){S.ardConnTime=Date.now();setInterval(()=>{if(!S.ardConnected)return;const d=Math.floor((Date.now()-S.ardConnTime)/1000);$('ardStatusMeta').textContent=`${Math.floor(d/60)}:${(d%60).toString().padStart(2,'0')}`;},1000);}
+  else $('ardStatusMeta').textContent='';
 }
-
 async function ardConnect(){
   if(!hasSerial){toast('Web Serial niedostępne','err');return;}
   try{
-    const ports=await navigator.serial.getPorts();
-    let port;
-    if(ports.length>0){
-      port=ports.find(p=>p.getInfo().usbVendorId===0x2341||p.getInfo().usbVendorId===0x1a86||p.getInfo().usbVendorId===0x0403)||ports[0];
-      ardOut(`// Znaleziono ${ports.length} portów, używam: ${port.getInfo().usbVendorId?.toString(16)||'?'}`,'sys');
-    }else{
-      ardOut('// Brak portów – wybierz w oknie dialogowym','sys');
-      port=await navigator.serial.requestPort();
-    }
+    let port;const ports=await navigator.serial.getPorts();
+    if(ports.length>0){port=ports.find(p=>{const id=p.getInfo();return id.usbVendorId===0x2341||id.usbVendorId===0x1a86||id.usbVendorId===0x0403;})||ports[0];ardOut(`// Znaleziono ${ports.length} portów`,'sys');}
+    else{port=await navigator.serial.requestPort();}
     const baud=parseInt($('ardBaud').value);
     await port.open({baudRate:baud});
-    S.ardPort=port; S.ardWriter=port.writable.getWriter();
-    ardSetConnected(true);
-    log(`Arduino połączone @ ${baud}`,`ok`);
-    ardOut(`// Połączono @ ${baud} baud`,'sys');
-    try{const info=port.getInfo();$('ardPortInfo').textContent=`VID: 0x${info.usbVendorId?.toString(16)||'?'} PID: 0x${info.usbProductId?.toString(16)||'?'}`;}catch(e){}
+    S.ardPort=port;S.ardWriter=port.writable.getWriter();
+    ardSetConnected(true);log(`Arduino @ ${baud}`,'ok');ardOut(`// Połączono @ ${baud}`,'sys');
+    try{const i=port.getInfo();$('ardPortInfo').textContent=`VID: 0x${i.usbVendorId?.toString(16)||'?'} PID: 0x${i.usbProductId?.toString(16)||'?'}`;}catch(e){}
     setTimeout(()=>ardSend('PING'),300);
     ardReadLoop();
-  }catch(e){
-    log('Błąd: '+e.message,'err');
-    toast('Błąd: '+e.message,'err');
-    ardOut('// Błąd: '+e.message,'err');
-    $('ardStatus').className='ard-status err';
-    $('ardStatusTxt').textContent='Błąd: '+e.message;
-  }
+  }catch(e){log('Błąd: '+e.message,'err');toast('Błąd: '+e.message,'err');ardOut('// Błąd: '+e.message,'err');$('ardStatus').className='ard-status err';$('ardStatusTxt').textContent='Błąd';}
 }
-
 async function ardReadLoop(){
-  const decoder=new TextDecoder();
-  let buf='';
+  const dec=new TextDecoder();let buf='';
   while(S.ardConnected&&S.ardPort&&S.ardPort.readable){
-    const reader=S.ardPort.readable.getReader();
-    S.ardReader=reader;
-    try{
-      while(true){
-        const {value,done}=await reader.read();
-        if(done)break;
-        buf+=decoder.decode(value,{stream:true});
-        const lines=buf.split('\n');
-        buf=lines.pop();
-        for(const line of lines){
-          const l=line.trim();
-          if(!l)continue;
-          ardOut(l,'rx');
-          ardHandleLine(l);
-        }
-      }
-    }catch(e){
-      if(S.ardConnected){log('Czytanie: '+e.message,'err');ardOut('// Czytanie: '+e.message,'err');}
-    }finally{
-      try{reader.releaseLock();}catch(e){}
-      S.ardReader=null;
-    }
+    const reader=S.ardPort.readable.getReader();S.ardReader=reader;
+    try{while(true){const {value,done}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();for(const l of lines){const t=l.trim();if(t){ardOut(t,'rx');ardHandleLine(t);}}}}
+    catch(e){if(S.ardConnected){log('Czytanie: '+e.message,'err');ardOut('// '+e.message,'err');}}
+    finally{try{reader.releaseLock();}catch(e){}S.ardReader=null;}
   }
 }
-
 function ardHandleLine(line){
-  if(line==='READY'){ardOut('// Arduino gotowe','sys');}
-  else if(line==='PONG'){
-    ardOut('// PONG – połączenie OK','sys');
-    if(S.ardSettings.autoDump){setTimeout(()=>{if(S.ardConnected)ardSend('DUMP');},500);}
-  }
-  else if(line.startsWith('UID ')){
-    S.ardUid=line.substring(4);
-    $('ardUid').textContent=formatUid(S.ardUid);
-    $('ardCardInfoCard').style.display='';
-    detectCardType();
-  }
-  else if(line.startsWith('SAK ')){
-    S.ardSak=line.substring(4);
-    $('ardSak').textContent='0x'+S.ardSak.toUpperCase();
-    detectCardType();
-  }
-  else if(line.startsWith('SEC ')){
-    S.ardSectors[parseInt(line.substring(4))]={status:'reading',blocks:0};
-    ardUpdateProgress(parseInt(line.substring(4)),16);
-  }
+  if(line==='READY'){ardOut('// Gotowe','sys');}
+  else if(line==='PONG'){ardOut('// PONG','sys');if(S.ardSettings.autoDump)setTimeout(()=>{if(S.ardConnected)ardSend('DUMP');},500);}
+  else if(line.startsWith('UID ')){S.ardUid=line.substring(4);$('ardUid').textContent=formatUid(S.ardUid);$('ardCardInfoCard').style.display='';detectCardType();}
+  else if(line.startsWith('SAK ')){S.ardSak=line.substring(4);$('ardSak').textContent='0x'+S.ardSak.toUpperCase();detectCardType();}
+  else if(line.startsWith('SEC ')){S.ardSectors[parseInt(line.substring(4))]={status:'reading',blocks:0};ardUpdateProgress(parseInt(line.substring(4)),16);}
   else if(line.startsWith('BLK ')){
-    const parts=line.split(' ');
-    const b=parseInt(parts[1]);
-    const hex=parts[2];
-    if(!isNaN(b)&&hex&&hex.length===32){
-      const bytes=new Uint8Array(16);
-      for(let i=0;i<16;i++)bytes[i]=parseInt(hex.substr(i*2,2),16);
-      S.ardBlocks[b]=bytes;
-      S.ardOriginal[b]=new Uint8Array(bytes);
-      S.ardDirty.delete(b);
-      const sec=Math.floor(b/4);
-      if(S.ardSectors[sec])S.ardSectors[sec].blocks=(S.ardSectors[sec].blocks||0)+1;
-      ardRenderBlock(b);
-    }
+    const p=line.split(' ');const b=parseInt(p[1]);const hex=p[2];
+    if(!isNaN(b)&&hex&&hex.length===32){const bytes=new Uint8Array(16);for(let i=0;i<16;i++)bytes[i]=parseInt(hex.substr(i*2,2),16);S.ardBlocks[b]=bytes;S.ardOriginal[b]=new Uint8Array(bytes);S.ardDirty.delete(b);const sec=Math.floor(b/4);if(S.ardSectors[sec])S.ardSectors[sec].blocks=(S.ardSectors[sec].blocks||0)+1;ardRenderBlock(b);}
   }
-  else if(line==='LOCKED'){
-    const lastSec=Object.keys(S.ardSectors).map(Number).filter(k=>S.ardSectors[k]?.status==='reading').pop();
-    if(lastSec!==undefined){S.ardSectors[lastSec]={status:'locked'};S.ardDumpFailedSectors.push(lastSec);}
-    ardRenderSectorMap();
-  }
-  else if(line==='SECTOR_END'){
-    const lastSec=Object.keys(S.ardSectors).map(Number).filter(k=>S.ardSectors[k]?.status==='reading').pop();
-    if(lastSec!==undefined)S.ardSectors[lastSec].status='ok';
-    ardRenderSectorMap();
-  }
-  else if(line==='END'){
-    ardOut('// Koniec odpowiedzi','sys');
-    S.ardDumpInProgress=false;
-    ardEndProgress();
-    ardRenderEditor();
-    ardRenderDiff();
-    ardRenderSectorMap();
-    ardCheckDirty();
-    $('ardHistoryCard').style.display='';
-    ardRenderHistory();
-  }
+  else if(line==='LOCKED'){const last=Object.keys(S.ardSectors).map(Number).filter(k=>S.ardSectors[k]?.status==='reading').pop();if(last!==undefined){S.ardSectors[last]={status:'locked'};S.ardDumpFailedSectors.push(last);}ardRenderSectorMap();}
+  else if(line==='SECTOR_END'){const last=Object.keys(S.ardSectors).map(Number).filter(k=>S.ardSectors[k]?.status==='reading').pop();if(last!==undefined)S.ardSectors[last].status='ok';ardRenderSectorMap();}
+  else if(line==='END'){ardOut('// Koniec','sys');S.ardDumpInProgress=false;ardEndProgress();ardRenderEditor();ardRenderDiff();ardRenderSectorMap();ardCheckDirty();$('ardHistoryCard').style.display='';ardRenderHistory();}
   else if(line==='OK'){ardOut('// OK','sys');toast('OK','ok');}
-  else if(line.startsWith('ERR ')){
-    ardOut('// '+line,'err');
-    if(line==='ERR no_card'){toast('Brak karty na czytniku','err');}
-    else if(line.startsWith('ERR auth_sector_')){
-      const sec=parseInt(line.split('_').pop());
-      if(!isNaN(sec)){S.ardSectors[sec]={status:'locked'};S.ardDumpFailedSectors.push(sec);ardRenderSectorMap();}
-    }
-  }
+  else if(line.startsWith('ERR ')){ardOut('// '+line,'err');if(line==='ERR no_card')toast('Brak karty','err');else if(line.startsWith('ERR auth_sector_')){const sec=parseInt(line.split('_').pop());if(!isNaN(sec)){S.ardSectors[sec]={status:'locked'};S.ardDumpFailedSectors.push(sec);ardRenderSectorMap();}}}
 }
-
-function formatUid(uid){
-  if(!uid)return '—';
-  const cleaned=uid.replace(/[^0-9A-Fa-f]/g,'');
-  const parts=[];
-  for(let i=0;i<cleaned.length;i+=2)parts.push(cleaned.substr(i,2).toUpperCase());
-  return parts.join(' ');
-}
-
+function formatUid(uid){if(!uid)return '—';const c=uid.replace(/[^0-9A-Fa-f]/g,'');const p=[];for(let i=0;i<c.length;i+=2)p.push(c.substr(i,2).toUpperCase());return p.join(' ');}
 function detectCardType(){
   if(!S.ardSak)return;
-  const sak=parseInt(S.ardSak,16);
-  let type='MIFARE';
-  if(sak===0x08)type='MIFARE Classic 1K';
-  else if(sak===0x18)type='MIFARE Classic 4K';
-  else if(sak===0x09)type='MIFARE Mini';
-  else if(sak===0x00)type='MIFARE Ultralight';
-  else if(sak===0x20)type='MIFARE Plus';
-  else if(sak===0x10)type='MIFARE Plus 2K';
-  else type='SAK 0x'+S.ardSak;
-  S.ardCardType=type;
-  $('ardCardType').textContent=type;
-  $('ardVerify').textContent='OK';
-  $('ardVerify').style.color='var(--su)';
+  const sak=parseInt(S.ardSak,16);let t='MIFARE';
+  if(sak===0x08)t='MIFARE Classic 1K';
+  else if(sak===0x18)t='MIFARE Classic 4K';
+  else if(sak===0x09)t='MIFARE Mini';
+  else if(sak===0x00)t='MIFARE Ultralight';
+  else if(sak===0x20)t='MIFARE Plus';
+  else t='SAK 0x'+S.ardSak;
+  S.ardCardType=t;
+  $('ardCardType').textContent=t;$('ardVerify').textContent='OK';$('ardVerify').style.color='var(--su)';
 }
-
-function ardUpdateProgress(sector,total){
+function ardUpdateProgress(sec,total){
   if(!S.ardDumpInProgress){S.ardDumpInProgress=true;$('ardProgressWrap').classList.add('show');$('ardProgressText').classList.add('show');$('ardCancelDump').style.display='';}
-  const pct=Math.round((sector/total)*100);
-  $('ardProgressBar').style.width=pct+'%';
-  $('ardProgressPct').textContent=pct+'%';
-  $('ardProgressLabel').textContent=`Sektor ${sector}/${total}`;
+  const pct=Math.round((sec/total)*100);
+  $('ardProgressBar').style.width=pct+'%';$('ardProgressPct').textContent=pct+'%';$('ardProgressLabel').textContent=`Sektor ${sec}/16`;
 }
 function ardEndProgress(){
   if(!S.ardDumpInProgress)return;
   $('ardProgressBar').style.width='100%';
-  setTimeout(()=>{
-    $('ardProgressWrap').classList.remove('show');
-    $('ardProgressText').classList.remove('show');
-    $('ardCancelDump').style.display='none';
-    if(S.ardDumpFailedSectors.length>0)$('ardRetryDump').style.display='';
-    else $('ardRetryDump').style.display='none';
-    ardCheckDirty();
-  },600);
+  setTimeout(()=>{$('ardProgressWrap').classList.remove('show');$('ardProgressText').classList.remove('show');$('ardCancelDump').style.display='none';if(S.ardDumpFailedSectors.length>0)$('ardRetryDump').style.display='';else $('ardRetryDump').style.display='none';ardCheckDirty();},600);
 }
-
 function ardRenderSectorMap(){
-  const map=$('ardSectorMap');
-  map.innerHTML='';
-  let totalOk=0,totalLocked=0;
+  const map=$('ardSectorMap');map.innerHTML='';
+  let ok=0,lock=0;
   for(let s=0;s<16;s++){
-    const box=document.createElement('div');
-    box.className='sector-box';
-    box.dataset.sector=s;
-    const st=S.ardSectors[s];
-    let stat='—',cls='empty';
+    const box=document.createElement('div');box.className='sector-box';box.dataset.sector=s;
+    const st=S.ardSectors[s];let stat='—',cls='empty';
     if(st){
-      if(st.status==='locked'){cls='locked';stat='LOCK';totalLocked++;}
+      if(st.status==='locked'){cls='locked';stat='LOCK';lock++;}
       else if(st.status==='ok'||st.status==='reading'){
-        let hasData=false,isNdef=false;
-        for(let i=0;i<4;i++){
-          const b=s*4+i;
-          if(b%4===3)continue;
-          if(S.ardBlocks[b]&&S.ardBlocks[b].some(x=>x!==0)){hasData=true;}
-        }
-        if(s===0)cls='manufacturer';
-        else if(s===1&&hasData)cls='ndef';
-        else if(hasData)cls='data';
-        else cls='empty';
-        stat=hasData?'DATA':'0';
-        if(st.status==='ok')totalOk++;
+        let has=false;
+        for(let i=0;i<4;i++){const b=s*4+i;if(b%4===3)continue;if(S.ardBlocks[b]&&S.ardBlocks[b].some(x=>x!==0))has=true;}
+        if(s===0)cls='manufacturer';else if(s===1&&has)cls='ndef';else if(has)cls='data';else cls='empty';
+        stat=has?'DATA':'0';
+        if(st.status==='ok')ok++;
       }
     }
     if(s===0)cls='manufacturer';
     box.classList.add(cls);
     box.innerHTML=`<div class="num">${s}</div><div class="stat">${stat}</div>`;
-    if(S.ardDirty.size>0){
-      for(let i=0;i<4;i++){
-        const b=s*4+i;
-        if(S.ardDirty.has(b)){
-          const dot=document.createElement('div');
-          dot.className='warn-dot';
-          box.appendChild(dot);
-          break;
-        }
-      }
-    }
-    box.onclick=()=>{
-      document.querySelectorAll('.sector-box.active').forEach(x=>x.classList.remove('active'));
-      box.classList.add('active');
-      $('ardSector').value=s;
-      const ed=$('ardBlockEditor');
-      const target=ed.querySelector(`[data-b="${s*4}"]`);
-      if(target)target.scrollIntoView({behavior:'smooth',block:'center'});
-    };
+    if(S.ardDirty.size>0)for(let i=0;i<4;i++){const b=s*4+i;if(S.ardDirty.has(b)){const dot=document.createElement('div');dot.className='warn-dot';box.appendChild(dot);break;}}
+    box.onclick=()=>{document.querySelectorAll('.sector-box.active').forEach(x=>x.classList.remove('active'));box.classList.add('active');$('ardSector').value=s;const t=$('ardBlockEditor').querySelector(`[data-b="${s*4}"]`);if(t)t.scrollIntoView({behavior:'smooth',block:'center'});};
     map.appendChild(box);
   }
-  $('ardKeyStatus').textContent=`${totalOk} OK / ${totalLocked} LOCK`;
+  $('ardKeyStatus').textContent=`${ok} OK / ${lock} LOCK`;
 }
-
 function ardRenderBlock(b){
   const ed=$('ardBlockEditor');
   if(ed.querySelector('.info-text'))ed.innerHTML='';
   let row=ed.querySelector(`[data-b="${b}"]`);
   const d=S.ardBlocks[b];
   const hexStr=Array.from(d).map(x=>x.toString(16).padStart(2,'0')).join(' ').toUpperCase();
-  const isTrailer=(b%4===3);
-  const sec=Math.floor(b/4);
-  const st=S.ardSectors[sec];
-  const isLocked=st&&st.status==='locked';
+  const isT=(b%4===3);const sec=Math.floor(b/4);const st=S.ardSectors[sec];const isL=st&&st.status==='locked';
   if(!row){
-    row=document.createElement('div');
-    row.className='block-editor-row';
-    row.dataset.b=b;
-    if(isTrailer)row.classList.add('trailer');
-    if(isLocked)row.classList.add('locked');
-    row.innerHTML=`
-      <div class="be-addr">${b}</div>
-      <div class="be-body">
-        <input type="text" class="be-input" value="${hexStr}" maxlength="47" ${isTrailer||isLocked?'readonly':''}>
-        <div class="be-actions">
-          <button class="save" title="Zapisz blok" ${isTrailer||isLocked?'disabled':''}>💾</button>
-          <button class="revert" title="Przywróć" disabled>↺</button>
-        </div>
-      </div>`;
+    row=document.createElement('div');row.className='block-editor-row';row.dataset.b=b;
+    if(isT)row.classList.add('trailer');if(isL)row.classList.add('locked');
+    row.innerHTML=`<div class="be-addr">${b}</div><div class="be-body"><input type="text" class="be-input" value="${hexStr}" maxlength="47" ${isT||isL?'readonly':''}><div class="be-actions"><button class="save" title="Zapisz" ${isT||isL?'disabled':''}>💾</button><button class="revert" title="Przywróć" disabled>↺</button></div></div>`;
     ed.appendChild(row);
-    const inp=row.querySelector('.be-input');
-    const saveBtn=row.querySelector('button.save');
-    const revertBtn=row.querySelector('button.revert');
+    const inp=row.querySelector('.be-input');const sb=row.querySelector('button.save');const rb=row.querySelector('button.revert');
     inp.addEventListener('input',()=>{
       const cur=inp.value.replace(/\s+/g,'').toUpperCase();
       if(cur.length===32&&/^[0-9A-F]{32}$/.test(cur)){
-        const bytes=new Uint8Array(16);
-        for(let i=0;i<16;i++)bytes[i]=parseInt(cur.substr(i*2,2),16);
+        const bytes=new Uint8Array(16);for(let i=0;i<16;i++)bytes[i]=parseInt(cur.substr(i*2,2),16);
         const orig=Array.from(S.ardOriginal[b]).map(x=>x.toString(16).padStart(2,'0')).join('');
-        if(orig!==cur.toLowerCase()){
-          S.ardBlocks[b]=bytes;S.ardDirty.add(b);
-          inp.classList.add('modified');row.classList.add('modified');
-          saveBtn.disabled=false;revertBtn.disabled=false;
-        }else{
-          S.ardBlocks[b]=bytes;S.ardDirty.delete(b);
-          inp.classList.remove('modified');row.classList.remove('modified');
-          saveBtn.disabled=true;revertBtn.disabled=true;
-        }
+        if(orig!==cur.toLowerCase()){S.ardBlocks[b]=bytes;S.ardDirty.add(b);inp.classList.add('modified');row.classList.add('modified');sb.disabled=false;rb.disabled=false;}
+        else{S.ardBlocks[b]=bytes;S.ardDirty.delete(b);inp.classList.remove('modified');row.classList.remove('modified');sb.disabled=true;rb.disabled=true;}
         ardCheckDirty();ardRenderDiff();
       }
     });
-    saveBtn.addEventListener('click',()=>{
-      const cur=inp.value.replace(/\s+/g,'').toUpperCase();
-      if(cur.length===32&&/^[0-9A-F]{32}$/.test(cur))ardSend(`WRITE ${b} ${cur}`);
-    });
-    revertBtn.addEventListener('click',()=>{
-      S.ardBlocks[b]=new Uint8Array(S.ardOriginal[b]);
-      S.ardDirty.delete(b);
-      inp.value=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ').toUpperCase();
-      inp.classList.remove('modified');row.classList.remove('modified');
-      saveBtn.disabled=true;revertBtn.disabled=true;
-      ardCheckDirty();ardRenderDiff();
-    });
+    sb.addEventListener('click',()=>{const cur=inp.value.replace(/\s+/g,'').toUpperCase();if(cur.length===32&&/^[0-9A-F]{32}$/.test(cur))ardSend(`WRITE ${b} ${cur}`);});
+    rb.addEventListener('click',()=>{S.ardBlocks[b]=new Uint8Array(S.ardOriginal[b]);S.ardDirty.delete(b);inp.value=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ').toUpperCase();inp.classList.remove('modified');row.classList.remove('modified');sb.disabled=true;rb.disabled=true;ardCheckDirty();ardRenderDiff();});
   }else{
-    const inp=row.querySelector('input');
-    inp.value=hexStr;
-    inp.classList.remove('modified');row.classList.remove('modified');
-    row.querySelector('button.save').disabled=true;
-    row.querySelector('button.revert').disabled=true;
+    const inp=row.querySelector('input');inp.value=hexStr;inp.classList.remove('modified');row.classList.remove('modified');
+    row.querySelector('button.save').disabled=true;row.querySelector('button.revert').disabled=true;
   }
 }
-
 function ardRenderEditor(){
-  const ed=$('ardBlockEditor');
-  ed.innerHTML='';
-  let hasData=false;
-  for(let b=0;b<64;b++){if(S.ardBlocks[b].some(x=>x!==0)){hasData=true;break;}}
-  if(!hasData){ed.innerHTML='<div class="info-text">Brak danych. Naciśnij „Odczytaj wszystko”.</div>';return;}
+  const ed=$('ardBlockEditor');ed.innerHTML='';
+  let has=false;for(let b=0;b<64;b++){if(S.ardBlocks[b].some(x=>x!==0)){has=true;break;}}
+  if(!has){ed.innerHTML='<div class="info-text">Brak danych. Naciśnij „Odczytaj wszystko”.</div>';return;}
   for(let b=0;b<64;b++)ardRenderBlock(b);
 }
-
-function ardCheckDirty(){
-  $('ardDirtyCount').textContent=S.ardDirty.size;
-  $('ardWriteDirty').disabled=S.ardDirty.size===0;
-  $('ardRevertAll').disabled=S.ardDirty.size===0;
-}
-
+function ardCheckDirty(){$('ardDirtyCount').textContent=S.ardDirty.size;$('ardWriteDirty').disabled=S.ardDirty.size===0;$('ardRevertAll').disabled=S.ardDirty.size===0;}
 function ardRenderDiff(){
-  const view=$('ardDiffView');
-  if(S.ardDirty.size===0){view.innerHTML='<span class="same">Brak zmian</span>';$('ardDiffCard').style.display='none';return;}
+  const v=$('ardDiffView');
+  if(S.ardDirty.size===0){v.innerHTML='<span class="same">Brak zmian</span>';$('ardDiffCard').style.display='none';return;}
   $('ardDiffCard').style.display='';
-  let html='';
+  let h='';
   for(const b of Array.from(S.ardDirty).sort((a,b)=>a-b)){
     const old=Array.from(S.ardOriginal[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ').toUpperCase();
     const neu=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ').toUpperCase();
-    html+=`<div><span class="same">Blok ${b}:</span><br><span class="old">- ${old}</span><br><span class="new">+ ${neu}</span></div>`;
+    h+=`<div><span class="same">Blok ${b}:</span><br><span class="old">- ${old}</span><br><span class="new">+ ${neu}</span></div>`;
   }
-  view.innerHTML=html;
+  v.innerHTML=h;
 }
-
 function ardRenderHistory(){
   const list=$('ardHistoryList');
   const hist=JSON.parse(localStorage.getItem('ardHistory')||'[]');
   if(!hist.length){list.innerHTML='<div class="info-text">Brak zapisanych zrzutów.</div>';return;}
   list.innerHTML='';
   hist.forEach((h,i)=>{
-    const d=document.createElement('div');
-    d.className='history-item';
+    const d=document.createElement('div');d.className='history-item';
     d.innerHTML=`<div><div class="hist-uid">${h.uid||'?'}</div><div class="hist-meta">${new Date(h.time).toLocaleString('pl')}</div></div><div class="hist-actions"><button data-i="${i}" class="load">Wczytaj</button><button data-i="${i}" class="del">✕</button></div>`;
-    d.querySelector('.load').onclick=()=>{
-      const blocks=h.blocks.map(arr=>new Uint8Array(arr));
-      S.ardBlocks=blocks;S.ardOriginal=blocks.map(b=>new Uint8Array(b));S.ardDirty.clear();
-      S.ardUid=h.uid;S.ardSak=h.sak;
-      $('ardUid').textContent=formatUid(h.uid);$('ardSak').textContent='0x'+(h.sak||'?');
-      detectCardType();ardRenderEditor();ardRenderDiff();ardCheckDirty();
-      toast('Wczytano z historii','ok');
-    };
-    d.querySelector('.del').onclick=()=>{
-      hist.splice(i,1);localStorage.setItem('ardHistory',JSON.stringify(hist));ardRenderHistory();
-    };
+    d.querySelector('.load').onclick=()=>{S.ardBlocks=h.blocks.map(a=>new Uint8Array(a));S.ardOriginal=h.blocks.map(a=>new Uint8Array(a));S.ardDirty.clear();S.ardUid=h.uid;S.ardSak=h.sak;$('ardUid').textContent=formatUid(h.uid);$('ardSak').textContent='0x'+(h.sak||'?');detectCardType();ardRenderEditor();ardRenderDiff();ardCheckDirty();toast('Wczytano','ok');};
+    d.querySelector('.del').onclick=()=>{hist.splice(i,1);localStorage.setItem('ardHistory',JSON.stringify(hist));ardRenderHistory();};
     list.appendChild(d);
   });
 }
-
-// ================== SEND ==================
 async function ardSend(cmd){
   if(!S.ardConnected||!S.ardWriter){toast('Nie połączono','err');return;}
   try{
     ardOut('> '+cmd,'tx');
-    S.ardCmdHistory.push(cmd);
-    if(S.ardCmdHistory.length>50)S.ardCmdHistory.shift();
+    S.ardCmdHistory.push(cmd);if(S.ardCmdHistory.length>50)S.ardCmdHistory.shift();
     S.ardCmdHistoryIdx=S.ardCmdHistory.length;
-    const data=new TextEncoder().encode(cmd+'\n');
-    await S.ardWriter.write(data);
-  }catch(e){log('Błąd wysyłania: '+e.message,'err');ardOut('// Błąd: '+e.message,'err');}
+    await S.ardWriter.write(new TextEncoder().encode(cmd+'\n'));
+  }catch(e){log('Błąd: '+e.message,'err');ardOut('// '+e.message,'err');}
 }
 
 $('ardConnect').onclick=ardConnect;
 $('ardDisconnect').onclick=async()=>{
-  try{
-    ardSetConnected(false);
-    if(S.ardReader){try{await S.ardReader.cancel();}catch(e){}}
-    if(S.ardWriter){try{S.ardWriter.releaseLock();}catch(e){}S.ardWriter=null;}
-    if(S.ardPort){await S.ardPort.close();S.ardPort=null;}
-    log('Rozłączono','info');ardOut('// Rozłączono','sys');
-  }catch(e){log('Błąd: '+e.message,'err');}
+  try{ardSetConnected(false);if(S.ardReader){try{await S.ardReader.cancel();}catch(e){}}if(S.ardWriter){try{S.ardWriter.releaseLock();}catch(e){}S.ardWriter=null;}if(S.ardPort){await S.ardPort.close();S.ardPort=null;}log('Rozłączono','info');ardOut('// Rozłączono','sys');}catch(e){log('Błąd: '+e.message,'err');}
 };
-
 $('ardPing').onclick=()=>ardSend('PING');
 $('ardUid').onclick=()=>ardSend('UID');
 $('ardDump').onclick=()=>{
   S.ardBlocks=new Array(64).fill(null).map(()=>new Uint8Array(16));
   S.ardOriginal=new Array(64).fill(null).map(()=>new Uint8Array(16));
-  S.ardDirty.clear();
-  S.ardSectors=new Array(16).fill(null);
-  S.ardDumpFailedSectors=[];
+  S.ardDirty.clear();S.ardSectors=new Array(16).fill(null);S.ardDumpFailedSectors=[];
   $('ardBlockEditor').innerHTML='<div class="info-text">Odczyt w toku…</div>';
   $('ardRetryDump').style.display='none';
-  ardRenderSectorMap();
-  ardSend('DUMP');
+  ardRenderSectorMap();ardSend('DUMP');
 };
-$('ardCancelDump').onclick=()=>{S.ardDumpCancel=true;ardOut('// Anulowanie...','sys');};
-$('ardRetryDump').onclick=()=>{
-  if(S.ardDumpFailedSectors.length===0){toast('Brak nieudanych','info');return;}
-  const failed=S.ardDumpFailedSectors.slice();
-  S.ardDumpFailedSectors=[];
-  (async()=>{
-    for(const s of failed){
-      await ardSend(`READ ${s}`);
-      await new Promise(r=>setTimeout(r,500));
-    }
-  })();
-};
-
-$('ardReadSector').onclick=()=>{ardSend(`READ ${$('ardSector').value}`);};
-
+$('ardCancelDump').onclick=()=>ardOut('// Anulowanie...','sys');
+$('ardRetryDump').onclick=()=>{if(S.ardDumpFailedSectors.length===0){toast('Brak nieudanych','info');return;}const f=S.ardDumpFailedSectors.slice();S.ardDumpFailedSectors=[];(async()=>{for(const s of f){await ardSend(`READ ${s}`);await new Promise(r=>setTimeout(r,500));}})();};
+$('ardReadSector').onclick=()=>ardSend(`READ ${$('ardSector').value}`);
 $('ardSetKey').onclick=()=>{
-  const s=$('ardKeySector').value;
-  const k=$('ardKeyHex').value.trim().toUpperCase();
-  if(!/^[0-9A-F]{12}$/.test(k))return toast('Klucz: 12 hex','err');
-  if(s==='all'){
-    for(let i=0;i<16;i++){S.ardKeys[i]=k;ardSend(`KEY ${i} ${k}`);}
-  }else{
-    S.ardKeys[s]=k;ardSend(`KEY ${s} ${k}`);
-  }
-  toast('Klucz ustawiony','ok');
+  const s=$('ardKeySector').value;const k=$('ardKeyHex').value.trim().toUpperCase();
+  if(!/^[0-9A-F]{12}$/.test(k))return toast('Klucz 12 hex','err');
+  if(s==='all')for(let i=0;i<16;i++){S.ardKeys[i]=k;ardSend(`KEY ${i} ${k}`);}
+  else{S.ardKeys[s]=k;ardSend(`KEY ${s} ${k}`);}
+  toast('Ustawiono','ok');
 };
-document.querySelectorAll('.key-preset-row button').forEach(b=>{
-  b.onclick=()=>{document.querySelectorAll('.key-preset-row button').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('ardKeyHex').value=b.dataset.key;};
-});
-
-$('ardTestAllKeys').onclick=async()=>{
-  if(!S.ardConnected)return;
-  for(let s=0;s<16;s++){
-    ardSend(`READ ${s}`);
-    await new Promise(r=>setTimeout(r,300));
-  }
-};
-
+document.querySelectorAll('.key-preset-row button').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.key-preset-row button').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('ardKeyHex').value=b.dataset.key;};});
+$('ardTestAllKeys').onclick=async()=>{for(let s=0;s<16;s++){ardSend(`READ ${s}`);await new Promise(r=>setTimeout(r,300));}};
 $('ardShowAll').onclick=()=>ardRenderEditor();
-$('ardShowModified').onclick=()=>{
-  const ed=$('ardBlockEditor');
-  ed.innerHTML='';
-  if(S.ardDirty.size===0){ed.innerHTML='<div class="info-text">Brak zmian.</div>';return;}
-  for(const b of Array.from(S.ardDirty).sort((a,b)=>a-b))ardRenderBlock(b);
-};
-$('ardCopyHexAll').onclick=async()=>{
-  let txt='';
-  for(let b=0;b<64;b++)txt+=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ')+'\n';
-  try{await navigator.clipboard.writeText(txt);toast('HEX skopiowany','ok');}catch(e){toast('Błąd','err');}
-};
-$('ardExportBin').onclick=()=>{
-  const out=new Uint8Array(1024);
-  for(let b=0;b<64;b++)out.set(S.ardBlocks[b],b*16);
-  downloadBlob(new Blob([out],{type:'application/octet-stream'}),`dump-${(S.ardUid||'unknown').replace(/\s/g,'')}.bin`);
-};
-$('ardExportMfd').onclick=()=>{
-  const out=new Uint8Array(1024);
-  for(let b=0;b<64;b++)out.set(S.ardBlocks[b],b*16);
-  downloadBlob(new Blob([out],{type:'application/octet-stream'}),`dump-${(S.ardUid||'unknown').replace(/\s/g,'')}.mfd`);
-};
+$('ardShowModified').onclick=()=>{const ed=$('ardBlockEditor');ed.innerHTML='';if(S.ardDirty.size===0){ed.innerHTML='<div class="info-text">Brak zmian.</div>';return;}for(const b of Array.from(S.ardDirty).sort((a,b)=>a-b))ardRenderBlock(b);};
+$('ardCopyHexAll').onclick=async()=>{let t='';for(let b=0;b<64;b++)t+=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ')+'\n';try{await navigator.clipboard.writeText(t);toast('HEX skopiowany','ok');}catch(e){toast('Błąd','err');}};
+$('ardExportBin').onclick=()=>{const o=new Uint8Array(1024);for(let b=0;b<64;b++)o.set(S.ardBlocks[b],b*16);downloadBlob(new Blob([o],{type:'application/octet-stream'}),`dump-${(S.ardUid||'unknown').replace(/\s/g,'')}.bin`);};
+$('ardExportMfd').onclick=()=>{const o=new Uint8Array(1024);for(let b=0;b<64;b++)o.set(S.ardBlocks[b],b*16);downloadBlob(new Blob([o],{type:'application/octet-stream'}),`dump-${(S.ardUid||'unknown').replace(/\s/g,'')}.mfd`);};
 $('ardImportFile').onclick=()=>$('ardFileInput').click();
-$('ardFileInput').onchange=async e=>{
-  const f=e.target.files[0];if(!f)return;
-  const buf=new Uint8Array(await f.arrayBuffer());
-  if(buf.length<1024)return toast('Plik za mały (min 1024 B)','err');
-  S.ardBlocks=new Array(64).fill(null).map(()=>new Uint8Array(16));
-  S.ardOriginal=new Array(64).fill(null).map(()=>new Uint8Array(16));
-  for(let b=0;b<64;b++){
-    const chunk=buf.slice(b*16,(b+1)*16);
-    S.ardBlocks[b]=chunk;
-    S.ardOriginal[b]=new Uint8Array(chunk);
-  }
-  S.ardDirty.clear();
-  ardRenderEditor();ardRenderDiff();ardCheckDirty();
-  toast('Import OK','ok');
-  e.target.value='';
-};
-$('ardWriteDirty').onclick=async()=>{
-  if(S.ardDirty.size===0)return;
-  if(!confirm(`Zapisać ${S.ardDirty.size} bloków na kartę?`))return;
-  const blocks=Array.from(S.ardDirty).sort((a,b)=>a-b);
-  for(const b of blocks){
-    const hex=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join('');
-    ardSend(`WRITE ${b} ${hex}`);
-    await new Promise(r=>setTimeout(r,250));
-  }
-  toast(`Wysłano ${blocks.length} zapisów`,'ok');
-};
-$('ardRevertAll').onclick=()=>{
-  if(!confirm('Przywrócić wszystkie bloki do stanu oryginalnego?'))return;
-  S.ardBlocks=S.ardOriginal.map(b=>new Uint8Array(b));
-  S.ardDirty.clear();
-  ardRenderEditor();ardRenderDiff();ardCheckDirty();
-  toast('Przywrócono','ok');
-};
-
-$('ardHistorySave').onclick=()=>{
-  if(!S.ardUid)return toast('Brak danych','err');
-  const hist=JSON.parse(localStorage.getItem('ardHistory')||'[]');
-  hist.unshift({uid:S.ardUid,sak:S.ardSak,time:Date.now(),blocks:S.ardBlocks.map(b=>Array.from(b))});
-  while(hist.length>10)hist.pop();
-  localStorage.setItem('ardHistory',JSON.stringify(hist));
-  ardRenderHistory();
-  toast('Zapisano do historii','ok');
-};
-$('ardHistoryClear').onclick=()=>{
-  if(!confirm('Wyczyścić historię?'))return;
-  localStorage.removeItem('ardHistory');ardRenderHistory();
-};
-
-$('ardConsoleFilter').addEventListener('click',e=>{
-  const btn=e.target.closest('button');
-  if(!btn)return;
-  document.querySelectorAll('#ardConsoleFilter button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  S.ardConsoleFilter=btn.dataset.f;
-  const filter=S.ardConsoleFilter;
-  document.querySelectorAll('#ardOutput div').forEach(d=>{
-    d.style.display=(filter==='all'||d.className.includes(filter))?'':'none';
-  });
-});
-
+$('ardFileInput').onchange=async e=>{const f=e.target.files[0];if(!f)return;const b=new Uint8Array(await f.arrayBuffer());if(b.length<1024)return toast('Za mały','err');S.ardBlocks=new Array(64).fill(null).map(()=>new Uint8Array(16));S.ardOriginal=new Array(64).fill(null).map(()=>new Uint8Array(16));for(let i=0;i<64;i++){S.ardBlocks[i]=b.slice(i*16,(i+1)*16);S.ardOriginal[i]=new Uint8Array(S.ardBlocks[i]);}S.ardDirty.clear();ardRenderEditor();ardRenderDiff();ardCheckDirty();toast('Import OK','ok');e.target.value='';};
+$('ardWriteDirty').onclick=async()=>{if(S.ardDirty.size===0)return;if(!confirm(`Zapisać ${S.ardDirty.size} bloków?`))return;for(const b of Array.from(S.ardDirty).sort((a,b)=>a-b)){const hex=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join('');ardSend(`WRITE ${b} ${hex}`);await new Promise(r=>setTimeout(r,250));}toast('Wysłano','ok');};
+$('ardRevertAll').onclick=()=>{if(!confirm('Przywrócić wszystko?'))return;S.ardBlocks=S.ardOriginal.map(b=>new Uint8Array(b));S.ardDirty.clear();ardRenderEditor();ardRenderDiff();ardCheckDirty();};
+$('ardHistorySave').onclick=()=>{if(!S.ardUid)return toast('Brak danych','err');const h=JSON.parse(localStorage.getItem('ardHistory')||'[]');h.unshift({uid:S.ardUid,sak:S.ardSak,time:Date.now(),blocks:S.ardBlocks.map(b=>Array.from(b))});while(h.length>10)h.pop();localStorage.setItem('ardHistory',JSON.stringify(h));ardRenderHistory();toast('Zapisano','ok');};
+$('ardHistoryClear').onclick=()=>{if(!confirm('Wyczyścić?'))return;localStorage.removeItem('ardHistory');ardRenderHistory();};
+$('ardConsoleFilter').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#ardConsoleFilter button').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.ardConsoleFilter=b.dataset.f;const f=S.ardConsoleFilter;document.querySelectorAll('#ardOutput div').forEach(d=>{d.style.display=(f==='all'||d.className.includes(f))?'':'none';});});
 $('ardSend').onclick=()=>{const c=$('ardCmd').value.trim();if(c){ardSend(c);$('ardCmd').value='';}};
-$('ardCmd').addEventListener('keydown',e=>{
-  if(e.key==='Enter')$('ardSend').click();
-  else if(e.key==='ArrowUp'){
-    e.preventDefault();
-    if(S.ardCmdHistoryIdx>0){S.ardCmdHistoryIdx--;$('ardCmd').value=S.ardCmdHistory[S.ardCmdHistoryIdx]||'';}
-  }else if(e.key==='ArrowDown'){
-    e.preventDefault();
-    if(S.ardCmdHistoryIdx<S.ardCmdHistory.length-1){S.ardCmdHistoryIdx++;$('ardCmd').value=S.ardCmdHistory[S.ardCmdHistoryIdx]||'';}
-    else{S.ardCmdHistoryIdx=S.ardCmdHistory.length;$('ardCmd').value='';}
-  }
-});
-
+$('ardCmd').addEventListener('keydown',e=>{if(e.key==='Enter')$('ardSend').click();else if(e.key==='ArrowUp'){e.preventDefault();if(S.ardCmdHistoryIdx>0){S.ardCmdHistoryIdx--;$('ardCmd').value=S.ardCmdHistory[S.ardCmdHistoryIdx]||'';}}else if(e.key==='ArrowDown'){e.preventDefault();if(S.ardCmdHistoryIdx<S.ardCmdHistory.length-1){S.ardCmdHistoryIdx++;$('ardCmd').value=S.ardCmdHistory[S.ardCmdHistoryIdx]||'';}else{S.ardCmdHistoryIdx=S.ardCmdHistory.length;$('ardCmd').value='';}}});
 $('ardCopySketch').onclick=async()=>{try{await navigator.clipboard.writeText(ARD_SKETCH);toast('Skopiowano','ok');}catch(e){toast('Błąd','err');}};
-$('ardDownloadSketch').onclick=()=>{downloadBlob(new Blob([ARD_SKETCH],{type:'text/plain'}),'nfc_rc522.ino');};
+$('ardDownloadSketch').onclick=()=>downloadBlob(new Blob([ARD_SKETCH],{type:'text/plain'}),'nfc_rc522.ino');
 
-// ================== RESZTA ==================
-function downloadBlob(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
+// ============ WEB NFC ============
+function renderCard(tag){
+  const v=$('cardViz');v.classList.remove('scanning','error');
+  if(!tag){v.classList.remove('active');$('cardUid').textContent='---- ---- ---- ----';$('cardRecords').innerHTML='<span class="card-empty">Czeka na kartę…</span>';$('cardType').textContent='NFC TAG';$('cardSize').textContent='0 B';return;}
+  v.classList.add('active');$('cardUid').textContent=tag.serialNumber||'---- ---- ---- ----';
+  const chips=[];let tb=0;
+  for(const r of tag.records){const b=new Uint8Array(r.data);tb+=b.length;const cls=r.recordType==='mime'?'mime':r.recordType==='text'?'text':r.recordType==='url'?'url':'';chips.push(`<span class="card-chip-tag ${cls}">${r.recordType}</span>`);}
+  if(!chips.length)chips.push('<span class="card-empty">Pusty NDEF</span>');
+  $('cardRecords').innerHTML=chips.join('');
+  $('cardType').textContent=tag.serialNumber?(tag.serialNumber.split(':').length===7?'MIFARE 1K':'NFC TAG'):'NFC TAG';
+  $('cardSize').textContent=`${tb} B`;
+}
+async function captureTag(){
+  return new Promise((res,rej)=>{
+    if(!hasNfc)return rej(new Error('Brak Web NFC'));
+    const ndef=new NDEFReader();const ctrl=new AbortController();
+    const to=setTimeout(()=>{ctrl.abort();rej(new Error('Timeout'));},30000);
+    ndef.onreading=({serialNumber,message})=>{clearTimeout(to);ctrl.abort();const rec=[];if(message&&message.records)for(const r of message.records){const cp={recordType:r.recordType};if(r.mediaType)cp.mediaType=r.mediaType;if(r.id)cp.id=r.id;if(r.encoding)cp.encoding=r.encoding;if(r.lang)cp.lang=r.lang;cp.data=recData(r).buffer.slice(0);rec.push(cp);}res({serialNumber,records:rec});};
+    ndef.onreadingerror=()=>{clearTimeout(to);rej(new Error('Błąd odczytu'));};
+    ndef.scan({signal:ctrl.signal}).catch(e=>{clearTimeout(to);rej(e);});
+  });
+}
+async function writeTag(records){if(!hasNfc)throw new Error('Brak Web NFC');const ndef=new NDEFReader();await ndef.write({records});}
+function recForWrite(r){const t=r.recordType;const b=new Uint8Array(r.data);if(t==='text'){const txt=new TextDecoder(r.encoding||'utf-8').decode(b);const o={recordType:'text',data:txt};if(r.encoding)o.encoding=r.encoding;if(r.lang)o.lang=r.lang;return o;}if(t==='url')return{recordType:'url',data:new TextDecoder().decode(b)};if(t==='mime')return{recordType:'mime',mediaType:r.mediaType||'application/octet-stream',data:b};if(t==='empty')return{recordType:'empty'};return{recordType:'mime',mediaType:r.mediaType||'application/octet-stream',data:b};}
+function recordPreview(r){const b=new Uint8Array(r.data);const h=b.slice(0,32);let t;try{t=new TextDecoder(r.encoding||'utf-8').decode(h);}catch(e){t='';}if(/[\x00-\x08\x0e-\x1f]/.test(t))return hexDump(h);return t+(b.length>32?'…':'');}
 
 $('readBtn').onclick=async()=>{
-  if(!('NDEFReader' in window))return toast('Brak Web NFC','err');
+  if(!hasNfc)return toast('Brak Web NFC','err');
+  $('readResult').innerHTML='';$('readActions').style.display='none';
+  $('cardViz').classList.add('scanning');$('cardViz').classList.remove('active','error');
   try{
     showBig('i-scan','Zbliż kartę…','');
-    const ndef=new NDEFReader();
-    const ctrl=new AbortController();
-    const to=setTimeout(()=>{ctrl.abort();hideBig();toast('Timeout','err');},30000);
-    await ndef.scan({signal:ctrl.signal});
-    ndef.onreading=({serialNumber,message})=>{
-      clearTimeout(to);ctrl.abort();hideBig();
-      let html=`<div class="uid-display" style="padding:11px;background:var(--s2);border-radius:8px;text-align:center;font-family:var(--mo);color:var(--pr);font-weight:700;margin-bottom:8px">UID: ${serialNumber}</div>`;
-      if(!message||!message.records.length){html+='<div class="info-text">Karta pusta</div>';}
-      else{message.records.forEach(r=>{const bytes=r.data?new Uint8Array(r.data.buffer||r.data):new Uint8Array(0);let txt;try{txt=new TextDecoder(r.encoding||'utf-8').decode(bytes);}catch(e){txt='';}if(!/[\x20-\x7E\s]*/.test(txt))txt=Array.from(bytes.slice(0,32)).map(x=>x.toString(16).padStart(2,'0')).join(' ');html+=`<div class="card" style="padding:10px;margin-bottom:6px"><strong style="color:var(--pr);font-size:10px;text-transform:uppercase">${r.recordType}${r.mediaType?' / '+r.mediaType:''}</strong><div style="font-family:var(--mo);font-size:11px;margin-top:4px;word-break:break-all">${txt.substring(0,200)}</div></div>`;});}
-      $('readResult').innerHTML=html;
-    };
-    ndef.onreadingerror=()=>{clearTimeout(to);hideBig();toast('Błąd odczytu','err');};
-  }catch(e){hideBig();toast('Błąd: '+e.message,'err');}
+    const tag=await captureTag();hideBig();vibrate(30);S.read=tag;renderCard(tag);
+    let html=`<div class="uid-display">UID: ${tag.serialNumber}</div>`;
+    if(!tag.records.length)html+=`<div class="result-item"><strong>Zawartość</strong><div class="preview">Pusta</div></div>`;
+    else tag.records.forEach(r=>{const cls=r.recordType==='mime'?'mime':r.recordType;const b=new Uint8Array(r.data);const p=recordPreview(r);html+=`<div class="result-item"><strong><span class="chip ${cls}">${r.recordType}</span>${r.mediaType?' '+r.mediaType:''}</strong><div class="preview">${p.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><details><summary>HEX (${b.length} B)</summary><div class="hex-block">${hexDump(b).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div></details></div>`;});
+    $('readResult').innerHTML=html;$('readActions').style.display='block';
+  }catch(e){hideBig();$('cardViz').classList.remove('scanning');$('cardViz').classList.add('error');toast('Błąd: '+e.message,'err');}
 };
+$('readToClone').onclick=()=>{if(!S.read)return;S.clone=S.read;renderClone();document.querySelector('nav button[data-tab="clone"]').click();};
+$('readToHex').onclick=()=>{if(!S.read)return;const c=S.read.records.map(r=>new Uint8Array(r.data));const t=c.reduce((a,x)=>a+x.length,0);const b=new Uint8Array(t);let o=0;for(const x of c){b.set(x,o);o+=x.length;}S.hex=b;$('hexInput').value=bytesToHex(b);updateHexView();document.querySelector('nav button[data-tab="hex"]').click();};
+$('readToBlocks').onclick=()=>{if(!S.read)return;renderBlocks(S.read);document.querySelector('nav button[data-tab="blocks"]').click();};
+$('readExportJson').onclick=()=>{if(!S.read)return;const o={serialNumber:S.read.serialNumber,records:S.read.records.map(r=>({recordType:r.recordType,mediaType:r.mediaType,id:r.id,encoding:r.encoding,lang:r.lang,dataHex:bytesToHex(new Uint8Array(r.data),'')}))};downloadBlob(new Blob([JSON.stringify(o,null,2)],{type:'application/json'}),'tag.json');};
+$('readExportBin').onclick=()=>{if(!S.read)return;const c=S.read.records.map(r=>new Uint8Array(r.data));const t=c.reduce((a,x)=>a+x.length,0);const b=new Uint8Array(t);let o=0;for(const x of c){b.set(x,o);o+=x.length;}downloadBlob(new Blob([b],{type:'application/octet-stream'}),'tag.bin');};
 
-$('ardAutoReconnect').onchange=e=>{S.ardSettings.autoReconnect=e.target.checked;saveSettings();};
-$('ardAutoDump').onchange=e=>{S.ardSettings.autoDump=e.target.checked;saveSettings();};
-$('ardVibrate').onchange=e=>{S.ardSettings.vibrate=e.target.checked;saveSettings();};
-$('ardBaudGlobal').onchange=e=>{S.ardSettings.baud=parseInt(e.target.value);$('ardBaud').value=e.target.value;saveSettings();};
-$('ardResetAll').onclick=()=>{
-  if(!confirm('Reset wszystkiego?'))return;
-  S.ardBlocks=new Array(64).fill(null).map(()=>new Uint8Array(16));
-  S.ardOriginal=new Array(64).fill(null).map(()=>new Uint8Array(16));
-  S.ardDirty.clear();S.ardSectors=new Array(16).fill(null);
-  S.ardUid=null;S.ardSak=null;
-  $('ardUid').textContent='—';$('ardSak').textContent='—';
-  ardRenderEditor();ardRenderSectorMap();ardRenderDiff();ardCheckDirty();
-  toast('Reset OK','ok');
-};
-
-function loadSettings(){try{const s=localStorage.getItem('ardSettings');if(s)Object.assign(S.ardSettings,JSON.parse(s));}catch(e){}
-  $('ardBaud').value=S.ardSettings.baud;$('ardBaudGlobal').value=S.ardSettings.baud;
-  $('ardAutoReconnect').checked=S.ardSettings.autoReconnect;
-  $('ardAutoDump').checked=S.ardSettings.autoDump;
-  $('ardVibrate').checked=S.ardSettings.vibrate;
+// BLOCKS
+function encodeNDEFRecord(r,f,l){
+  const t=r.recordType;let ty,pa;
+  if(t==='text'){ty=new Uint8Array([0x54]);const txt=new TextDecoder().decode(new Uint8Array(r.data));const lb=new TextEncoder().encode(r.lang||'en');const tb=new TextEncoder().encode(txt);pa=new Uint8Array(1+lb.length+tb.length);pa[0]=lb.length&0x3F;pa.set(lb,1);pa.set(tb,1+lb.length);}
+  else if(t==='url'){ty=new Uint8Array([0x55]);const u=new TextDecoder().decode(new Uint8Array(r.data));let p=0,rest=u;if(u.startsWith('https://www.')){p=2;rest=u.substring(12);}else if(u.startsWith('http://www.')){p=1;rest=u.substring(11);}else if(u.startsWith('https://')){p=4;rest=u.substring(8);}else if(u.startsWith('http://')){p=3;rest=u.substring(7);}const rb=new TextEncoder().encode(rest);pa=new Uint8Array(1+rb.length);pa[0]=p;pa.set(rb,1);}
+  else if(t==='mime'){ty=new TextEncoder().encode(r.mediaType||'application/octet-stream');pa=new Uint8Array(r.data);}
+  else if(t==='empty'){ty=new Uint8Array(0);pa=new Uint8Array(0);}
+  else{ty=new TextEncoder().encode('application/octet-stream');pa=new Uint8Array(r.data);}
+  const tnf=t==='empty'?0:(t==='mime'?2:1);const sr=pa.length<256?1:0;const il=r.id?1:0;
+  const hd=((f?1:0)<<7)|((l?1:0)<<6)|(sr<<4)|(il<<3)|tnf;
+  const parts=[new Uint8Array([hd,ty.length])];
+  if(sr)parts.push(new Uint8Array([pa.length]));else parts.push(new Uint8Array([(pa.length>>24)&0xFF,(pa.length>>16)&0xFF,(pa.length>>8)&0xFF,pa.length&0xFF]));
+  if(il)parts.push(new Uint8Array([r.id.length]));
+  parts.push(ty);if(il)parts.push(new Uint8Array(r.id));parts.push(pa);
+  const tt=parts.reduce((a,p)=>a+p.length,0);const b=new Uint8Array(tt);let o=0;for(const p of parts){b.set(p,o);o+=p.length;}return b;
 }
-function saveSettings(){try{localStorage.setItem('ardSettings',JSON.stringify(S.ardSettings));}catch(e){}}
+function buildNDEFMessage(tag){if(!tag||!tag.records.length)return new Uint8Array(0);const p=[];tag.records.forEach((r,i)=>p.push(encodeNDEFRecord(r,i===0,i===tag.records.length-1)));const t=p.reduce((a,x)=>a+x.length,0);const b=new Uint8Array(t);let o=0;for(const x of p){b.set(x,o);o+=x.length;}return b;}
+function buildTLV(m){if(!m.length)return new Uint8Array(0);if(m.length<255){const t=new Uint8Array(2+m.length+1);t[0]=3;t[1]=m.length;t.set(m,2);t[2+m.length]=0xFE;return t;}const t=new Uint8Array(4+m.length+1);t[0]=3;t[1]=0xFF;t[2]=(m.length>>8)&0xFF;t[3]=m.length&0xFF;t.set(m,4);t[4+m.length]=0xFE;return t;}
+function mapTLVToBlocks(tlv,tag){
+  const b=new Array(64).fill(null).map(()=>new Uint8Array(16));
+  if(tag&&tag.serialNumber){const p=tag.serialNumber.split(':').map(x=>parseInt(x,16)).filter(x=>!isNaN(x));const b0=new Uint8Array(16);for(let i=0;i<Math.min(p.length,4);i++)b0[i]=p[i];if(p.length>=4)b0[4]=p[0]^p[1]^p[2]^p[3];b0[5]=0x08;b0[6]=0x00;b0[7]=0x04;b0[8]=0x62;b0[9]=0x63;b0[10]=0x64;b0[11]=0x65;b0[12]=0x66;b0[13]=0x67;b0[14]=0x68;b0[15]=0x69;b[0]=b0;}
+  b[1]=new Uint8Array([0x14,0x01,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);
+  b[2]=new Uint8Array([0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);
+  let bn=4,o=0;
+  while(o<tlv.length&&bn<64){if(bn%4===3){bn++;continue;}const c=new Uint8Array(16);const r=tlv.length-o;const cp=Math.min(16,r);c.set(tlv.slice(o,o+cp));b[bn]=c;o+=cp;bn++;}
+  for(let i=3;i<64;i+=4)b[i]=new Uint8Array([0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x07,0x80,0x69,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]);
+  return b;
+}
+function buildTLVDiagram(tlv){
+  if(!tlv.length)return 'Brak NDEF';
+  let h='';const isL=tlv[1]===0xFF;const hl=isL?4:2;const nl=isL?((tlv[2]<<8)|tlv[3]):tlv[1];
+  h+=`<span class="lbl">// TLV</span>\n<span class="tag">0x03</span> <span class="lbl">(NDEF)</span>\n`;
+  if(isL)h+=`<span class="len">0xFF ${tlv[2].toString(16).padStart(2,'0')} ${tlv[3].toString(16).padStart(2,'0')}</span> <span class="lbl">(${nl} B)</span>\n`;
+  else h+=`<span class="len">0x${tlv[1].toString(16).padStart(2,'0')}</span> <span class="lbl">(${nl} B)</span>\n`;
+  h+=`\n<span class="lbl">// NDEF</span>\n`;
+  let o=hl;
+  while(o<hl+nl){const hd=tlv[o];const sr=(hd>>4)&1;const tnf=hd&7;const tl=tlv[o+1];let p=o+2;let pl;if(sr){pl=tlv[p];p++;}else{pl=(tlv[p]<<24)|(tlv[p+1]<<16)|(tlv[p+2]<<8)|tlv[p+3];p+=4;}h+=`<span class="ndef-h">0x${hd.toString(16).padStart(2,'0')}</span> <span class="lbl">(TNF=${tnf})</span>\n<span class="ndef-h">0x${tl.toString(16).padStart(2,'0')}</span>\n<span class="ndef-h">0x${pl.toString(16).padStart(2,'0')}</span> <span class="lbl">(${pl} B)</span>\n`;const tB=tlv.slice(p,p+tl);h+=`<span class="ndef-t">${Array.from(tB).map(x=>'0x'+x.toString(16).padStart(2,'0')).join(' ')}</span>\n`;p+=tl;const pB=tlv.slice(p,p+pl);h+=`<span class="ndef-p">${Array.from(pB).map(x=>'0x'+x.toString(16).padStart(2,'0')).join(' ')}</span>\n`;o=p+pl;if((hd>>6)&1)break;}
+  h+=`\n<span class="term">0xFE</span>`;
+  return h;
+}
+function renderBlocks(tag){
+  let tlv=new Uint8Array(0),m=new Uint8Array(0);
+  if(tag){m=buildNDEFMessage(tag);tlv=buildTLV(m);}
+  S.blocks=mapTLVToBlocks(tlv,tag);
+  $('tlvDiagram').innerHTML=tag?buildTLVDiagram(tlv).replace(/\n/g,'<br>'):'Czeka…';
+  $('blocksSize').textContent=`${m.length} B`;
+  const blk=S.blocks;let u=0,f=0;
+  const v=$('blocksView');v.innerHTML='';
+  for(let s=0;s<16;s++){
+    const sec=document.createElement('div');sec.className='sector-block';
+    const hd=document.createElement('div');hd.className='sector-head';
+    const used=[];for(let i=0;i<4;i++){if(i===3)continue;const b=s*4+i;const d=blk[b];if(d&&d.some(x=>x!==0))used.push(b);}
+    hd.innerHTML=`<span>Sektor ${s}</span><span class="badge-sm ${used.length?'used':''}">${used.length}/3</span>`;
+    sec.appendChild(hd);
+    let sk=false;
+    for(let i=0;i<4;i++){
+      const b=s*4+i;const d=blk[b];const isT=(i===3);const isU=d&&d.some(x=>x!==0);
+      if(isT&&!S.showTrailer)continue;
+      if(!isU&&!S.showEmpty&&!isT){sk=true;continue;}
+      const row=document.createElement('div');row.className='block-row';row.dataset.block=b;
+      if(isT)row.classList.add('trailer');else if(isU)row.classList.add('ndef-used');else row.classList.add('empty');
+      let hx,as;
+      if(isT){hx='•• •• •• •• •• •• FF 07 80 69 •• •• •• •• •• ••';as='Key A + Access + Key B';}
+      else{hx=Array.from(d||new Uint8Array(16)).map(x=>x.toString(16).padStart(2,'0')).join(' ');as=Array.from(d||new Uint8Array(16)).map(x=>x>=32&&x<127?String.fromCharCode(x):'·').join('');}
+      if(S.blockView==='hex')row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hx}</span></div>`;
+      else if(S.blockView==='ascii')row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${as}</span></div>`;
+      else if(S.blockView==='annotated'){let a='';if(b===0)a='UID+BCC+SAK+ATQA';else if(b===1||b===2)a='MAD';else if(isT)a='Trailer';else if(isU)a='NDEF';else a='Pusty';row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hx}</span><span class="block-ascii">${a}</span></div>`;}
+      else row.innerHTML=`<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hx}</span><span class="block-ascii">${as}</span></div>`;
+      sec.appendChild(row);
+      if(!isT){if(isU)u++;else f++;}
+    }
+    if(!sk)v.appendChild(sec);
+  }
+  $('blocksUsed').textContent=u;$('blocksFree').textContent=f;$('blocksPct').textContent=Math.round((u/(u+f||1))*100)+'%';
+}
+$('blocksView').addEventListener('click',e=>{
+  const row=e.target.closest('.block-row');if(!row)return;
+  document.querySelectorAll('.block-row.selected').forEach(r=>r.classList.remove('selected'));
+  row.classList.add('selected');
+  const b=parseInt(row.dataset.block,10);const d=S.blocks[b];if(!d)return;
+  let desc='';
+  if(b===0)desc='<b>Blok 0</b>: producent (UID, BCC, SAK, ATQA)';
+  else if(b===1||b===2)desc='<b>MAD</b>';
+  else if(b%4===3)desc='<b>Trailer</b>';
+  else if(d.some(x=>x!==0))desc='<b>Dane NDEF</b>';
+  else desc='<b>Pusty</b>';
+  $('byteInspector').innerHTML=`${desc}<br><span style="font-family:var(--mo);font-size:10px">Blok ${b}</span><div class="hex-block" style="margin-top:6px">${Array.from(d).map(x=>x.toString(16).padStart(2,'0')).join(' ')}</div>`;
+});
+$('blockViewMode').onchange=e=>{S.blockView=e.target.value;if(S.blocks)renderBlocks(S.read);};
+$('toggleTrailer').onclick=()=>{S.showTrailer=!S.showTrailer;if(S.blocks)renderBlocks(S.read);};
+$('toggleEmpty').onclick=()=>{S.showEmpty=!S.showEmpty;if(S.blocks)renderBlocks(S.read);};
+$('blocksRead').onclick=async()=>{if(!hasNfc)return toast('Brak Web NFC','err');try{showBig('i-scan','Zbliż kartę…','');const t=await captureTag();hideBig();S.read=t;renderCard(t);renderBlocks(t);toast('Gotowe','ok');}catch(e){hideBig();toast('Błąd','err');}};
+
+// WRITE URL / DATA / PHOTO / EDIT
+$('writeUrlBtn').onclick=async()=>{const u=$('urlInput').value.trim();if(!u)return toast('Podaj URL','err');try{showBig('i-save','Zbliż kartę…','',hideBig);await writeTag([{recordType:'url',data:u}]);hideBig();showBigSuccess('URL OK',u);}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('writeDataBtn').onclick=async()=>{const n=$('nameInput').value.trim();const id=$('idInput').value.trim();const u=$('urlDataInput').value.trim();if(!u)return toast('Podaj URL','err');const p=`NAME=${n};ID=${id};URL=${u};`;try{showBig('i-save','Zbliż kartę…','',hideBig);await writeTag([{recordType:'url',data:u},{recordType:'text',data:p,lang:'pl'}]);hideBig();showBigSuccess('Dane OK',p);}catch(e){hideBig();showBigError('Błąd',e.message);}};
+
+const fileInput=$('fileInput'),cameraInput=$('cameraInput');
+$('galleryBtn').onclick=()=>fileInput.click();
+$('cameraBtn').onclick=()=>cameraInput.click();
+const crop={img:null,scale:1,offsetX:0,offsetY:0,rotation:0,aspect:1,drag:false,sx:0,sy:0,sox:0,soy:0};
+function openCrop(f){const r=new FileReader();r.onload=e=>{const i=new Image();i.onload=()=>{crop.img=i;crop.scale=1;crop.offsetX=0;crop.offsetY=0;crop.rotation=0;crop.aspect=1;document.querySelectorAll('.crop-aspects button').forEach(b=>b.classList.toggle('active',b.dataset.aspect==='1'));$('cropZoom').value=100;$('cropModal').classList.add('show');requestAnimationFrame(()=>{layoutCrop();renderCrop();});};i.src=e.target.result;};r.readAsDataURL(f);}
+function layoutCrop(){const s=$('cropStage'),f=$('cropFrame');const W=s.clientWidth-40,H=s.clientHeight-40;let fw,fh;if(crop.aspect===0){fw=W;fh=H;}else if(W/H>crop.aspect){fh=H;fw=fh*crop.aspect;}else{fw=W;fh=fw/crop.aspect;}f.style.left=(s.clientWidth-fw)/2+'px';f.style.top=(s.clientHeight-fh)/2+'px';f.style.width=fw+'px';f.style.height=fh+'px';}
+function renderCrop(){const s=$('cropStage'),c=$('cropCanvas');const W=s.clientWidth,H=s.clientHeight,dpr=window.devicePixelRatio||1;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.fillStyle='#000';x.fillRect(0,0,W,H);if(!crop.img)return;x.save();x.translate(W/2+crop.offsetX,H/2+crop.offsetY);x.rotate(crop.rotation*Math.PI/180);const fit=Math.min(W/crop.img.width,H/crop.img.height);const sc=fit*crop.scale;x.scale(sc,sc);x.drawImage(crop.img,-crop.img.width/2,-crop.img.height/2);x.restore();}
+function applyCrop(){const s=$('cropStage'),c=$('cropCanvas'),f=$('cropFrame');const sr=s.getBoundingClientRect(),fr=f.getBoundingClientRect();const dpr=window.devicePixelRatio||1;const cx=(fr.left-sr.left)*dpr,cy=(fr.top-sr.top)*dpr,cw=fr.width*dpr,ch=fr.height*dpr;const o=document.createElement('canvas');o.width=cw;o.height=ch;const x=o.getContext('2d');x.drawImage(c,cx,cy,cw,ch,0,0,cw,ch);const t=parseInt($('compressSelect').value,10);let q=0.85;let du=o.toDataURL('image/jpeg',q);while(du.length>t*1.5&&q>0.15){q-=0.1;du=o.toDataURL('image/jpeg',q);}S.photo=du;$('photoPreview').src=du;$('photoPreview').style.display='block';const b=Math.round((du.split(',')[1]||'').length*0.75);$('photoInfo').textContent=`${Math.round(fr.width)}×${Math.round(fr.height)} px • ~${b} B`;$('writePhotoBtn').disabled=false;$('cropModal').classList.remove('show');}
+$('cropClose').onclick=()=>$('cropModal').classList.remove('show');
+$('cropCancel').onclick=()=>$('cropModal').classList.remove('show');
+$('cropApply').onclick=applyCrop;
+$('cropZoom').oninput=e=>{crop.scale=parseInt(e.target.value,10)/100;renderCrop();};
+$('cropRotate').onclick=()=>{crop.rotation=(crop.rotation+90)%360;renderCrop();};
+$('cropReset').onclick=()=>{crop.scale=1;crop.offsetX=0;crop.offsetY=0;crop.rotation=0;$('cropZoom').value=100;renderCrop();};
+document.querySelectorAll('.crop-aspects button').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.crop-aspects button').forEach(x=>x.classList.remove('active'));b.classList.add('active');crop.aspect=parseFloat(b.dataset.aspect);layoutCrop();};});
+const cc=$('cropCanvas');
+cc.addEventListener('pointerdown',e=>{crop.drag=true;crop.sx=e.clientX;crop.sy=e.clientY;crop.sox=crop.offsetX;crop.soy=crop.offsetY;cc.setPointerCapture(e.pointerId);});
+cc.addEventListener('pointermove',e=>{if(!crop.drag)return;crop.offsetX=crop.sox+(e.clientX-crop.sx);crop.offsetY=crop.soy+(e.clientY-crop.sy);renderCrop();});
+cc.addEventListener('pointerup',()=>{crop.drag=false;});
+cc.addEventListener('pointercancel',()=>{crop.drag=false;});
+window.addEventListener('resize',()=>{if($('cropModal').classList.contains('show')){layoutCrop();renderCrop();}});
+fileInput.onchange=e=>{if(e.target.files[0])openCrop(e.target.files[0]);e.target.value='';};
+cameraInput.onchange=e=>{if(e.target.files[0])openCrop(e.target.files[0]);e.target.value='';};
+$('writePhotoBtn').onclick=async()=>{if(!S.photo)return;const b64=S.photo.split(',')[1];const bin=atob(b64);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);try{showBig('i-save','Zbliż kartę…',`${bytes.length} B`,hideBig);await writeTag([{recordType:'mime',mediaType:'image/jpeg',data:bytes}]);hideBig();showBigSuccess('Zdjęcie OK',`${bytes.length} B`);}catch(e){hideBig();showBigError('Błąd',e.message);}};
+
+$('editLoadBtn').onclick=async()=>{if(!hasNfc)return toast('Brak Web NFC','err');try{showBig('i-search','Zbliż kartę…','');const t=await captureTag();hideBig();let u='',n='',id='';for(const r of t.records){const rt=r.recordType;if(rt==='url')u=new TextDecoder().decode(new Uint8Array(r.data));else if(rt==='text')new TextDecoder().decode(new Uint8Array(r.data)).split(';').forEach(p=>{const [k,v]=p.split('=');if(k==='NAME')n=v||'';if(k==='ID')id=v||'';if(k==='URL'&&!u)u=v||'';});}$('editUid').textContent='UID: '+t.serialNumber;$('editUrl').value=u;$('editName').value=n;$('editId').value=id;$('editForm').style.display='block';renderCard(t);S.read=t;}catch(e){hideBig();toast('Błąd','err');}};
+$('editSaveBtn').onclick=async()=>{const u=$('editUrl').value.trim();const n=$('editName').value.trim();const id=$('editId').value.trim();if(!u)return toast('Podaj URL','err');const p=`NAME=${n};ID=${id};URL=${u};`;try{showBig('i-save','Zbliż kartę…','',hideBig);await writeTag([{recordType:'url',data:u},{recordType:'text',data:p,lang:'pl'}]);hideBig();showBigSuccess('OK');}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('editClearBtn').onclick=async()=>{if(!confirm('Wyczyścić?'))return;try{showBig('i-trash','Zbliż kartę…','');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('OK');}catch(e){hideBig();showBigError('Błąd',e.message);}};
+
+// CLONE
+function renderClone(){const s=S.clone;if(!s){$('slot').classList.add('empty');$('slotCount').textContent='—';$('slotInfo').textContent='Brak.';$('cloneHex').textContent='—';return;}$('slot').classList.remove('empty');$('slotCount').textContent=s.records.length;const tb=s.records.reduce((a,r)=>a+new Uint8Array(r.data).length,0);$('slotInfo').textContent=`UID: ${s.serialNumber}\nRekordy: ${s.records.length} • ${tb} B`;const c=s.records.map(r=>new Uint8Array(r.data));const t=c.reduce((a,x)=>a+x.length,0);const b=new Uint8Array(t);let o=0;for(const x of c){b.set(x,o);o+=x.length;}$('cloneHex').textContent=hexDump(b);}
+renderClone();
+$('cloneRead').onclick=async()=>{try{showBig('i-scan','Zbliż kartę źródłową…','');const t=await captureTag();hideBig();S.clone=t;renderClone();}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('cloneClear').onclick=()=>{S.clone=null;renderClone();};
+$('cloneCopy').onclick=async()=>{if(!S.clone)return toast('Brak','err');try{showBig('i-save','Zbliż kartę docelową…','',hideBig);const r=S.clone.records.map(recForWrite).filter(Boolean);await writeTag(r);hideBig();showBigSuccess('Skopiowano!',`${r.length} rekordów`);}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('cloneMove').onclick=async()=>{if(!S.clone)return toast('Brak','err');if(!confirm('Przenieść?'))return;try{showBig('i-save','Zbliż kartę docelową…','',hideBig);const r=S.clone.records.map(recForWrite).filter(Boolean);await writeTag(r);hideBig();showBigSuccess('Skopiowano','Teraz wyczyścimy źródło');await new Promise(x=>setTimeout(x,1800));showBig('i-trash','Zbliż źródło…','');await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('Przeniesiono');}catch(e){hideBig();showBigError('Błąd',e.message);}};
+
+// HEX
+function updateHexView(){$('hexView').textContent=hexDump(S.hex);$('hexBytes').textContent=S.hex.length;$('hexBits').textContent=S.hex.length*8;}
+$('hexInput').oninput=()=>{try{S.hex=hexToBytes($('hexInput').value);updateHexView();}catch(e){$('hexView').textContent='Błąd: '+e.message;}};
+$('hexClear').onclick=()=>{S.hex=new Uint8Array(0);$('hexInput').value='';updateHexView();};
+$('hexLoadFile').onclick=()=>$('hexFile').click();
+$('hexFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;const b=new Uint8Array(await f.arrayBuffer());S.hex=b;$('hexInput').value=bytesToHex(b);updateHexView();e.target.value='';};
+$('hexSaveFile').onclick=()=>{if(!S.hex.length)return toast('Pusty','err');downloadBlob(new Blob([S.hex],{type:'application/octet-stream'}),'buf.bin');};
+$('hexLoadTag').onclick=async()=>{try{showBig('i-scan','Zbliż kartę…','');const t=await captureTag();const c=t.records.map(r=>new Uint8Array(r.data));const tt=c.reduce((a,x)=>a+x.length,0);const b=new Uint8Array(tt);let o=0;for(const x of c){b.set(x,o);o+=x.length;}S.hex=b;$('hexInput').value=bytesToHex(b);updateHexView();hideBig();showBigSuccess('OK');}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('hexWriteTag').onclick=async()=>{if(!S.hex.length)return toast('Pusty','err');try{showBig('i-save','Zbliż kartę…','',hideBig);await writeTag([{recordType:'mime',mediaType:'application/octet-stream',data:S.hex}]);hideBig();showBigSuccess('OK');}catch(e){hideBig();showBigError('Błąd',e.message);}};
+
+// SETTINGS
+function loadCS(){try{const s=localStorage.getItem('nfcCardSettings');if(s)Object.assign(S.cardSettings,JSON.parse(s));}catch(e){}}
+function saveCS(){try{localStorage.setItem('nfcCardSettings',JSON.stringify(S.cardSettings));}catch(e){}}
+function applyCS(){
+  const c=S.cardSettings;const i=$('cardInner');
+  i.style.backgroundImage=c.image?`url('${c.image}')`:'';
+  i.style.backgroundColor=c.image?'#000':(PRESET_COLORS[c.preset]||'#1a1a1a');
+  i.style.borderRadius=c.radius+'px';
+  i.classList.toggle('has-image',!!c.image);i.classList.toggle('floating',c.float);
+  document.querySelector('.card-chip').style.display=c.showChip?'':'none';
+  document.querySelector('.card-wave').style.display=c.showWave?'':'none';
+  $('cardUid').style.display=c.showUid?'':'none';
+  $('cardRecords').style.display=c.showRecords?'':'none';
+  $('cardSize').style.display=c.showSize?'':'none';
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.toggle('active',b.dataset.preset===c.preset));
+  $('cardRadius').value=c.radius;$('cardRadiusVal').textContent=c.radius;
+  $('cardFloat').checked=c.float;$('showUid').checked=c.showUid;$('showRecords').checked=c.showRecords;$('showSize').checked=c.showSize;$('showWave').checked=c.showWave;$('showChip').checked=c.showChip;
+  const p=$('cardImagePreview');if(c.image){p.src=c.image;p.style.display='block';}else{p.style.display='none';p.src='';}
+}
+document.querySelectorAll('.preset-btn').forEach(b=>{b.onclick=()=>{S.cardSettings.preset=b.dataset.preset;S.cardSettings.image=null;saveCS();applyCS();};});
+$('uploadCardImage').onclick=()=>$('cardImageInput').click();
+$('cardImageInput').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{S.cardSettings.image=ev.target.result;saveCS();applyCS();};r.readAsDataURL(f);e.target.value='';};
+$('clearCardImage').onclick=()=>{S.cardSettings.image=null;saveCS();applyCS();};
+$('cardRadius').oninput=e=>{S.cardSettings.radius=parseInt(e.target.value,10);$('cardRadiusVal').textContent=e.target.value;saveCS();applyCS();};
+$('cardFloat').onchange=e=>{S.cardSettings.float=e.target.checked;saveCS();applyCS();};
+$('showUid').onchange=e=>{S.cardSettings.showUid=e.target.checked;saveCS();applyCS();};
+$('showRecords').onchange=e=>{S.cardSettings.showRecords=e.target.checked;saveCS();applyCS();};
+$('showSize').onchange=e=>{S.cardSettings.showSize=e.target.checked;saveCS();applyCS();};
+$('showWave').onchange=e=>{S.cardSettings.showWave=e.target.checked;saveCS();applyCS();};
+$('showChip').onchange=e=>{S.cardSettings.showChip=e.target.checked;saveCS();applyCS();};
+$('resetCardSettings').onclick=()=>{S.cardSettings={preset:'dark',image:null,radius:16,float:true,showUid:true,showRecords:true,showSize:true,showWave:true,showChip:true};saveCS();applyCS();};
+
+// TOOLS
+$('formatBtn').onclick=async()=>{if(!confirm('Format NDEF?'))return;try{showBig('i-unlock','Zbliż kartę…','',hideBig);await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('OK');}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('resetCardBtn').onclick=async()=>{if(!confirm('Wyczyścić?'))return;try{showBig('i-refresh','Zbliż kartę…','',hideBig);await writeTag([{recordType:'text',data:'',lang:'pl'}]);hideBig();showBigSuccess('OK');}catch(e){hideBig();showBigError('Błąd',e.message);}};
+$('resetAppBtn').onclick=()=>{if(!confirm('Reset?'))return;S.read=null;S.clone=null;S.hex=new Uint8Array(0);S.photo=null;S.blocks=null;S.ardBlocks=new Array(64).fill(null).map(()=>new Uint8Array(16));S.ardOriginal=new Array(64).fill(null).map(()=>new Uint8Array(16));S.ardDirty.clear();S.ardSectors=new Array(16).fill(null);$('ardBlockEditor').innerHTML='';$('ardOutput').textContent='';$('readResult').innerHTML='';$('readActions').style.display='none';$('photoPreview').style.display='none';$('hexInput').value='';$('blocksView').innerHTML='';$('tlvDiagram').textContent='Czeka…';renderClone();renderCard(null);updateHexView();log('Reset','ok');};
+
+// ARD SETTINGS
+function loadAS(){try{const s=localStorage.getItem('ardSettings');if(s)Object.assign(S.ardSettings,JSON.parse(s));}catch(e){}
+  $('ardBaud').value=S.ardSettings.baud;$('ardBaudGlobal').value=S.ardSettings.baud;
+  $('ardAutoReconnect').checked=S.ardSettings.autoReconnect;$('ardAutoDump').checked=S.ardSettings.autoDump;$('ardVibrate').checked=S.ardSettings.vibrate;
+}
+function saveAS(){try{localStorage.setItem('ardSettings',JSON.stringify(S.ardSettings));}catch(e){}}
+$('ardAutoReconnect').onchange=e=>{S.ardSettings.autoReconnect=e.target.checked;saveAS();};
+$('ardAutoDump').onchange=e=>{S.ardSettings.autoDump=e.target.checked;saveAS();};
+$('ardVibrate').onchange=e=>{S.ardSettings.vibrate=e.target.checked;saveAS();};
+$('ardBaudGlobal').onchange=e=>{S.ardSettings.baud=parseInt(e.target.value);$('ardBaud').value=e.target.value;saveAS();};
 
 $('logToggle').onclick=()=>$('logPanel').classList.toggle('open');
 $('logClear').onclick=()=>{$('log').innerHTML='';};
 
-loadSettings();
-ardRenderHistory();
+loadCS();applyCS();loadAS();ardRenderHistory();
 log('Gotowe','ok');
-if(hasSerial)ardOut('// Web Serial gotowe – kliknij „Połącz (COM5)”','sys');
+if(hasSerial)ardOut('// Web Serial – połącz Arduino','sys');
 </script>
 </body>
 </html>
