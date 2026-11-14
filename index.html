@@ -2,80 +2,546 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Programator NFC – vercode.pl</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>NFC Master – vercode.pl</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-        .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 420px; width: 100%; text-align: center; }
-        h1 { color: #333; margin-top: 0; font-size: 24px; }
-        p { color: #666; font-size: 14px; margin-bottom: 20px; }
-        input { width: 100%; padding: 14px; margin-bottom: 15px; border: 2px solid #e0e0e0; border-radius: 10px; box-sizing: border-box; font-size: 16px; transition: border 0.3s; }
-        input:focus { outline: none; border-color: #667eea; }
-        button { width: 100%; padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
-        button:hover:not(:disabled) { transform: scale(1.02); }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-        #status { margin-top: 20px; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 15px; display: none; }
-        .success { background: #d4edda; color: #155724; display: block !important; }
-        .error { background: #f8d7da; color: #721c24; display: block !important; }
-        .info { background: #cce5ff; color: #004085; display: block !important; }
-        .badge { display: inline-block; padding: 4px 10px; background: #eee; border-radius: 20px; font-size: 12px; margin-bottom: 15px; color: #555; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; margin: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #fff; min-height: 100vh; display: flex; flex-direction: column;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+        header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; background: rgba(0,0,0,0.4);
+            border-bottom: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+        }
+        header h1 { font-size: 18px; margin: 0; }
+        .badges { display: flex; gap: 8px; align-items: center; }
+        .badge {
+            padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold;
+            background: rgba(255,255,255,0.15);
+        }
+        .badge.ok { background: #2ecc71; color: #000; }
+        .badge.err { background: #e74c3c; color: #fff; }
+        .badge.wait { background: #f39c12; color: #000; }
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; border: none; padding: 12px 20px; border-radius: 10px;
+            font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.15s;
+            font-family: inherit;
+        }
+        button:hover:not(:disabled) { transform: scale(1.03); }
+        button:active:not(:disabled) { transform: scale(0.97); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button.secondary { background: rgba(255,255,255,0.12); }
+        button.danger { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        nav {
+            display: flex; gap: 4px; padding: 10px; overflow-x: auto;
+            background: rgba(0,0,0,0.3); scrollbar-width: none;
+        }
+        nav::-webkit-scrollbar { display: none; }
+        nav button {
+            flex-shrink: 0; padding: 10px 16px; font-size: 13px;
+            background: rgba(255,255,255,0.08);
+        }
+        nav button.active { background: linear-gradient(135deg, #667eea, #764ba2); }
+        main { flex: 1; padding: 16px; overflow-y: auto; }
+        .tab { display: none; max-width: 600px; margin: 0 auto; }
+        .tab.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        .card {
+            background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; padding: 20px; margin-bottom: 16px;
+        }
+        .card h2 { margin-top: 0; font-size: 16px; color: #a8b8ff; }
+        label { display: block; font-size: 13px; margin-bottom: 6px; color: #a8b8ff; font-weight: 600; }
+        input, textarea {
+            width: 100%; padding: 12px; margin-bottom: 12px;
+            background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 10px; color: white; font-size: 15px; font-family: inherit;
+        }
+        input:focus, textarea:focus { outline: none; border-color: #667eea; }
+        .row { display: flex; gap: 8px; margin-bottom: 12px; }
+        .row > * { flex: 1; }
+        #photoPreview {
+            max-width: 100%; max-height: 200px; border-radius: 10px;
+            display: none; margin: 10px auto;
+        }
+        #log {
+            background: rgba(0,0,0,0.6); padding: 10px 16px; font-family: monospace;
+            font-size: 12px; max-height: 120px; overflow-y: auto; border-top: 1px solid rgba(255,255,255,0.1);
+            white-space: pre-wrap;
+        }
+        #log div { padding: 2px 0; color: #8a9bb8; }
+        #log div.ok { color: #2ecc71; }
+        #log div.err { color: #e74c3c; }
+        #log div.info { color: #f39c12; }
+        .kbd {
+            display: inline-block; padding: 2px 8px; background: rgba(255,255,255,0.15);
+            border-radius: 4px; font-family: monospace; font-size: 12px;
+        }
+        .big-status {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            display: none; align-items: center; justify-content: center;
+            flex-direction: column; z-index: 999; backdrop-filter: blur(10px);
+        }
+        .big-status.show { display: flex; }
+        .big-status .icon { font-size: 100px; margin-bottom: 20px; animation: bounce 1s infinite; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .big-status .text { font-size: 24px; font-weight: bold; text-align: center; padding: 0 20px; }
+        .photo-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .photo-btns button { padding: 14px; font-size: 14px; }
+        .info-text { font-size: 12px; color: #8a9bb8; margin-top: 8px; line-height: 1.5; }
+        .uid-display {
+            font-family: monospace; font-size: 18px; padding: 10px;
+            background: rgba(0,0,0,0.4); border-radius: 8px; text-align: center;
+            letter-spacing: 2px; color: #a8b8ff; margin: 10px 0;
+        }
+        .result-item {
+            padding: 8px 12px; background: rgba(0,0,0,0.3); border-radius: 8px;
+            margin-bottom: 6px; font-size: 13px; word-break: break-all;
+        }
+        .result-item strong { color: #a8b8ff; }
+        #editLocked { color: #f39c12; font-size: 13px; text-align: center; padding: 10px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <span class="badge" id="badge">Sprawdzam wsparcie...</span>
-        <h1>📲 Programator NFC</h1>
-        <p>Wpisz adres URL, przyłóż kartę do telefonu.</p>
+    <header>
+        <h1>📡 NFC Master</h1>
+        <div class="badges">
+            <span id="nfcBadge" class="badge wait">Sprawdzam...</span>
+            <button id="fsBtn" class="secondary" style="padding:8px 12px;font-size:13px;">⛶ Full</button>
+        </div>
+    </header>
 
-        <input type="url" id="urlInput" value="https://vercode.pl" placeholder="https://twojadomena.pl">
-        <button id="writeBtn" disabled>Zapisz na karcie</button>
-        <div id="status"></div>
+    <nav>
+        <button data-tab="read" class="active">🔍 Odczyt</button>
+        <button data-tab="writeUrl">🌐 URL</button>
+        <button data-tab="writeData">📝 Dane</button>
+        <button data-tab="photo">📷 Zdjęcie</button>
+        <button data-tab="edit">✏️ Edycja</button>
+    </nav>
+
+    <main>
+        <!-- ODCZYT -->
+        <section id="tab-read" class="tab active">
+            <div class="card">
+                <h2>Odczyt karty</h2>
+                <button id="readBtn" style="width:100%;">🔍 Odczytaj kartę</button>
+                <div id="readResult" style="margin-top:16px;"></div>
+            </div>
+        </section>
+
+        <!-- ZAPIS URL -->
+        <section id="tab-writeUrl" class="tab">
+            <div class="card">
+                <h2>Zapisz adres URL</h2>
+                <label>Adres strony</label>
+                <input type="url" id="urlInput" value="https://vercode.pl" placeholder="https://...">
+                <button id="writeUrlBtn" style="width:100%;">💾 Zapisz URL na karcie</button>
+                <p class="info-text">Po przyłożeniu karty telefon otworzy tę stronę automatycznie.</p>
+            </div>
+        </section>
+
+        <!-- ZAPIS DANYCH (Arduino) -->
+        <section id="tab-writeData" class="tab">
+            <div class="card">
+                <h2>Dane czytelne dla Arduino</h2>
+                <label>Imię / Nazwa (np. Jan)</label>
+                <input type="text" id="nameInput" placeholder="Jan Kowalski">
+                <label>ID / Numer karty (opcjonalnie)</label>
+                <input type="text" id="idInput" placeholder="np. Pracownik #42">
+                <label>Adres URL (dla telefonu)</label>
+                <input type="url" id="urlDataInput" value="https://vercode.pl">
+                <button id="writeDataBtn" style="width:100%;">💾 Zapisz dane + URL</button>
+                <p class="info-text">
+                    Na karcie zostaną zapisane 2 rekordy:<br>
+                    1️⃣ URL – otworzy stronę na telefonie.<br>
+                    2️⃣ Tekst: <span class="kbd">NAME=...;ID=...;URL=...;</span> – łatwy do parsowania w Arduino (np. przez bibliotekę <b>Adafruit PN532</b> lub <b>Seeed-NDEF</b>).
+                </p>
+            </div>
+        </section>
+
+        <!-- ZDJĘCIE -->
+        <section id="tab-photo" class="tab">
+            <div class="card">
+                <h2>Zdjęcie na kartę</h2>
+                <div class="photo-btns">
+                    <button id="cameraBtn">📸 Aparat</button>
+                    <button id="galleryBtn" class="secondary">🖼️ Galeria</button>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;">
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+                <img id="photoPreview" alt="Podgląd">
+                <div id="photoInfo" class="info-text"></div>
+                <div style="margin-top:12px;">
+                    <label>Rozmiar kompresji</label>
+                    <select id="compressSelect" style="width:100%;padding:12px;background:rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.15);border-radius:10px;color:white;font-size:15px;margin-bottom:12px;">
+                        <option value="100">Mały (~100 B) – tylko miniatura</option>
+                        <option value="300" selected>Średni (~300 B) – dobra miniatura</option>
+                        <option value="600">Duży (~600 B) – wyraźna miniatura</option>
+                    </select>
+                </div>
+                <button id="writePhotoBtn" style="width:100%;" disabled>💾 Zapisz zdjęcie na karcie</button>
+                <p class="info-text">
+                    ⚠️ MIFARE Classic 1K ma tylko ~750 B miejsca. Zdjęcie zostanie zapisane jako <b>base64 w rekordzie MIME</b> – tylko miniatura. Dla pełnego zdjęcia użyj karty NTAG215 lub zapisz URL do zdjęcia.
+                </p>
+            </div>
+        </section>
+
+        <!-- EDYCJA -->
+        <section id="tab-edit" class="tab">
+            <div class="card">
+                <h2>Edycja istniejącej karty</h2>
+                <button id="editLoadBtn" style="width:100%;">📖 Wczytaj dane z karty</button>
+                <div id="editLocked" style="display:none;">🔒 Najpierw wczytaj dane z karty</div>
+                <div id="editForm" style="display:none;margin-top:16px;">
+                    <div class="uid-display" id="editUid">UID: ---</div>
+                    <label>Adres URL</label>
+                    <input type="url" id="editUrl" placeholder="https://...">
+                    <label>Imię / Nazwa</label>
+                    <input type="text" id="editName" placeholder="Jan">
+                    <label>ID</label>
+                    <input type="text" id="editId" placeholder="...">
+                    <div class="row">
+                        <button id="editSaveBtn">💾 Zapisz zmiany</button>
+                        <button id="editClearBtn" class="danger">🗑️ Wyczyść kartę</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="log"></div>
+
+    <div class="big-status" id="bigStatus">
+        <div class="icon" id="bigIcon">📡</div>
+        <div class="text" id="bigText">Zbliż kartę do telefonu...</div>
     </div>
 
-    <script>
-        const writeBtn = document.getElementById('writeBtn');
-        const urlInput = document.getElementById('urlInput');
-        const statusDiv = document.getElementById('status');
-        const badge = document.getElementById('badge');
+<script>
+// ============ LOG ============
+const logEl = document.getElementById('log');
+function log(msg, type = '') {
+    const div = document.createElement('div');
+    if (type) div.className = type;
+    div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+    if (logEl.children.length > 100) logEl.removeChild(logEl.firstChild);
+}
 
-        if (!('NDEFReader' in window)) {
-            badge.innerText = "❌ Brak wsparcia NFC";
-            badge.style.background = '#f8d7da';
-            badge.style.color = '#721c24';
-            statusDiv.className = "info error";
-            statusDiv.innerHTML = "Twoja przeglądarka nie wspiera Web NFC.<br><b>Użyj Chrome na Androidzie</b> i otwórz tę stronę przez <b>HTTPS</b>.";
-            writeBtn.disabled = true;
-        } else {
-            badge.innerText = "✅ Web NFC dostępne";
-            badge.style.background = '#d4edda';
-            badge.style.color = '#155724';
-            writeBtn.disabled = false;
+// ============ BADGE ============
+const nfcBadge = document.getElementById('nfcBadge');
+const hasNfc = 'NDEFReader' in window;
+if (hasNfc) {
+    nfcBadge.className = 'badge ok';
+    nfcBadge.textContent = '✅ NFC OK';
+    log('Web NFC dostępne', 'ok');
+} else {
+    nfcBadge.className = 'badge err';
+    nfcBadge.textContent = '❌ Brak NFC';
+    log('Web NFC NIE jest wspierane. Użyj Chrome na Androidzie + HTTPS.', 'err');
+    document.querySelectorAll('button').forEach(b => { if (b.id !== 'fsBtn') b.disabled = true; });
+}
 
-            writeBtn.addEventListener('click', async () => {
-                const url = urlInput.value.trim();
-                if (!url) {
-                    statusDiv.className = "info error";
-                    statusDiv.innerText = "Wpisz najpierw adres URL.";
-                    return;
-                }
-                try {
-                    statusDiv.className = "info";
-                    statusDiv.innerText = "⏳ Zbliż kartę do telefonu...";
-                    writeBtn.disabled = true;
-
-                    const ndef = new NDEFReader();
-                    await ndef.write({ records: [{ recordType: "url", data: url }] });
-
-                    statusDiv.className = "success";
-                    statusDiv.innerText = "✅ Sukces! Adres zapisany na karcie.";
-                } catch (err) {
-                    statusDiv.className = "error";
-                    statusDiv.innerText = "❌ Błąd: " + err.message;
-                } finally {
-                    writeBtn.disabled = false;
-                }
-            });
+// ============ FULLSCREEN ============
+async function enterFullscreen() {
+    try {
+        if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            await document.documentElement.webkitRequestFullscreen();
         }
-    </script>
+        log('Pełny ekran włączony', 'ok');
+    } catch (e) { log('Nie można włączyć pełnego ekranu: ' + e.message, 'err'); }
+}
+document.getElementById('fsBtn').addEventListener('click', enterFullscreen);
+// Automatyczna próba przy pierwszym dotknięciu (wymagane przez przeglądarki)
+document.body.addEventListener('click', function autoFs() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        enterFullscreen();
+    }
+    document.body.removeEventListener('click', autoFs);
+}, { once: true });
+
+// ============ TABS ============
+document.querySelectorAll('nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+
+// ============ BIG STATUS ============
+const bigStatus = document.getElementById('bigStatus');
+const bigIcon = document.getElementById('bigIcon');
+const bigText = document.getElementById('bigText');
+function showBig(icon, text) {
+    bigIcon.textContent = icon;
+    bigText.textContent = text;
+    bigStatus.classList.add('show');
+}
+function hideBig() { bigStatus.classList.remove('show'); }
+
+// ============ READ ============
+document.getElementById('readBtn').addEventListener('click', async () => {
+    if (!hasNfc) return;
+    const result = document.getElementById('readResult');
+    result.innerHTML = '';
+    try {
+        showBig('📡', 'Zbliż kartę do telefonu...');
+        const ndef = new NDEFReader();
+        await ndef.scan();
+        log('Skanowanie rozpoczęte', 'ok');
+
+        const controller = new AbortController();
+        ndef.addEventListener('reading', ({ serialNumber, message }) => {
+            controller.abort();
+            hideBig();
+            log(`UID: ${serialNumber}`, 'ok');
+            let html = `<div class="uid-display">UID: ${serialNumber}</div>`;
+            if (message.records.length === 0) {
+                html += '<div class="result-item">Karta pusta (brak NDEF)</div>';
+            } else {
+                for (const r of message.records) {
+                    const decoded = new TextDecoder(r.encoding || 'utf-8').decode(r.data);
+                    let display = decoded;
+                    if (r.recordType === 'url') display = decoded;
+                    else if (r.recordType === 'mime') display = `[${r.mediaType}] ${r.data.byteLength} bajtów`;
+                    html += `<div class="result-item"><strong>${r.recordType}</strong>: ${display}</div>`;
+                }
+            }
+            result.innerHTML = html;
+        }, { signal: controller.signal, once: false });
+
+        // timeout
+        setTimeout(() => {
+            if (bigStatus.classList.contains('show')) {
+                controller.abort();
+                hideBig();
+                log('Timeout – nie przyłożono karty', 'err');
+                result.innerHTML = '<div class="result-item">⏱️ Nie wykryto karty (10 s)</div>';
+            }
+        }, 10000);
+    } catch (e) {
+        hideBig();
+        log('Błąd: ' + e.message, 'err');
+    }
+});
+
+// ============ WRITE HELPER ============
+async function writeRecords(records, successMsg) {
+    if (!hasNfc) return;
+    try {
+        showBig('✍️', 'Zbliż kartę do zapisu...');
+        const ndef = new NDEFReader();
+        await ndef.write({ records });
+        hideBig();
+        log(successMsg, 'ok');
+        showBig('✅', 'Zapisano!');
+        setTimeout(hideBig, 1500);
+    } catch (e) {
+        hideBig();
+        log('Błąd zapisu: ' + e.message, 'err');
+        showBig('❌', 'Błąd: ' + e.message);
+        setTimeout(hideBig, 3000);
+    }
+}
+
+// ============ WRITE URL ============
+document.getElementById('writeUrlBtn').addEventListener('click', () => {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) return log('Podaj URL', 'err');
+    writeRecords([{ recordType: 'url', data: url }], `Zapisano URL: ${url}`);
+});
+
+// ============ WRITE DATA (Arduino) ============
+document.getElementById('writeDataBtn').addEventListener('click', () => {
+    const name = document.getElementById('nameInput').value.trim();
+    const id = document.getElementById('idInput').value.trim();
+    const url = document.getElementById('urlDataInput').value.trim();
+    if (!url) return log('Podaj URL', 'err');
+    const textPayload = `NAME=${name};ID=${id};URL=${url};`;
+    writeRecords([
+        { recordType: 'url', data: url },
+        { recordType: 'text', data: textPayload, lang: 'pl' }
+    ], `Zapisano dane: ${textPayload}`);
+});
+
+// ============ PHOTO ============
+let photoBase64 = null;
+const fileInput = document.getElementById('fileInput');
+const cameraInput = document.getElementById('cameraInput');
+const photoPreview = document.getElementById('photoPreview');
+const photoInfo = document.getElementById('photoInfo');
+const writePhotoBtn = document.getElementById('writePhotoBtn');
+
+document.getElementById('galleryBtn').addEventListener('click', () => fileInput.click());
+document.getElementById('cameraBtn').addEventListener('click', () => cameraInput.click());
+
+async function processPhoto(file, targetBytes) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            const ratio = Math.sqrt((w * h) / (targetBytes * 3.5));
+            if (ratio > 1) { w = Math.round(w / ratio); h = Math.round(h / ratio); }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            let quality = 0.7;
+            let dataUrl = canvas.toDataURL('image/jpeg', quality);
+            while (dataUrl.length > targetBytes * 1.4 && quality > 0.1) {
+                quality -= 0.1;
+                dataUrl = canvas.toDataURL('image/jpeg', quality);
+            }
+            resolve({ dataUrl, size: dataUrl.length });
+        };
+        const reader = new FileReader();
+        reader.onload = (e) => { img.src = e.target.result; };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function handlePhotoFile(file) {
+    if (!file) return;
+    const target = parseInt(document.getElementById('compressSelect').value);
+    const result = await processPhoto(file, target);
+    photoBase64 = result.dataUrl;
+    photoPreview.src = result.dataUrl;
+    photoPreview.style.display = 'block';
+    photoInfo.textContent = `Rozmiar base64: ${result.size} B (limit karty ~750 B)`;
+    writePhotoBtn.disabled = false;
+    log(`Zdjęcie przetworzone: ${result.size} B`, 'ok');
+}
+
+fileInput.addEventListener('change', (e) => handlePhotoFile(e.target.files[0]));
+cameraInput.addEventListener('change', (e) => handlePhotoFile(e.target.files[0]));
+
+writePhotoBtn.addEventListener('click', async () => {
+    if (!photoBase64) return;
+    // base64 -> ArrayBuffer
+    const b64 = photoBase64.split(',')[1];
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    // jako rekord MIME
+    try {
+        showBig('✍️', 'Zbliż kartę (zdjęcie)...');
+        const ndef = new NDEFReader();
+        await ndef.write({
+            records: [{
+                recordType: 'mime',
+                mediaType: 'image/jpeg',
+                data: bytes.buffer
+            }]
+        });
+        hideBig();
+        log('Zdjęcie zapisane na karcie', 'ok');
+        showBig('✅', 'Zdjęcie zapisane!');
+        setTimeout(hideBig, 1500);
+    } catch (e) {
+        hideBig();
+        log('Błąd zapisu zdjęcia: ' + e.message, 'err');
+        showBig('❌', 'Za duże na kartę!');
+        setTimeout(hideBig, 3000);
+    }
+});
+
+// ============ EDIT ============
+const editLocked = document.getElementById('editLocked');
+const editForm = document.getElementById('editForm');
+let loadedData = null;
+
+document.getElementById('editLoadBtn').addEventListener('click', async () => {
+    if (!hasNfc) return;
+    try {
+        showBig('📖', 'Wczytuję dane z karty...');
+        const ndef = new NDEFReader();
+        await ndef.scan();
+        const controller = new AbortController();
+        
+        ndef.addEventListener('reading', ({ serialNumber, message }) => {
+            controller.abort();
+            hideBig();
+            loadedData = { uid: serialNumber, url: '', name: '', id: '' };
+            document.getElementById('editUid').textContent = 'UID: ' + serialNumber;
+            
+            for (const r of message.records) {
+                const text = new TextDecoder(r.encoding || 'utf-8').decode(r.data);
+                if (r.recordType === 'url') {
+                    loadedData.url = text;
+                } else if (r.recordType === 'text') {
+                    // parsuj NAME=...;ID=...;URL=...
+                    text.split(';').forEach(part => {
+                        const [k, v] = part.split('=');
+                        if (k === 'NAME') loadedData.name = v || '';
+                        if (k === 'ID') loadedData.id = v || '';
+                        if (k === 'URL') loadedData.url = loadedData.url || v || '';
+                    });
+                }
+            }
+            document.getElementById('editUrl').value = loadedData.url;
+            document.getElementById('editName').value = loadedData.name;
+            document.getElementById('editId').value = loadedData.id;
+            
+            editLocked.style.display = 'none';
+            editForm.style.display = 'block';
+            log(`Wczytano kartę ${serialNumber}`, 'ok');
+        }, { signal: controller.signal });
+
+        setTimeout(() => {
+            if (bigStatus.classList.contains('show')) {
+                controller.abort(); hideBig();
+                log('Timeout', 'err');
+            }
+        }, 10000);
+    } catch (e) {
+        hideBig();
+        log('Błąd: ' + e.message, 'err');
+    }
+});
+
+document.getElementById('editSaveBtn').addEventListener('click', () => {
+    const url = document.getElementById('editUrl').value.trim();
+    const name = document.getElementById('editName').value.trim();
+    const id = document.getElementById('editId').value.trim();
+    if (!url) return log('Podaj URL', 'err');
+    const text = `NAME=${name};ID=${id};URL=${url};`;
+    writeRecords([
+        { recordType: 'url', data: url },
+        { recordType: 'text', data: text, lang: 'pl' }
+    ], 'Zaktualizowano kartę');
+});
+
+document.getElementById('editClearBtn').addEventListener('click', async () => {
+    if (!confirm('Wyczyścić kartę? (nadpisze puste rekordy)')) return;
+    try {
+        showBig('🗑️', 'Czyszczę kartę...');
+        const ndef = new NDEFReader();
+        await ndef.write({
+            records: [{ recordType: 'text', data: '', lang: 'pl' }]
+        });
+        hideBig();
+        log('Karta wyczyszczona', 'ok');
+    } catch (e) {
+        hideBig();
+        log('Błąd czyszczenia: ' + e.message, 'err');
+    }
+});
+
+// ============ INIT ============
+log('Gotowe. Wybierz zakładkę i przyłóż kartę.', 'ok');
+log('Tip: naciśnij ⛶ Full, aby wejść w tryb pełnoekranowy.', 'info');
+</script>
 </body>
 </html>
