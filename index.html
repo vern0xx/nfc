@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programator NFC – vercode.pl</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 420px; width: 100%; text-align: center; }
+        h1 { color: #333; margin-top: 0; font-size: 24px; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; }
+        input { width: 100%; padding: 14px; margin-bottom: 15px; border: 2px solid #e0e0e0; border-radius: 10px; box-sizing: border-box; font-size: 16px; transition: border 0.3s; }
+        input:focus { outline: none; border-color: #667eea; }
+        button { width: 100%; padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
+        button:hover:not(:disabled) { transform: scale(1.02); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        #status { margin-top: 20px; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 15px; display: none; }
+        .success { background: #d4edda; color: #155724; display: block !important; }
+        .error { background: #f8d7da; color: #721c24; display: block !important; }
+        .info { background: #cce5ff; color: #004085; display: block !important; }
+        .badge { display: inline-block; padding: 4px 10px; background: #eee; border-radius: 20px; font-size: 12px; margin-bottom: 15px; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <span class="badge" id="badge">Sprawdzam wsparcie...</span>
+        <h1>📲 Programator NFC</h1>
+        <p>Wpisz adres URL, przyłóż kartę do telefonu.</p>
+
+        <input type="url" id="urlInput" value="https://vercode.pl" placeholder="https://twojadomena.pl">
+        <button id="writeBtn" disabled>Zapisz na karcie</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const writeBtn = document.getElementById('writeBtn');
+        const urlInput = document.getElementById('urlInput');
+        const statusDiv = document.getElementById('status');
+        const badge = document.getElementById('badge');
+
+        if (!('NDEFReader' in window)) {
+            badge.innerText = "❌ Brak wsparcia NFC";
+            badge.style.background = '#f8d7da';
+            badge.style.color = '#721c24';
+            statusDiv.className = "info error";
+            statusDiv.innerHTML = "Twoja przeglądarka nie wspiera Web NFC.<br><b>Użyj Chrome na Androidzie</b> i otwórz tę stronę przez <b>HTTPS</b>.";
+            writeBtn.disabled = true;
+        } else {
+            badge.innerText = "✅ Web NFC dostępne";
+            badge.style.background = '#d4edda';
+            badge.style.color = '#155724';
+            writeBtn.disabled = false;
+
+            writeBtn.addEventListener('click', async () => {
+                const url = urlInput.value.trim();
+                if (!url) {
+                    statusDiv.className = "info error";
+                    statusDiv.innerText = "Wpisz najpierw adres URL.";
+                    return;
+                }
+                try {
+                    statusDiv.className = "info";
+                    statusDiv.innerText = "⏳ Zbliż kartę do telefonu...";
+                    writeBtn.disabled = true;
+
+                    const ndef = new NDEFReader();
+                    await ndef.write({ records: [{ recordType: "url", data: url }] });
+
+                    statusDiv.className = "success";
+                    statusDiv.innerText = "✅ Sukces! Adres zapisany na karcie.";
+                } catch (err) {
+                    statusDiv.className = "error";
+                    statusDiv.innerText = "❌ Błąd: " + err.message;
+                } finally {
+                    writeBtn.disabled = false;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
