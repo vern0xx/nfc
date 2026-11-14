@@ -1,901 +1,1260 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>AirPods Pro — Doświadczenie</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<title>NFC Master Pro — Arduino Max</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    background:#000;color:#fff;overflow-x:hidden;
-    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
-  }
-  #scene{position:fixed;inset:0;width:100vw;height:100vh;display:block;z-index:0}
-  .scroll-space{height:760vh;position:relative;z-index:1;pointer-events:none}
-
-  .overlay{position:fixed;inset:0;z-index:3;pointer-events:none}
-
-  .nav{
-    position:fixed;top:0;left:0;right:0;height:56px;z-index:6;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:0 32px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;
-    color:rgba(255,255,255,.55);
-    background:linear-gradient(to bottom,rgba(0,0,0,.65),rgba(0,0,0,0));
-  }
-  .nav .brand{color:#fff;letter-spacing:.28em;font-weight:600;font-size:12px}
-  .nav .brand span{color:rgba(255,255,255,.4);margin-left:8px;letter-spacing:.1em;font-weight:400}
-  .nav .dots{display:flex;gap:7px;align-items:center}
-  .nav .dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.25)}
-  .nav .dot.on{background:#fff;box-shadow:0 0 10px rgba(255,255,255,.9)}
-
-  .panel{
-    position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
-    padding:0 9vw;opacity:0;will-change:opacity,transform;
-  }
-  .panel.center{align-items:center;text-align:center}
-  .panel.left{align-items:flex-start;text-align:left}
-  .panel.right{align-items:flex-end;text-align:right}
-
-  .eyebrow{
-    font-size:11px;letter-spacing:.42em;text-transform:uppercase;
-    color:rgba(255,255,255,.42);margin-bottom:22px;font-weight:600;
-  }
-  .eyebrow b{color:#7fd7ff;font-weight:600}
-
-  .title{
-    font-size:clamp(44px,8.4vw,132px);
-    line-height:.92;font-weight:700;letter-spacing:-.045em;
-    background:linear-gradient(180deg,#ffffff 0%,#ffffff 42%,#8f929c 100%);
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-    filter:drop-shadow(0 14px 60px rgba(120,190,255,.16));
-  }
-  .title.sm{font-size:clamp(34px,5.4vw,84px)}
-
-  .sub{
-    margin-top:26px;max-width:520px;
-    font-size:clamp(14px,1.35vw,19px);line-height:1.6;
-    color:rgba(255,255,255,.62);font-weight:400;letter-spacing:.005em;
-  }
-  .panel.center .sub{margin-left:auto;margin-right:auto}
-
-  .stat-row{display:flex;gap:46px;margin-top:44px}
-  .panel.center .stat-row{justify-content:center}
-  .panel.right .stat-row{justify-content:flex-end}
-  .stat{display:flex;flex-direction:column;gap:6px}
-  .stat .v{font-size:clamp(22px,2.6vw,38px);font-weight:700;letter-spacing:-.03em;color:#fff}
-  .stat .k{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.36)}
-
-  .hud{
-    position:fixed;z-index:5;pointer-events:none;
-    font-size:10px;letter-spacing:.26em;text-transform:uppercase;
-    color:rgba(255,255,255,.28);
-  }
-  .hud.bl{left:32px;bottom:30px}
-  .hud.br{right:32px;bottom:30px;text-align:right}
-  .hud .val{color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
-
-  .bar{
-    position:fixed;left:0;bottom:0;height:2px;width:100%;z-index:6;
-    background:rgba(255,255,255,.06);
-  }
-  .bar i{
-    display:block;height:100%;width:0%;
-    background:linear-gradient(90deg,#2b6cff,#7fd7ff,#ffffff);
-    box-shadow:0 0 18px rgba(127,215,255,.8);
-  }
-
-  .hint{
-    position:fixed;left:50%;bottom:58px;transform:translateX(-50%);
-    z-index:5;display:flex;flex-direction:column;align-items:center;gap:10px;
-    font-size:9.5px;letter-spacing:.34em;text-transform:uppercase;color:rgba(255,255,255,.4);
-    transition:opacity .6s ease;
-  }
-  .hint .line{width:1px;height:46px;background:linear-gradient(to bottom,rgba(255,255,255,.55),transparent);position:relative;overflow:hidden}
-  .hint .line::after{
-    content:'';position:absolute;top:-46px;left:0;width:1px;height:46px;
-    background:linear-gradient(to bottom,transparent,#fff);
-    animation:drip 2.1s cubic-bezier(.6,0,.3,1) infinite;
-  }
-  @keyframes drip{0%{top:-46px}70%,100%{top:46px}}
-
-  #loader{
-    position:fixed;inset:0;z-index:20;background:#000;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
-    transition:opacity 1s ease, visibility 1s;
-  }
-  #loader.gone{opacity:0;visibility:hidden}
-  #loader .logo{font-size:12px;letter-spacing:.55em;text-transform:uppercase;color:rgba(255,255,255,.85);font-weight:600}
-  #loader .lbar{width:150px;height:1px;background:rgba(255,255,255,.12);overflow:hidden}
-  #loader .lbar i{display:block;height:100%;width:0;background:#fff;animation:load 1.6s cubic-bezier(.5,0,.2,1) forwards}
-  @keyframes load{to{width:100%}}
-
-  @media (max-width:760px){
-    .nav{padding:0 18px;font-size:10px}
-    .nav .brand span{display:none}
-    .panel{padding:0 7vw}
-    .stat-row{gap:26px;flex-wrap:wrap}
-    .hud.bl{left:18px;bottom:22px}
-    .hud.br{right:18px;bottom:22px}
-  }
+:root{--bg:#0a0a0a;--s1:#141414;--s2:#1a1a1a;--s3:#222;--s4:#2a2a2a;--b1:#262626;--b2:#333;--b3:#444;--tx:#f5f5f5;--mu:#8a8a8a;--dm:#555;--pr:#3b82f6;--su:#10b981;--wa:#f59e0b;--er:#ef4444;--in:#06b6d4;--go:#d4af37;--r-sm:6px;--r:10px;--r-lg:16px;--sh-lg:0 12px 40px rgba(0,0,0,.6);--t:44px;--mo:'SF Mono',Consolas,monospace}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;display:flex;flex-direction:column;font-size:15px;overflow-x:hidden}
+svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle}
+svg.ic-lg{width:26px;height:26px}
+svg.ic-xl{width:80px;height:80px}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--s1);border-bottom:1px solid var(--b1);position:sticky;top:0;z-index:50}
+header h1{font-size:15px;margin:0;font-weight:700;flex:1;display:flex;align-items:center;gap:8px}
+.bd{padding:4px 9px;border-radius:16px;font-size:10px;font-weight:800;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;gap:4px;text-transform:uppercase}
+.bd svg{width:12px;height:12px}
+.bd.ok{background:var(--su);color:#000;border-color:var(--su)}
+.bd.err{background:var(--er);color:#fff;border-color:var(--er)}
+.bd.wait{background:var(--wa);color:#000;border-color:var(--wa)}
+.bd.serial{background:var(--in);color:#000;border-color:var(--in)}
+.hb{background:var(--s2);border:1px solid var(--b1);color:var(--tx);width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.hb:active{background:var(--b2)}
+nav{display:flex;gap:4px;padding:8px 10px;overflow-x:auto;background:var(--s1);border-bottom:1px solid var(--b1);scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex-shrink:0;padding:9px 12px;font-size:12px;font-weight:600;background:transparent;border:1px solid transparent;color:var(--mu);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;min-height:38px}
+nav button svg{width:15px;height:15px}
+nav button.active{background:var(--s3);color:var(--tx);border-color:var(--b2)}
+main{flex:1;padding:14px;overflow-y:auto}
+.tab{display:none;max-width:720px;margin:0 auto;padding-bottom:32px}
+.tab.active{display:block}
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:12px;color:var(--pr);font-weight:800;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.8px}
+.card h2 svg{width:16px;height:16px}
+.card.danger h2{color:var(--er)}.card.warn h2{color:var(--wa)}.card.ok h2{color:var(--su)}
+label{display:block;font-size:10px;margin-bottom:5px;color:var(--mu);font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+input,textarea,select{width:100%;padding:11px;margin-bottom:10px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;color:var(--tx);font-size:14px;font-family:inherit;min-height:var(--t)}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--pr)}
+textarea{resize:vertical;min-height:100px;font-family:var(--mo);font-size:12px;line-height:1.5}
+select{cursor:pointer}
+.btn{background:var(--pr);color:#fff;border:none;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:var(--t);width:100%;text-transform:uppercase;letter-spacing:.4px}
+.btn:active:not(:disabled){transform:scale(.98)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn svg{width:16px;height:16px}
+.btn.secondary{background:var(--s2);color:var(--tx);border:1px solid var(--b1)}
+.btn.success{background:var(--su);color:#000}
+.btn.danger{background:var(--er)}
+.btn.warning{background:var(--wa);color:#000}
+.btn.sm{padding:8px 11px;font-size:11px;width:auto;min-height:34px}
+.row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:flex-end}
+.row>*{flex:1;min-width:100px}
+.row>label{flex:0 0 auto;min-width:auto;margin-bottom:5px}
+.row>input,.row>select{margin-bottom:0}
+.info-text{font-size:11px;color:var(--mu);margin-top:8px;line-height:1.6}
+.alert{padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:12px;display:flex;gap:10px;line-height:1.55}
+.alert svg{width:18px;height:18px;flex-shrink:0;margin-top:1px}
+.alert.info{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.4);color:#67e8f9}
+.alert.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);color:#fcd34d}
+.alert.error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.4);color:#fca5a5}
+.alert.success{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.4);color:#86efac}
+.hex-block{font-family:var(--mo);font-size:11px;background:#000;padding:10px;border-radius:6px;color:#9ca3af;white-space:pre;overflow-x:auto;line-height:1.5;border:1px solid var(--b1)}
+#logPanel{background:var(--s1);border-top:1px solid var(--b1);max-height:34px;overflow:hidden;transition:max-height .2s}
+#logPanel.open{max-height:180px}
+#logHeader{display:flex;align-items:center;padding:7px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--mu);font-weight:800;cursor:pointer;background:var(--s1);gap:6px}
+#logHeader svg{width:13px;height:13px}
+#logHeader .spacer{flex:1}
+#logHeader button{background:none;border:none;color:var(--mu);cursor:pointer;padding:4px;display:flex}
+#log{background:#000;padding:8px 12px;font-family:var(--mo);font-size:11px;max-height:140px;overflow-y:auto;line-height:1.6}
+#log div{padding:1px 0;color:#9ca3af;word-break:break-all}
+#log div.ok{color:var(--su)}#log div.err{color:var(--er)}#log div.info{color:var(--wa)}
+#toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:6px;pointer-events:none;width:calc(100% - 24px);max-width:380px}
+.toast{background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:var(--sh-lg);font-size:13px;font-weight:600;animation:su .25s;pointer-events:auto}
+.toast svg{width:18px;height:18px;flex-shrink:0}
+.toast.ok{border-color:var(--su);color:#86efac}
+.toast.err{border-color:var(--er);color:#fca5a5}
+.toast.info{border-color:var(--in);color:#67e8f9}
+@keyframes su{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+#bigStatus{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:999;display:none;align-items:center;justify-content:center;flex-direction:column;padding:32px;text-align:center}
+#bigStatus.show{display:flex}
+#bigStatus svg.ic-xl{color:var(--pr);margin-bottom:20px;animation:pl 1.4s ease-in-out infinite}
+#bigStatus.ok svg.ic-xl{color:var(--su);animation:none}
+#bigStatus.err svg.ic-xl{color:var(--er);animation:none}
+#bigStatus .text{font-size:18px;font-weight:700;line-height:1.4;max-width:400px}
+#bigStatus .sub{font-size:12px;color:var(--mu);margin-top:10px;max-width:400px}
+@keyframes pl{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(1.06)}}
+#bigStatus button{margin-top:22px;background:var(--s2);color:var(--tx);border:1px solid var(--b2);padding:10px 22px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px}
+/* ARDUINO */
+.ard-status{display:flex;align-items:center;gap:10px;padding:12px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;font-size:12px;margin-bottom:10px;font-weight:600;flex-wrap:wrap}
+.ard-status .dot{width:10px;height:10px;border-radius:50%;background:var(--dm);flex-shrink:0}
+.ard-status.on .dot{background:var(--su);box-shadow:0 0 8px var(--su);animation:pu 1.5s infinite}
+.ard-status.err .dot{background:var(--er)}
+.ard-status .meta{margin-left:auto;font-size:10px;color:var(--mu);font-family:var(--mo)}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.5}}
+.card-info{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px;margin-bottom:10px}
+.card-info-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.card-info-header strong{font-size:11px;text-transform:uppercase;color:var(--pr);letter-spacing:.6px}
+.card-info-header .type-badge{padding:3px 10px;background:var(--pr);color:#fff;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.4px}
+.card-info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.card-info-grid .item{background:var(--s3);padding:8px;border-radius:6px}
+.card-info-grid .lbl{font-size:9px;text-transform:uppercase;color:var(--mu);letter-spacing:.5px;font-weight:800;margin-bottom:3px}
+.card-info-grid .v{font-family:var(--mo);font-size:13px;color:var(--tx);font-weight:700;word-break:break-all}
+.sector-map{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:10px 0}
+.sector-box{aspect-ratio:1;border-radius:6px;border:1px solid var(--b1);background:var(--s2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px;position:relative;transition:all .15s;min-height:44px}
+.sector-box:active{transform:scale(.96)}
+.sector-box .num{font-size:10px;font-weight:800;color:var(--mu);font-family:var(--mo)}
+.sector-box .stat{font-size:8px;text-transform:uppercase;color:var(--dm);letter-spacing:.3px;margin-top:1px}
+.sector-box.locked{background:rgba(239,68,68,.15);border-color:var(--er)}
+.sector-box.locked .num{color:#fca5a5}
+.sector-box.empty{background:var(--s3);border-color:var(--b2)}
+.sector-box.empty .num{color:var(--mu)}
+.sector-box.ndef{background:rgba(34,197,94,.15);border-color:var(--su)}
+.sector-box.ndef .num{color:#86efac}
+.sector-box.data{background:rgba(59,130,246,.15);border-color:var(--pr)}
+.sector-box.data .num{color:#93c5fd}
+.sector-box.manufacturer{background:rgba(245,158,11,.15);border-color:var(--wa)}
+.sector-box.manufacturer .num{color:#fcd34d}
+.sector-box.active{outline:2px solid var(--pr);outline-offset:2px}
+.sector-box .warn-dot{position:absolute;top:2px;right:2px;width:6px;height:6px;background:var(--wa);border-radius:50%}
+.progress-wrap{background:var(--s3);border-radius:20px;height:8px;overflow:hidden;margin-bottom:10px;display:none}
+.progress-wrap.show{display:block}
+.progress-bar{height:100%;background:var(--pr);transition:width .2s;width:0%}
+.progress-text{font-family:var(--mo);font-size:11px;color:var(--mu);margin-bottom:6px;display:none;justify-content:space-between}
+.progress-text.show{display:flex}
+.block-section{margin-top:12px}
+.block-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.block-section-header strong{font-size:11px;text-transform:uppercase;color:var(--pr);letter-spacing:.6px}
+.block-editor-row{display:grid;grid-template-columns:36px 1fr;gap:8px;align-items:center;margin-bottom:6px;padding:6px;border-radius:6px;border:1px solid transparent;transition:all .15s}
+.block-editor-row.trailer{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2)}
+.block-editor-row.modified{background:rgba(245,158,11,.1);border-color:var(--wa)}
+.block-editor-row.nddef{background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.2)}
+.block-editor-row.locked{background:rgba(239,68,68,.08);opacity:.7}
+.block-editor-row .be-addr{color:var(--pr);font-weight:800;text-align:center;font-family:var(--mo);font-size:12px}
+.block-editor-row.trailer .be-addr{color:var(--er)}
+.block-editor-row .be-body{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.block-editor-row .be-input{flex:1;min-width:180px;margin:0;padding:6px 8px;font-size:11px;font-family:var(--mo);letter-spacing:.5px;text-transform:uppercase;background:#000;border-color:var(--b2)}
+.block-editor-row .be-input.modified{border-color:var(--wa);background:rgba(245,158,11,.05)}
+.block-editor-row .be-actions{display:flex;gap:2px}
+.block-editor-row .be-actions button{padding:0;width:28px;height:26px;min-height:0;font-size:11px;background:var(--s3);color:var(--tx);border:1px solid var(--b1);border-radius:4px;cursor:pointer}
+.block-editor-row .be-actions button:hover:not(:disabled){background:var(--b2)}
+.block-editor-row .be-actions button:disabled{opacity:.3;cursor:not-allowed}
+.block-editor-row .be-actions button.save{background:var(--su);color:#000;border-color:var(--su)}
+.block-editor-row .be-actions button.save:not(:disabled):hover{filter:brightness(1.1)}
+.block-editor-row .be-actions button.revert{background:var(--wa);color:#000;border-color:var(--wa)}
+.console{background:#000;border:1px solid var(--b1);border-radius:8px;padding:10px;font-family:var(--mo);font-size:11px;color:#9ca3af;height:220px;overflow-y:auto;line-height:1.5;white-space:pre-wrap;word-break:break-all}
+.console .tx{color:var(--pr);font-weight:700}
+.console .rx{color:var(--su)}
+.console .err{color:var(--er)}
+.console .sys{color:var(--wa);font-style:italic}
+.console .ts{color:var(--dm);font-size:9px;margin-right:4px}
+.console-filter{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}
+.console-filter button{padding:4px 8px;font-size:10px;background:var(--s2);border:1px solid var(--b1);color:var(--mu);border-radius:6px;cursor:pointer;font-weight:700;text-transform:uppercase}
+.console-filter button.active{background:var(--pr);color:#fff;border-color:var(--pr)}
+.key-preset-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
+.key-preset-row button{padding:6px;font-size:10px;background:var(--s3);color:var(--tx);border:1px solid var(--b1);border-radius:6px;cursor:pointer;font-family:var(--mo);text-transform:uppercase;letter-spacing:.3px}
+.key-preset-row button:hover{background:var(--b2)}
+.key-preset-row button.active{background:var(--pr);color:#fff;border-color:var(--pr)}
+.diff-view{font-family:var(--mo);font-size:10px;background:#000;padding:8px;border-radius:6px;border:1px solid var(--b1);max-height:200px;overflow-y:auto;line-height:1.6}
+.diff-view .same{color:#52525b}
+.diff-view .old{color:#fca5a5;background:rgba(239,68,68,.1);padding:1px 4px;border-radius:2px}
+.diff-view .new{color:#86efac;background:rgba(34,197,94,.1);padding:1px 4px;border-radius:2px}
+.history-item{padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;margin-bottom:4px;font-size:11px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.history-item:hover{background:var(--s3)}
+.history-item .hist-meta{font-family:var(--mo);color:var(--mu);font-size:10px}
+.history-item .hist-uid{color:var(--pr);font-weight:700;font-family:var(--mo)}
+.history-item .hist-actions{display:flex;gap:2px}
+.history-item .hist-actions button{padding:2px 6px;font-size:10px;background:var(--s4);border:1px solid var(--b1);color:var(--tx);border-radius:4px;cursor:pointer}
+.kbd{background:var(--s2);padding:1px 5px;border-radius:3px;border:1px solid var(--b1);font-family:var(--mo);font-size:10px;color:var(--pr)}
 </style>
 </head>
 <body>
 
-<canvas id="scene"></canvas>
-<div class="scroll-space"></div>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="i-nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+<symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+<symbol id="i-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+<symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+<symbol id="i-hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+<symbol id="i-chip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
+<symbol id="i-usb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="1"/><circle cx="4" cy="20" r="1"/><path d="M4.7 19.3 19 5"/><path d="m21 3-3 1 2 2Z"/><path d="M9.26 7.68 5 12l2 5"/><path d="m10 14 5 2 3.5-3.5"/><path d="m18 12 1-1 1 1-1 1Z"/></symbol>
+<symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>
+<symbol id="i-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></symbol>
+<symbol id="i-diff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="15"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+</svg>
 
-<div class="nav">
-  <div class="brand">AIRPODS<span>PRO</span></div>
-  <div class="dots">
-    <span class="dot on"></span><span class="dot"></span>
-    <span class="dot"></span><span class="dot"></span>
+<header>
+  <h1><svg class="ic ic-lg"><use href="#i-nfc"/></svg> NFC Master Pro</h1>
+  <span id="nfcBadge" class="bd wait"><svg><use href="#i-scan"/></svg> <span>Sprawdzam</span></span>
+  <button class="hb" id="fsBtn"><svg class="ic"><use href="#i-full"/></svg></button>
+</header>
+
+<nav>
+  <button data-tab="arduino" class="active"><svg class="ic"><use href="#i-usb"/></svg> Arduino</button>
+  <button data-tab="read"><svg class="ic"><use href="#i-search"/></svg> Web NFC</button>
+  <button data-tab="settings"><svg class="ic"><use href="#i-settings"/></svg> Ustawienia</button>
+</nav>
+
+<main>
+
+<!-- ============ ARDUINO ============ -->
+<section id="tab-arduino" class="tab active">
+
+  <!-- Połączenie -->
+  <div class="card">
+    <h2><svg><use href="#i-plug"/></svg> Połączenie Arduino</h2>
+    <div class="ard-status" id="ardStatus">
+      <div class="dot"></div>
+      <span id="ardStatusTxt">Nie połączono</span>
+      <span class="meta" id="ardStatusMeta"></span>
+    </div>
+    <div class="row">
+      <select id="ardBaud" style="flex:1">
+        <option value="9600">9600</option>
+        <option value="19200">19200</option>
+        <option value="38400">38400</option>
+        <option value="57600">57600</option>
+        <option value="115200" selected>115200</option>
+      </select>
+      <label class="toggle-switch" style="min-height:auto;display:none"></label>
+    </div>
+    <button class="btn" id="ardConnect"><svg><use href="#i-plug"/></svg> Połącz (COM5)</button>
+    <button class="btn danger" id="ardDisconnect" style="display:none"><svg><use href="#i-x"/></svg> Rozłącz</button>
+    <div class="info-text" id="ardPortInfo"></div>
   </div>
-</div>
 
-<div class="overlay">
-  <section class="panel center" data-a="0.00" data-b="0.10" data-c="0.17" data-d="0.24">
-    <div class="eyebrow">Nowa generacja &nbsp;·&nbsp; <b>2026</b></div>
-    <h1 class="title">AirPods&nbsp;Pro</h1>
-    <p class="sub">Cisza, która ma znaczenie. Otwórz etui — i pozwól, żeby dźwięk zrobił resztę.</p>
-  </section>
-
-  <section class="panel left" data-a="0.26" data-b="0.34" data-c="0.42" data-d="0.50">
-    <div class="eyebrow">Adaptacyjne ANC</div>
-    <h2 class="title sm">Usuwa<br>hałas.</h2>
-    <p class="sub">Do 2× skuteczniejsze tłumienie niż poprzednia generacja. Algorytm dostraja się 48 000 razy na sekundę.</p>
-    <div class="stat-row">
-      <div class="stat"><div class="v">2×</div><div class="k">mniej hałasu</div></div>
-      <div class="stat"><div class="v">48k</div><div class="k">korekt / s</div></div>
+  <!-- Info o karcie -->
+  <div class="card" id="ardCardInfoCard" style="display:none">
+    <h2><svg><use href="#i-chip"/></svg> Informacje o karcie</h2>
+    <div class="card-info">
+      <div class="card-info-header">
+        <strong>Wykryta karta</strong>
+        <span class="type-badge" id="ardCardType">—</span>
+      </div>
+      <div class="card-info-grid">
+        <div class="item"><div class="lbl">UID</div><div class="v" id="ardUid">—</div></div>
+        <div class="item"><div class="lbl">SAK</div><div class="v" id="ardSak">—</div></div>
+        <div class="item"><div class="lbl">ATQA</div><div class="v" id="ardAtqa">—</div></div>
+        <div class="item"><div class="lbl">Weryfikacja</div><div class="v" id="ardVerify">—</div></div>
+      </div>
+      <div class="sector-map" id="ardSectorMap"></div>
+      <div class="info-text">Kliknij sektor, aby zobaczyć bloki. Kolor: czerwony = zablokowany, zielony = NDEF, niebieski = dane, szary = pusty.</div>
     </div>
-  </section>
+  </div>
 
-  <section class="panel right" data-a="0.52" data-b="0.60" data-c="0.68" data-d="0.76">
-    <div class="eyebrow">Personalizowany dźwięk przestrzenny</div>
-    <h2 class="title sm">Dźwięk<br>dookoła.</h2>
-    <p class="sub">Śledzenie ruchu głowy i skanowanie geometrii ucha tworzą scenę dźwiękową, w której jesteś w środku.</p>
-    <div class="stat-row">
-      <div class="stat"><div class="v">360°</div><div class="k">scena audio</div></div>
-      <div class="stat"><div class="v">6</div><div class="k">mikrofonów</div></div>
+  <!-- Akcje -->
+  <div class="card" id="ardActionsCard" style="display:none">
+    <h2><svg><use href="#i-scan"/></svg> Operacje</h2>
+    <div class="progress-text" id="ardProgressText"><span id="ardProgressLabel">Gotowe</span><span id="ardProgressPct">0%</span></div>
+    <div class="progress-wrap" id="ardProgressWrap"><div class="progress-bar" id="ardProgressBar"></div></div>
+    <div class="row">
+      <button class="btn sm secondary" id="ardPing" title="PING"><svg><use href="#i-terminal"/></svg> PING</button>
+      <button class="btn sm secondary" id="ardUid" title="UID"><svg><use href="#i-search"/></svg> UID</button>
+      <button class="btn sm" id="ardDump" style="flex:2"><svg><use href="#i-download"/></svg> Odczytaj wszystko (DUMP)</button>
     </div>
-  </section>
+    <div class="row">
+      <button class="btn sm secondary" id="ardCancelDump" style="display:none">Anuluj DUMP</button>
+      <button class="btn sm warning" id="ardRetryDump" style="display:none">Ponów nieudane</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label style="flex:0 0 auto;margin:0 4px 0 0;align-self:center;color:var(--mu);font-size:10px">Sektor</label>
+      <select id="ardSector" style="flex:1;margin-bottom:0">
+        <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
+        <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
+        <option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option>
+        <option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+      </select>
+      <button class="btn sm" id="ardReadSector" style="flex:1"><svg><use href="#i-search"/></svg> Odczytaj sektor</button>
+    </div>
+  </div>
 
-  <section class="panel center" data-a="0.80" data-b="0.88" data-c="0.94" data-d="1.01">
-    <div class="eyebrow">Nowa era dźwięku</div>
-    <h2 class="title">Posłuchaj<br>ciszy.</h2>
-    <p class="sub">AirPods Pro. Zaprojektowane, by zniknąć. Stworzone, by zostać w pamięci.</p>
-  </section>
+  <!-- Klucze -->
+  <div class="card" id="ardKeysCard" style="display:none">
+    <h2><svg><use href="#i-key"/></svg> Klucze MIFARE</h2>
+    <div class="row">
+      <select id="ardKeySector" style="flex:1;margin-bottom:0">
+        <option value="all">Wszystkie</option>
+        <option value="0">Sektor 0</option><option value="1">Sektor 1</option><option value="2">Sektor 2</option>
+        <option value="3">Sektor 3</option><option value="4">Sektor 4</option><option value="5">Sektor 5</option>
+        <option value="6">Sektor 6</option><option value="7">Sektor 7</option><option value="8">Sektor 8</option>
+        <option value="9">Sektor 9</option><option value="10">Sektor 10</option><option value="11">Sektor 11</option>
+        <option value="12">Sektor 12</option><option value="13">Sektor 13</option><option value="14">Sektor 14</option>
+        <option value="15">Sektor 15</option>
+      </select>
+      <input id="ardKeyHex" value="FFFFFFFFFFFF" placeholder="FFFFFFFFFFFF" style="flex:1;margin-bottom:0;font-family:var(--mo);text-transform:uppercase;letter-spacing:1px" maxlength="12">
+      <button class="btn sm success" id="ardSetKey"><svg><use href="#i-check"/></svg> Ustaw</button>
+    </div>
+    <div class="key-preset-row">
+      <button data-key="FFFFFFFFFFFF" class="active">FFFFFF.. (default)</button>
+      <button data-key="A0A1A2A3A4A5">A0A1A2.. (MAD)</button>
+      <button data-key="D3F7D3F7D3F7">D3F7D3.. (NDEF)</button>
+      <button data-key="000000000000">00.. (zero)</button>
+    </div>
+    <div class="info-text">
+      Klucz A per sektor. Ustaw indywidualnie lub dla wszystkich.
+      Status: <span id="ardKeyStatus" style="color:var(--pr);font-family:var(--mo)">—</span>
+    </div>
+    <button class="btn sm secondary" id="ardTestAllKeys" style="margin-top:8px"><svg><use href="#i-search"/></svg> Testuj wszystkie klucze</button>
+  </div>
+
+  <!-- Bloki -->
+  <div class="card" id="ardBlocksCard" style="display:none">
+    <h2><svg><use href="#i-grid"/></svg> Edytor bloków</h2>
+    <div class="block-section-header">
+      <strong>Bloki MIFARE 1K</strong>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="btn sm secondary" id="ardShowAll" title="Pokaż wszystkie"><svg><use href="#i-eye"/></svg></button>
+        <button class="btn sm secondary" id="ardShowModified" title="Pokaż zmienione"><svg><use href="#i-diff"/></svg></button>
+        <button class="btn sm secondary" id="ardCopyHexAll" title="Kopiuj HEX"><svg><use href="#i-copy"/></svg></button>
+        <button class="btn sm secondary" id="ardExportBin" title="Eksport .bin"><svg><use href="#i-download"/></svg></button>
+        <button class="btn sm secondary" id="ardExportMfd" title="Eksport .mfd">.mfd</button>
+        <button class="btn sm secondary" id="ardImportFile" title="Import .bin/.mfd"><svg><use href="#i-upload"/></svg></button>
+      </div>
+    </div>
+    <div id="ardBlockEditor">
+      <div class="info-text">Brak danych. Naciśnij „Odczytaj wszystko”.</div>
+    </div>
+    <input type="file" id="ardFileInput" accept=".bin,.mfd,.dat" style="display:none">
+    <div class="row" style="margin-top:10px">
+      <button class="btn success" id="ardWriteDirty" disabled><svg><use href="#i-save"/></svg> Zapisz zmiany (<span id="ardDirtyCount">0</span>)</button>
+      <button class="btn secondary" id="ardRevertAll" disabled>Przywróć oryginał</button>
+    </div>
+  </div>
+
+  <!-- Diff -->
+  <div class="card" id="ardDiffCard" style="display:none">
+    <h2><svg><use href="#i-diff"/></svg> Różnice</h2>
+    <div class="diff-view" id="ardDiffView">Brak zmian</div>
+  </div>
+
+  <!-- Historia -->
+  <div class="card" id="ardHistoryCard" style="display:none">
+    <h2><svg><use href="#i-history"/></svg> Historia (localStorage)</h2>
+    <div id="ardHistoryList"><div class="info-text">Brak zapisanych zrzutów.</div></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn sm secondary" id="ardHistorySave"><svg><use href="#i-save"/></svg> Zapisz zrzut</button>
+      <button class="btn sm danger" id="ardHistoryClear"><svg><use href="#i-trash"/></svg> Wyczyść historię</button>
+    </div>
+  </div>
+
+  <!-- Konsola -->
+  <div class="card" id="ardConsoleCard" style="display:none">
+    <h2><svg><use href="#i-terminal"/></svg> Konsola</h2>
+    <div class="console-filter" id="ardConsoleFilter">
+      <button data-f="all" class="active">Wszystko</button>
+      <button data-f="tx">TX</button>
+      <button data-f="rx">RX</button>
+      <button data-f="err">Błędy</button>
+      <button data-f="sys">System</button>
+    </div>
+    <div class="row">
+      <input id="ardCmd" placeholder="UID, DUMP, READ 4, WRITE 4 0123.., KEY 0 FFFFFFFFFFFF, PING" style="flex:1;margin-bottom:0;font-family:var(--mo)">
+      <button class="btn sm" id="ardSend">Wyślij</button>
+    </div>
+    <div class="console" id="ardOutput" style="margin-top:8px"></div>
+    <div class="info-text">Historia: ↑/↓ w polu komendy • Kliknij RX/TX, aby filtrować</div>
+  </div>
+
+  <!-- Szkic -->
+  <div class="card">
+    <h2><svg><use href="#i-chip"/></svg> Szkic Arduino</h2>
+    <div class="row">
+      <button class="btn sm secondary" id="ardCopySketch"><svg><use href="#i-copy"/></svg> Kopiuj</button>
+      <button class="btn sm secondary" id="ardDownloadSketch"><svg><use href="#i-download"/></svg> Pobierz .ino</button>
+    </div>
+    <div class="hex-block" id="ardSketch" style="max-height:360px;font-size:10px;overflow:auto;white-space:pre"></div>
+  </div>
+
+</section>
+
+<!-- ============ WEB NFC ============ -->
+<section id="tab-read" class="tab">
+  <div class="alert info"><svg><use href="#i-info"/></svg><div>Web NFC to skrót – Arduino daje pełny dostęp do bloków. Użyj go dla pełnej kontroli.</div></div>
+  <div class="card">
+    <h2><svg><use href="#i-search"/></svg> Odczyt Web NFC</h2>
+    <button class="btn" id="readBtn"><svg><use href="#i-scan"/></svg> Odczytaj kartę</button>
+    <div id="readResult" style="margin-top:10px"></div>
+  </div>
+</section>
+
+<!-- ============ USTAWIENIA ============ -->
+<section id="tab-settings" class="tab">
+  <div class="card">
+    <h2><svg><use href="#i-settings"/></svg> Ustawienia</h2>
+    <label>Baudrate (domyślnie 115200)</label>
+    <select id="ardBaudGlobal">
+      <option value="9600">9600</option><option value="19200">19200</option>
+      <option value="38400">38400</option><option value="57600">57600</option>
+      <option value="115200" selected>115200</option>
+    </select>
+    <div class="toggle"><span>Auto-reconnect</span><label class="toggle-switch"><input type="checkbox" id="ardAutoReconnect" checked><span></span></label></div>
+    <div class="toggle"><span>Auto-odczyt po połączeniu</span><label class="toggle-switch"><input type="checkbox" id="ardAutoDump" checked><span></span></label></div>
+    <div class="toggle"><span>Wibracje</span><label class="toggle-switch"><input type="checkbox" id="ardVibrate" checked><span></span></label></div>
+    <button class="btn secondary" id="ardResetAll" style="margin-top:10px"><svg><use href="#i-refresh"/></svg> Reset wszystkiego</button>
+  </div>
+</section>
+
+</main>
+
+<div id="logPanel">
+  <div id="logHeader">
+    <svg><use href="#i-doc"/></svg> Log
+    <span class="spacer"></span>
+    <button id="logToggle"><svg><use href="#i-chevron"/></svg></button>
+    <button id="logClear"><svg><use href="#i-trash"/></svg></button>
+  </div>
+  <div id="log"></div>
 </div>
 
-<div class="hud bl">MODE <span class="val" id="hudMode">STANDBY</span></div>
-<div class="hud br">SCROLL <span class="val" id="hudPct">000%</span></div>
+<div id="toasts"></div>
 
-<div class="hint" id="hint">
-  <span>Przewiń</span>
-  <span class="line"></span>
+<div id="bigStatus">
+  <svg class="ic-xl" id="bigIcon"><use href="#i-scan"/></svg>
+  <div class="text" id="bigText"></div>
+  <div class="sub" id="bigSub"></div>
+  <button id="bigCancel" style="display:none"><svg class="ic"><use href="#i-x"/></svg> Anuluj</button>
 </div>
 
-<div class="bar"><i id="bar"></i></div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const S={
+  ardConnected:false, ardPort:null, ardWriter:null, ardReader:null, ardBuf:'',
+  ardBlocks:new Array(64).fill(null).map(()=>new Uint8Array(16)),
+  ardOriginal:new Array(64).fill(null).map(()=>new Uint8Array(16)),
+  ardDirty:new Set(),
+  ardKeys:new Array(16).fill('FFFFFFFFFFFF'),
+  ardSectors:new Array(16).fill(null),
+  ardUid:null, ardSak:null, ardAtqa:null, ardCardType:null,
+  ardCmdHistory:[], ardCmdHistoryIdx:-1,
+  ardConsoleFilter:'all',
+  ardDumpInProgress:false, ardDumpCancel:false, ardDumpFailedSectors:[],
+  ardConnTime:0,
+  ardSettings:{autoReconnect:true,autoDump:true,vibrate:true,baud:115200},
+  read:null
+};
 
-<div id="loader">
-  <div class="logo">AirPods Pro</div>
-  <div class="lbar"><i></i></div>
-</div>
+const ARD_SKETCH=`// NFC Master Pro – Arduino RC522
+// RC522: SS=10, RST=9, MOSI=11, MISO=12, SCK=13
+#include <SPI.h>
+#include <MFRC522.h>
+#define SS_PIN 10
+#define RST_PIN 9
+MFRC522 rfid(SS_PIN, RST_PIN);
+MFRC522::MIFARE_Key key;
+byte sectorKeys[16][6];
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+void printHex(byte* b, byte len) {
+  for(byte i=0; i<len; i++) {
+    if(b[i] < 0x10) Serial.print("0");
+    Serial.print(b[i], HEX);
   }
 }
-</script>
 
-<script type="module">
-import * as THREE from 'three';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+void setup() {
+  Serial.begin(115200);
+  SPI.begin();
+  rfid.PCD_Init();
+  SPI.setClockDivider(SPI_CLOCK_DIV8);
+  for(int s=0; s<16; s++)
+    for(int i=0; i<6; i++) sectorKeys[s][i] = 0xFF;
+  delay(200);
+  Serial.println("READY");
+}
 
-/* ───────────── helpers ───────────── */
-const clamp = (v,a,b)=>Math.min(b,Math.max(a,v));
-const lerp  = (a,b,t)=>a+(b-a)*t;
-const smooth = (a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
-const easeIO = t => t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+bool waitCard() {
+  for(int i=0; i<50; i++) {
+    if(rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) return true;
+    delay(100);
+  }
+  return false;
+}
 
-/* ───────────── renderer ───────────── */
-const canvas = document.getElementById('scene');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
+bool authBlock(byte block) {
+  byte sector = block / 4;
+  memcpy(key.keyByte, sectorKeys[sector], 6);
+  return rfid.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(rfid.uid)) == MFRC522::STATUS_OK;
+}
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(34, window.innerWidth/window.innerHeight, 0.1, 300);
-camera.position.set(0, 0.4, 4.6);
+void cmdUid() {
+  if(!waitCard()) { Serial.println("ERR no_card"); return; }
+  Serial.print("UID "); printHex(rfid.uid.uidByte, rfid.uid.size); Serial.println();
+  Serial.print("SAK "); if(rfid.uid.sak<0x10)Serial.print("0"); Serial.println(rfid.uid.sak, HEX);
+  Serial.println("END");
+  rfid.PICC_HaltA(); rfid.PCD_StopCrypto1();
+}
 
-/* ───────────── środowisko ───────────── */
-const pmrem = new THREE.PMREMGenerator(renderer);
-pmrem.compileEquirectangularShader();
-const envRT = pmrem.fromScene(new RoomEnvironment(), 0.035);
-scene.environment = envRT.texture;
+void cmdRead(int sector) {
+  if(sector < 0 || sector > 15) { Serial.println("ERR bad_sector"); return; }
+  if(!waitCard()) { Serial.println("ERR no_card"); return; }
+  if(!authBlock(sector*4)) { Serial.println("ERR auth_sector_"+String(sector)); rfid.PICC_HaltA(); rfid.PCD_StopCrypto1(); return; }
+  Serial.print("SECTOR "); Serial.println(sector);
+  for(int i=0; i<4; i++) {
+    byte block = sector*4 + i;
+    byte buf[18]; byte size = sizeof(buf);
+    if(rfid.MIFARE_Read(block, buf, &size) == MFRC522::STATUS_OK) {
+      Serial.print("BLK "); Serial.print(block); Serial.print(" ");
+      printHex(buf, 16); Serial.println();
+    } else Serial.println("ERR read_block_"+String(block));
+  }
+  Serial.println("END");
+  rfid.PICC_HaltA(); rfid.PCD_StopCrypto1();
+}
 
-/* ───────────── tło ───────────── */
-const bgMat = new THREE.ShaderMaterial({
-  side: THREE.BackSide, depthWrite: false, toneMapped: false,
-  uniforms:{
-    uTop:{value:new THREE.Color(0x070810)},
-    uBot:{value:new THREE.Color(0x000000)},
-    uGlow:{value:new THREE.Color(0x1a2842)},
-    uTime:{value:0}
-  },
-  vertexShader:`varying vec3 vP; void main(){ vP=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-  fragmentShader:`
-    varying vec3 vP; uniform vec3 uTop,uBot,uGlow; uniform float uTime;
-    void main(){
-      float h = vP.y*0.5+0.5;
-      vec3 col = mix(uBot,uTop,pow(h,1.35));
-      float g = smoothstep(0.95,0.0,length(vP.xy*vec2(0.85,1.15)));
-      col += uGlow*g*g*0.9;
-      float breathe = 0.6 + 0.4*sin(uTime*0.6);
-      col += uGlow * 0.15 * breathe * g;
-      float rim = smoothstep(0.0,0.55,1.0-length(vP.xy*vec2(0.7,1.0)));
-      col += vec3(0.02,0.035,0.06)*rim;
-      gl_FragColor = vec4(col,1.0);
-    }`
-});
-scene.add(new THREE.Mesh(new THREE.SphereGeometry(90, 40, 28), bgMat));
-
-/* ───────────── światła sceniczne ───────────── */
-const key = new THREE.DirectionalLight(0xffffff, 3.6); key.position.set(4.5, 6.5, 5.0); scene.add(key);
-const fill = new THREE.DirectionalLight(0x86b4ff, 1.8); fill.position.set(-6, 2.2, 3.4); scene.add(fill);
-const rim  = new THREE.DirectionalLight(0xffb27a, 3.0); rim.position.set(-2.5, 3.4, -6.0); scene.add(rim);
-const top  = new THREE.DirectionalLight(0xffffff, 1.8); top.position.set(0.4, 8.0, 0.6); scene.add(top);
-const under = new THREE.DirectionalLight(0x4a78ff, 0.9); under.position.set(0, -3, 1.5); scene.add(under);
-scene.add(new THREE.AmbientLight(0x223044, 0.55));
-
-/* ───────────── materiały ───────────── */
-const whiteMat = new THREE.MeshPhysicalMaterial({
-  color: 0xfafafc, roughness: 0.10, metalness: 0.0,
-  clearcoat: 1.0, clearcoatRoughness: 0.03,
-  envMapIntensity: 1.05,
-  sheen: 0.22, sheenColor: new THREE.Color(0xcce0ff), sheenRoughness: 0.5
-});
-
-const whiteMat2 = whiteMat.clone();
-whiteMat2.color = new THREE.Color(0xf1f2f6);
-whiteMat2.roughness = 0.16;
-whiteMat2.clearcoatRoughness = 0.06;
-
-const darkMat = new THREE.MeshPhysicalMaterial({
-  color: 0x101115, roughness: 0.5, metalness: 0.45,
-  clearcoat: 0.4, clearcoatRoughness: 0.3, envMapIntensity: 0.6
-});
-
-const siliconeMat = new THREE.MeshPhysicalMaterial({
-  color: 0x1d1e23, roughness: 0.55, metalness: 0.0,
-  clearcoat: 0.45, clearcoatRoughness: 0.5,
-  sheen: 1.0, sheenColor: new THREE.Color(0x9098b8), sheenRoughness: 0.85,
-  envMapIntensity: 0.75, side: THREE.DoubleSide
-});
-
-const chromeMat = new THREE.MeshStandardMaterial({
-  color: 0xbababa, roughness: 0.22, metalness: 1.0, envMapIntensity: 1.2
-});
-
-const goldMat = new THREE.MeshStandardMaterial({
-  color: 0xd8b25c, roughness: 0.32, metalness: 1.0, envMapIntensity: 1.0
-});
-
-/* tekstura siateczki (grille) */
-function makeGrilleTexture(){
-  const c = document.createElement('canvas'); c.width = c.height = 256;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#040406'; ctx.fillRect(0,0,256,256);
-  ctx.fillStyle = '#1c1c22';
-  for (let y = 3; y < 256; y += 5){
-    for (let x = 3; x < 256; x += 5){
-      ctx.beginPath(); ctx.arc(x, y, 1.15, 0, Math.PI*2); ctx.fill();
+void cmdDump() {
+  if(!waitCard()) { Serial.println("ERR no_card"); return; }
+  Serial.print("UID "); printHex(rfid.uid.uidByte, rfid.uid.size); Serial.println();
+  Serial.print("SAK "); if(rfid.uid.sak<0x10)Serial.print("0"); Serial.println(rfid.uid.sak, HEX);
+  for(int s=0; s<16; s++) {
+    Serial.print("SEC "); Serial.println(s);
+    if(authBlock(s*4)) {
+      for(int i=0; i<4; i++) {
+        byte block = s*4 + i;
+        byte buf[18]; byte size = sizeof(buf);
+        if(rfid.MIFARE_Read(block, buf, &size) == MFRC522::STATUS_OK) {
+          Serial.print("BLK "); Serial.print(block); Serial.print(" ");
+          printHex(buf, 16); Serial.println();
+        }
+      }
+      Serial.println("SECTOR_END");
+      rfid.PCD_StopCrypto1();
+    } else {
+      Serial.println("LOCKED");
+    }
+    delay(30);
+    if(!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
+      if(!waitCard()) { Serial.println("ERR card_lost"); break; }
     }
   }
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.anisotropy = 4;
-  return t;
+  Serial.println("END");
+  rfid.PICC_HaltA(); rfid.PCD_StopCrypto1();
 }
-const grilleTex = makeGrilleTexture();
-const grilleMat = new THREE.MeshStandardMaterial({
-  color: 0x08080c, roughness: 0.72, metalness: 0.35,
-  map: grilleTex, bumpMap: grilleTex, bumpScale: 0.004,
-  envMapIntensity: 0.4
+
+void cmdWrite(int block, String hexData) {
+  if(block < 0 || block > 63) { Serial.println("ERR bad_block"); return; }
+  if(hexData.length() != 32) { Serial.println("ERR bad_len"); return; }
+  if(block % 4 == 3) { Serial.println("ERR trailer_protected"); return; }
+  byte data[16];
+  for(int i=0; i<16; i++) {
+    char c1 = hexData[i*2], c2 = hexData[i*2+1];
+    data[i] = 0;
+    if(c1 >= '0' && c1 <= '9') data[i] = (c1 - '0') << 4;
+    else if(c1 >= 'A' && c1 <= 'F') data[i] = (c1 - 'A' + 10) << 4;
+    else if(c1 >= 'a' && c1 <= 'f') data[i] = (c1 - 'a' + 10) << 4;
+    if(c2 >= '0' && c2 <= '9') data[i] |= c2 - '0';
+    else if(c2 >= 'A' && c2 <= 'F') data[i] |= c2 - 'A' + 10;
+    else if(c2 >= 'a' && c2 <= 'f') data[i] |= c2 - 'a' + 10;
+  }
+  if(!waitCard()) { Serial.println("ERR no_card"); return; }
+  if(!authBlock(block)) { Serial.println("ERR auth"); rfid.PICC_HaltA(); rfid.PCD_StopCrypto1(); return; }
+  if(rfid.MIFARE_Write(block, data, 16) == MFRC522::STATUS_OK) Serial.println("OK");
+  else Serial.println("ERR write");
+  rfid.PICC_HaltA(); rfid.PCD_StopCrypto1();
+}
+
+void cmdKey(int sector, String hexKey) {
+  if(sector < 0 || sector > 15) { Serial.println("ERR bad_sector"); return; }
+  if(hexKey.length() != 12) { Serial.println("ERR bad_key"); return; }
+  for(int i=0; i<6; i++) {
+    char c1 = hexKey[i*2], c2 = hexKey[i*2+1];
+    byte b = 0;
+    if(c1 >= '0' && c1 <= '9') b = (c1 - '0') << 4;
+    else if(c1 >= 'A' && c1 <= 'F') b = (c1 - 'A' + 10) << 4;
+    else if(c1 >= 'a' && c1 <= 'f') b = (c1 - 'a' + 10) << 4;
+    if(c2 >= '0' && c2 <= '9') b |= c2 - '0';
+    else if(c2 >= 'A' && c2 <= 'F') b |= c2 - 'A' + 10;
+    else if(c2 >= 'a' && c2 <= 'f') b |= c2 - 'a' + 10;
+    sectorKeys[sector][i] = b;
+  }
+  Serial.println("OK");
+}
+
+void loop() {
+  if(!Serial.available()) return;
+  String cmd = Serial.readStringUntil('\\n');
+  cmd.trim();
+  if(!cmd.length()) return;
+  int sp = cmd.indexOf(' ');
+  String op = sp > 0 ? cmd.substring(0, sp) : cmd;
+  String rest = sp > 0 ? cmd.substring(sp+1) : "";
+  op.toUpperCase();
+  if(op == "PING") Serial.println("PONG");
+  else if(op == "UID") cmdUid();
+  else if(op == "READ") cmdRead(rest.toInt());
+  else if(op == "DUMP") cmdDump();
+  else if(op == "WRITE") { int sp2 = rest.indexOf(' '); int blk = rest.substring(0, sp2).toInt(); String hex = rest.substring(sp2+1); cmdWrite(blk, hex); }
+  else if(op == "KEY") { int sp2 = rest.indexOf(' '); int sec = rest.substring(0, sp2).toInt(); String hex = rest.substring(sp2+1); cmdKey(sec, hex); }
+  else Serial.println("ERR unknown_cmd");
+}`;
+
+$('ardSketch').textContent=ARD_SKETCH;
+
+function log(m,t=''){const el=$('log');const d=document.createElement('div');if(t)d.className=t;d.textContent=`[${new Date().toLocaleTimeString('pl')}] ${m}`;el.appendChild(d);el.scrollTop=el.scrollHeight;while(el.children.length>120)el.removeChild(el.firstChild);}
+function toast(m,t='info'){const el=document.createElement('div');el.className='toast '+t;const ic=t==='ok'?'i-check':t==='err'?'i-x':'i-info';el.innerHTML=`<svg class="ic"><use href="#${ic}"/></svg><span>${m}</span>`;$('toasts').appendChild(el);setTimeout(()=>{el.style.transition='opacity .3s';el.style.opacity='0';setTimeout(()=>el.remove(),300);},2800);}
+function vibrate(p){if(S.ardSettings.vibrate&&navigator.vibrate)navigator.vibrate(p);}
+function showBig(icon,text,sub='',cancel=null){$('bigIcon').innerHTML=`<use href="#${icon}"/>`;$('bigStatus').className='show';$('bigText').textContent=text;$('bigSub').textContent=sub;const b=$('bigCancel');if(cancel){b.style.display='flex';b.onclick=()=>{cancel();hideBig();};}else b.style.display='none';}
+function showBigSuccess(t,s=''){$('bigIcon').innerHTML=`<use href="#i-check"/>`;$('bigStatus').className='show ok';$('bigText').textContent=t;$('bigSub').textContent=s;$('bigCancel').style.display='none';vibrate([40,30,40]);setTimeout(hideBig,1500);}
+function showBigError(t,s=''){$('bigIcon').innerHTML=`<use href="#i-x"/>`;$('bigStatus').className='show err';$('bigText').textContent=t;$('bigSub').textContent=s;$('bigCancel').style.display='none';vibrate([80,40,80]);setTimeout(hideBig,3000);}
+function hideBig(){$('bigStatus').className='';}
+
+const hasSerial='serial' in navigator;
+if(hasSerial){
+  $('nfcBadge').className='bd serial';
+  $('nfcBadge').innerHTML='<svg><use href="#i-check"/></svg> <span>Serial OK</span>';
+  log('Web Serial dostępne','ok');
+}else{
+  $('nfcBadge').className='bd err';
+  $('nfcBadge').innerHTML='<svg><use href="#i-x"/></svg> <span>Brak Serial</span>';
+  log('Web Serial niedostępne – użyj Chrome/Edge na PC','err');
+}
+
+async function enterFs(){try{if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();}catch(e){}}
+$('fsBtn').onclick=enterFs;
+document.body.addEventListener('click',function a(){if(!document.fullscreenElement)enterFs();document.body.removeEventListener('click',a);},{once:true});
+
+document.querySelectorAll('nav button').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    $('tab-'+btn.dataset.tab).classList.add('active');
+    vibrate(10);
+  };
 });
 
-const ledMat = new THREE.MeshStandardMaterial({
-  color: 0x000000, emissive: new THREE.Color(0x6cff9e), emissiveIntensity: 9,
-  toneMapped: false, side: THREE.DoubleSide
-});
-
-/* ───────────── tekstura poświaty ───────────── */
-function makeGlowTexture(rgb='255,255,255', power=1.4){
-  const c = document.createElement('canvas'); c.width = c.height = 256;
-  const ctx = c.getContext('2d');
-  const g = ctx.createRadialGradient(128,128,0, 128,128,128);
-  g.addColorStop(0.0, `rgba(${rgb},1)`);
-  g.addColorStop(0.15, `rgba(${rgb},${0.72})`);
-  g.addColorStop(0.35, `rgba(${rgb},${0.28})`);
-  g.addColorStop(0.65, `rgba(${rgb},${0.06})`);
-  g.addColorStop(1.0, `rgba(${rgb},0)`);
-  ctx.fillStyle = g; ctx.fillRect(0,0,256,256);
-  const t = new THREE.CanvasTexture(c);
-  t.minFilter = THREE.LinearFilter;
-  return t;
+// ================== ARDUINO ==================
+function ardOut(text,cls='rx'){
+  const el=$('ardOutput');
+  const d=document.createElement('div');
+  if(S.ardConsoleFilter!=='all'&&S.ardConsoleFilter!==cls)d.style.display='none';
+  d.className=cls;
+  const ts=document.createElement('span');
+  ts.className='ts';
+  ts.textContent=new Date().toLocaleTimeString('pl',{hour12:false})+'.'+(Date.now()%1000).toString().padStart(3,'0');
+  d.appendChild(ts);
+  d.appendChild(document.createTextNode(text));
+  el.appendChild(d);
+  el.scrollTop=el.scrollHeight;
+  while(el.children.length>500)el.removeChild(el.firstChild);
 }
-const glowWhiteTex = makeGlowTexture('210,235,255');
-const glowCyanTex  = makeGlowTexture('120,200,255');
-const glowGreenTex = makeGlowTexture('140,255,180');
 
-/* ───────────── PRODUKT ───────────── */
-const product = new THREE.Group();
-scene.add(product);
-
-/* ══════════ ETUI ══════════ */
-const caseRoot = new THREE.Group();
-product.add(caseRoot);
-
-// korpus
-const bodyGeo = new RoundedBoxGeometry(1.5, 0.92, 0.62, 12, 0.19);
-const body = new THREE.Mesh(bodyGeo, whiteMat);
-body.position.y = -0.26;
-caseRoot.add(body);
-
-// wnętrze
-const inner = new THREE.Mesh(new RoundedBoxGeometry(1.36, 0.14, 0.5, 4, 0.06), darkMat);
-inner.position.y = 0.155;
-caseRoot.add(inner);
-
-// port USB-C
-const usbSlot = new THREE.Mesh(
-  new THREE.CapsuleGeometry(0.02, 0.075, 6, 12),
-  new THREE.MeshBasicMaterial({color: 0x050506})
-);
-usbSlot.rotation.z = Math.PI/2;
-usbSlot.position.set(0, -0.715, 0.0);
-usbSlot.scale.set(1, 1, 0.4);
-caseRoot.add(usbSlot);
-
-// dioda LED na froncie
-const led = new THREE.Mesh(new THREE.CircleGeometry(0.024, 24), ledMat);
-led.position.set(0, 0.015, 0.3115);
-caseRoot.add(led);
-
-// poświata wokół LED
-const ledGlow = new THREE.Sprite(new THREE.SpriteMaterial({
-  map: glowGreenTex, transparent: true, blending: THREE.AdditiveBlending,
-  depthWrite: false, opacity: 0.0, toneMapped: false
-}));
-ledGlow.scale.set(0.26, 0.26, 1);
-ledGlow.position.set(0, 0.015, 0.34);
-caseRoot.add(ledGlow);
-
-// światło punktowe z LED
-const ledLight = new THREE.PointLight(0x7effaa, 0.0, 1.6, 2);
-ledLight.position.set(0, 0.02, 0.35);
-caseRoot.add(ledLight);
-
-// zawias + wieko
-const hinge = new THREE.Group();
-hinge.position.set(0, 0.21, -0.31);
-caseRoot.add(hinge);
-
-// metalowy zawias (widoczny po otwarciu)
-const hingePin = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.028, 0.028, 1.32, 20),
-  chromeMat
-);
-hingePin.rotation.z = Math.PI/2;
-hingePin.position.set(0, 0, 0.02);
-hinge.add(hingePin);
-
-const lidGeo = new RoundedBoxGeometry(1.5, 0.42, 0.62, 12, 0.16);
-const lid = new THREE.Mesh(lidGeo, whiteMat);
-lid.position.set(0, 0.215, 0.31);
-hinge.add(lid);
-
-// wewnętrzna strona wieka
-const lidInner = new THREE.Mesh(new RoundedBoxGeometry(1.38, 0.02, 0.5, 4, 0.05), darkMat);
-lidInner.position.set(0, 0.005, 0.31);
-hinge.add(lidInner);
-
-// szczelina
-const seam = new THREE.Mesh(new RoundedBoxGeometry(1.505, 0.012, 0.625, 4, 0.006), darkMat);
-seam.position.set(0, 0.20, 0.0);
-caseRoot.add(seam);
-
-/* ══════════ SŁUCHAWKA ══════════ */
-function createEarbud(mirror){
-  const g = new THREE.Group();
-
-  /* --- GŁÓWKA --- */
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 48, 40), whiteMat);
-  head.scale.set(1.05, 1.02, 0.88);
-  g.add(head);
-
-  /* --- DYSZA (odchylona do przodu) --- */
-  const nozzleGroup = new THREE.Group();
-  nozzleGroup.position.set(0, 0.015, -0.09);
-  nozzleGroup.rotation.x = -0.32;
-  g.add(nozzleGroup);
-
-  // korpus dyszy
-  const nozzle = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.082, 0.098, 0.085, 32),
-    whiteMat2
-  );
-  nozzle.rotation.x = -Math.PI/2;
-  nozzle.position.set(0, 0, -0.042);
-  nozzleGroup.add(nozzle);
-
-  // metalowy pierścień
-  const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(0.083, 0.0055, 12, 40),
-    chromeMat
-  );
-  ring.position.set(0, 0, -0.084);
-  nozzleGroup.add(ring);
-
-  // gumka (LatheGeometry – realistyczny profil domku)
-  const tipPts = [];
-  const N = 22;
-  for (let i = 0; i <= N; i++){
-    const t = i / N;
-    const r = 0.089 * Math.cos(t * Math.PI * 0.42) * (1 - t * 0.12) + 0.004;
-    const y = t * 0.115;
-    tipPts.push(new THREE.Vector2(r, y));
+function ardSetConnected(connected){
+  S.ardConnected=connected;
+  $('ardConnect').style.display=connected?'none':'';
+  $('ardDisconnect').style.display=connected?'':'none';
+  $('ardStatus').className='ard-status '+(connected?'on':'');
+  $('ardStatusTxt').textContent=connected?'Połączono':'Nie połączono';
+  $('ardCardInfoCard').style.display=connected?'':'none';
+  $('ardActionsCard').style.display=connected?'':'none';
+  $('ardKeysCard').style.display=connected?'':'none';
+  $('ardBlocksCard').style.display=connected?'':'none';
+  $('ardConsoleCard').style.display=connected?'':'none';
+  if(connected){
+    S.ardConnTime=Date.now();
+    setInterval(()=>{
+      if(!S.ardConnected){clearInterval(this);return;}
+      const d=Math.floor((Date.now()-S.ardConnTime)/1000);
+      $('ardStatusMeta').textContent=`${Math.floor(d/60)}:${(d%60).toString().padStart(2,'0')}`;
+    },1000);
+  }else{
+    $('ardStatusMeta').textContent='';
   }
-  tipPts.push(new THREE.Vector2(0.001, 0.118));
-
-  const tipGeo = new THREE.LatheGeometry(tipPts, 44);
-  const tip = new THREE.Mesh(tipGeo, siliconeMat);
-  tip.rotation.x = -Math.PI/2;
-  tip.position.set(0, 0, -0.089);
-  nozzleGroup.add(tip);
-
-  // ciemna membrana w środku gumki
-  const tipHole = new THREE.Mesh(
-    new THREE.CircleGeometry(0.048, 24),
-    grilleMat
-  );
-  tipHole.position.set(0, 0, -0.203);
-  tipHole.rotation.y = Math.PI;
-  nozzleGroup.add(tipHole);
-
-  /* --- BOCZNA SIATKA ANC --- */
-  const sideGrille = new THREE.Mesh(
-    new THREE.CircleGeometry(0.048, 28),
-    grilleMat
-  );
-  sideGrille.position.set(mirror * 0.128, 0.035, 0.035);
-  sideGrille.rotation.y = mirror * 1.32;
-  g.add(sideGrille);
-
-  /* --- TRZPIEŃ --- */
-  const stemGroup = new THREE.Group();
-  stemGroup.position.set(0, -0.11, 0.035);
-  g.add(stemGroup);
-
-  // korpus trzpienia – zwężający się, spłaszczony cylinder
-  const stemGeo = new THREE.CylinderGeometry(0.062, 0.054, 0.36, 24, 1);
-  const stem = new THREE.Mesh(stemGeo, whiteMat);
-  stem.scale.set(1.15, 1, 0.62);
-  stem.position.y = -0.20;
-  stemGroup.add(stem);
-
-  // zaokrąglona końcówka
-  const stemBot = new THREE.Mesh(new THREE.SphereGeometry(0.054, 24, 16), whiteMat);
-  stemBot.scale.set(1.15, 0.55, 0.62);
-  stemBot.position.y = -0.395;
-  stemGroup.add(stemBot);
-
-  // złoty pierścień ładowania
-  const chargeRing = new THREE.Mesh(
-    new THREE.TorusGeometry(0.026, 0.0045, 10, 28),
-    goldMat
-  );
-  chargeRing.rotation.x = Math.PI/2;
-  chargeRing.position.y = -0.412;
-  stemGroup.add(chargeRing);
-
-  // odpowietrznik przy główce
-  const vent = new THREE.Mesh(
-    new THREE.CircleGeometry(0.011, 12),
-    new THREE.MeshBasicMaterial({color: 0x000000})
-  );
-  vent.position.set(mirror * 0.062, -0.03, 0.045);
-  vent.rotation.y = mirror * 1.32;
-  stemGroup.add(vent);
-
-  // mikrofon na dole
-  const mic = new THREE.Mesh(new THREE.CircleGeometry(0.014, 16), grilleMat);
-  mic.position.set(0, -0.418, 0.045);
-  mic.rotation.x = -Math.PI/2;
-  stemGroup.add(mic);
-
-  // szew między główką a trzpieniem
-  const seamRing = new THREE.Mesh(
-    new THREE.TorusGeometry(0.062, 0.0028, 8, 32),
-    darkMat
-  );
-  seamRing.rotation.x = Math.PI/2;
-  seamRing.scale.set(1.15, 1, 0.62);
-  seamRing.position.y = 0;
-  stemGroup.add(seamRing);
-
-  return g;
 }
 
-const budL = createEarbud(-1);
-const budR = createEarbud( 1);
-budL.position.set(-0.33, -0.10, 0);
-budR.position.set( 0.33, -0.10, 0);
-budL.rotation.y =  0.34;
-budR.rotation.y = -0.34;
-caseRoot.add(budL, budR);
-
-const BUD_BASE = { lx:-0.33, rx:0.33, y:-0.10 };
-
-/* ───────────── POŚWIATA – system glow ───────────── */
-
-// 1. Duże halo za produktem
-const halo = new THREE.Sprite(new THREE.SpriteMaterial({
-  map: glowCyanTex, transparent: true, blending: THREE.AdditiveBlending,
-  depthWrite: false, opacity: 0.0, toneMapped: false
-}));
-halo.scale.set(6.5, 6.5, 1);
-halo.position.set(0, 0.5, -2.2);
-product.add(halo);
-
-// 2. Mniejsze halo tuż za etui
-const haloInner = new THREE.Sprite(new THREE.SpriteMaterial({
-  map: glowWhiteTex, transparent: true, blending: THREE.AdditiveBlending,
-  depthWrite: false, opacity: 0.0, toneMapped: false
-}));
-haloInner.scale.set(2.8, 2.8, 1);
-haloInner.position.set(0, 0.1, -1.0);
-product.add(haloInner);
-
-// 3. Światła punktowe podążające za słuchawkami (efekt "magic glow")
-const budGlowL = new THREE.PointLight(0x88ccff, 0, 2.0, 2);
-const budGlowR = new THREE.PointLight(0x88ccff, 0, 2.0, 2);
-scene.add(budGlowL, budGlowR);
-
-// 4. Dodatkowa aura wokół słuchawek (sprites)
-function makeBudAura(){
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: glowCyanTex, transparent: true, blending: THREE.AdditiveBlending,
-    depthWrite: false, opacity: 0.0, toneMapped: false
-  }));
-  s.scale.set(0.9, 0.9, 1);
-  return s;
-}
-const auraL = makeBudAura();
-const auraR = makeBudAura();
-scene.add(auraL, auraR);
-
-/* ───────────── cień kontaktowy ───────────── */
-(function addContactShadow(){
-  const c = document.createElement('canvas'); c.width = c.height = 256;
-  const ctx = c.getContext('2d');
-  const grd = ctx.createRadialGradient(128,128,0,128,128,128);
-  grd.addColorStop(0,'rgba(0,0,0,0.9)');
-  grd.addColorStop(0.45,'rgba(0,0,0,0.35)');
-  grd.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle = grd; ctx.fillRect(0,0,256,256);
-  const tex = new THREE.CanvasTexture(c);
-  const mat = new THREE.MeshBasicMaterial({map:tex, transparent:true, depthWrite:false, opacity:0.85});
-  const plane = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4), mat);
-  plane.rotation.x = -Math.PI/2;
-  plane.position.y = -0.72;
-  product.add(plane);
-})();
-
-/* ───────────── kurz ───────────── */
-(function addDust(){
-  const N = window.innerWidth < 760 ? 180 : 400;
-  const pos = new Float32Array(N*3);
-  const spd = new Float32Array(N);
-  for(let i=0;i<N;i++){
-    pos[i*3+0] = (Math.random()-0.5)*14;
-    pos[i*3+1] = (Math.random()-0.5)*9;
-    pos[i*3+2] = (Math.random()-0.5)*10 - 2;
-    spd[i] = 0.15 + Math.random()*0.5;
+async function ardConnect(){
+  if(!hasSerial){toast('Web Serial niedostępne','err');return;}
+  try{
+    const ports=await navigator.serial.getPorts();
+    let port;
+    if(ports.length>0){
+      port=ports.find(p=>p.getInfo().usbVendorId===0x2341||p.getInfo().usbVendorId===0x1a86||p.getInfo().usbVendorId===0x0403)||ports[0];
+      ardOut(`// Znaleziono ${ports.length} portów, używam: ${port.getInfo().usbVendorId?.toString(16)||'?'}`,'sys');
+    }else{
+      ardOut('// Brak portów – wybierz w oknie dialogowym','sys');
+      port=await navigator.serial.requestPort();
+    }
+    const baud=parseInt($('ardBaud').value);
+    await port.open({baudRate:baud});
+    S.ardPort=port; S.ardWriter=port.writable.getWriter();
+    ardSetConnected(true);
+    log(`Arduino połączone @ ${baud}`,`ok`);
+    ardOut(`// Połączono @ ${baud} baud`,'sys');
+    try{const info=port.getInfo();$('ardPortInfo').textContent=`VID: 0x${info.usbVendorId?.toString(16)||'?'} PID: 0x${info.usbProductId?.toString(16)||'?'}`;}catch(e){}
+    setTimeout(()=>ardSend('PING'),300);
+    ardReadLoop();
+  }catch(e){
+    log('Błąd: '+e.message,'err');
+    toast('Błąd: '+e.message,'err');
+    ardOut('// Błąd: '+e.message,'err');
+    $('ardStatus').className='ard-status err';
+    $('ardStatusTxt').textContent='Błąd: '+e.message;
   }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+}
 
-  const c = document.createElement('canvas'); c.width=c.height=64;
-  const ctx = c.getContext('2d');
-  const g = ctx.createRadialGradient(32,32,0,32,32,32);
-  g.addColorStop(0,'rgba(255,255,255,1)');
-  g.addColorStop(0.35,'rgba(200,225,255,0.45)');
-  g.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.fillStyle=g; ctx.fillRect(0,0,64,64);
-  const tex = new THREE.CanvasTexture(c);
+async function ardReadLoop(){
+  const decoder=new TextDecoder();
+  let buf='';
+  while(S.ardConnected&&S.ardPort&&S.ardPort.readable){
+    const reader=S.ardPort.readable.getReader();
+    S.ardReader=reader;
+    try{
+      while(true){
+        const {value,done}=await reader.read();
+        if(done)break;
+        buf+=decoder.decode(value,{stream:true});
+        const lines=buf.split('\n');
+        buf=lines.pop();
+        for(const line of lines){
+          const l=line.trim();
+          if(!l)continue;
+          ardOut(l,'rx');
+          ardHandleLine(l);
+        }
+      }
+    }catch(e){
+      if(S.ardConnected){log('Czytanie: '+e.message,'err');ardOut('// Czytanie: '+e.message,'err');}
+    }finally{
+      try{reader.releaseLock();}catch(e){}
+      S.ardReader=null;
+    }
+  }
+}
 
-  const mat = new THREE.PointsMaterial({
-    size:0.055, map:tex, transparent:true, depthWrite:false,
-    blending:THREE.AdditiveBlending, opacity:0.55, sizeAttenuation:true, toneMapped:false
+function ardHandleLine(line){
+  if(line==='READY'){ardOut('// Arduino gotowe','sys');}
+  else if(line==='PONG'){
+    ardOut('// PONG – połączenie OK','sys');
+    if(S.ardSettings.autoDump){setTimeout(()=>{if(S.ardConnected)ardSend('DUMP');},500);}
+  }
+  else if(line.startsWith('UID ')){
+    S.ardUid=line.substring(4);
+    $('ardUid').textContent=formatUid(S.ardUid);
+    $('ardCardInfoCard').style.display='';
+    detectCardType();
+  }
+  else if(line.startsWith('SAK ')){
+    S.ardSak=line.substring(4);
+    $('ardSak').textContent='0x'+S.ardSak.toUpperCase();
+    detectCardType();
+  }
+  else if(line.startsWith('SEC ')){
+    S.ardSectors[parseInt(line.substring(4))]={status:'reading',blocks:0};
+    ardUpdateProgress(parseInt(line.substring(4)),16);
+  }
+  else if(line.startsWith('BLK ')){
+    const parts=line.split(' ');
+    const b=parseInt(parts[1]);
+    const hex=parts[2];
+    if(!isNaN(b)&&hex&&hex.length===32){
+      const bytes=new Uint8Array(16);
+      for(let i=0;i<16;i++)bytes[i]=parseInt(hex.substr(i*2,2),16);
+      S.ardBlocks[b]=bytes;
+      S.ardOriginal[b]=new Uint8Array(bytes);
+      S.ardDirty.delete(b);
+      const sec=Math.floor(b/4);
+      if(S.ardSectors[sec])S.ardSectors[sec].blocks=(S.ardSectors[sec].blocks||0)+1;
+      ardRenderBlock(b);
+    }
+  }
+  else if(line==='LOCKED'){
+    const lastSec=Object.keys(S.ardSectors).map(Number).filter(k=>S.ardSectors[k]?.status==='reading').pop();
+    if(lastSec!==undefined){S.ardSectors[lastSec]={status:'locked'};S.ardDumpFailedSectors.push(lastSec);}
+    ardRenderSectorMap();
+  }
+  else if(line==='SECTOR_END'){
+    const lastSec=Object.keys(S.ardSectors).map(Number).filter(k=>S.ardSectors[k]?.status==='reading').pop();
+    if(lastSec!==undefined)S.ardSectors[lastSec].status='ok';
+    ardRenderSectorMap();
+  }
+  else if(line==='END'){
+    ardOut('// Koniec odpowiedzi','sys');
+    S.ardDumpInProgress=false;
+    ardEndProgress();
+    ardRenderEditor();
+    ardRenderDiff();
+    ardRenderSectorMap();
+    ardCheckDirty();
+    $('ardHistoryCard').style.display='';
+    ardRenderHistory();
+  }
+  else if(line==='OK'){ardOut('// OK','sys');toast('OK','ok');}
+  else if(line.startsWith('ERR ')){
+    ardOut('// '+line,'err');
+    if(line==='ERR no_card'){toast('Brak karty na czytniku','err');}
+    else if(line.startsWith('ERR auth_sector_')){
+      const sec=parseInt(line.split('_').pop());
+      if(!isNaN(sec)){S.ardSectors[sec]={status:'locked'};S.ardDumpFailedSectors.push(sec);ardRenderSectorMap();}
+    }
+  }
+}
+
+function formatUid(uid){
+  if(!uid)return '—';
+  const cleaned=uid.replace(/[^0-9A-Fa-f]/g,'');
+  const parts=[];
+  for(let i=0;i<cleaned.length;i+=2)parts.push(cleaned.substr(i,2).toUpperCase());
+  return parts.join(' ');
+}
+
+function detectCardType(){
+  if(!S.ardSak)return;
+  const sak=parseInt(S.ardSak,16);
+  let type='MIFARE';
+  if(sak===0x08)type='MIFARE Classic 1K';
+  else if(sak===0x18)type='MIFARE Classic 4K';
+  else if(sak===0x09)type='MIFARE Mini';
+  else if(sak===0x00)type='MIFARE Ultralight';
+  else if(sak===0x20)type='MIFARE Plus';
+  else if(sak===0x10)type='MIFARE Plus 2K';
+  else type='SAK 0x'+S.ardSak;
+  S.ardCardType=type;
+  $('ardCardType').textContent=type;
+  $('ardVerify').textContent='OK';
+  $('ardVerify').style.color='var(--su)';
+}
+
+function ardUpdateProgress(sector,total){
+  if(!S.ardDumpInProgress){S.ardDumpInProgress=true;$('ardProgressWrap').classList.add('show');$('ardProgressText').classList.add('show');$('ardCancelDump').style.display='';}
+  const pct=Math.round((sector/total)*100);
+  $('ardProgressBar').style.width=pct+'%';
+  $('ardProgressPct').textContent=pct+'%';
+  $('ardProgressLabel').textContent=`Sektor ${sector}/${total}`;
+}
+function ardEndProgress(){
+  if(!S.ardDumpInProgress)return;
+  $('ardProgressBar').style.width='100%';
+  setTimeout(()=>{
+    $('ardProgressWrap').classList.remove('show');
+    $('ardProgressText').classList.remove('show');
+    $('ardCancelDump').style.display='none';
+    if(S.ardDumpFailedSectors.length>0)$('ardRetryDump').style.display='';
+    else $('ardRetryDump').style.display='none';
+    ardCheckDirty();
+  },600);
+}
+
+function ardRenderSectorMap(){
+  const map=$('ardSectorMap');
+  map.innerHTML='';
+  let totalOk=0,totalLocked=0;
+  for(let s=0;s<16;s++){
+    const box=document.createElement('div');
+    box.className='sector-box';
+    box.dataset.sector=s;
+    const st=S.ardSectors[s];
+    let stat='—',cls='empty';
+    if(st){
+      if(st.status==='locked'){cls='locked';stat='LOCK';totalLocked++;}
+      else if(st.status==='ok'||st.status==='reading'){
+        let hasData=false,isNdef=false;
+        for(let i=0;i<4;i++){
+          const b=s*4+i;
+          if(b%4===3)continue;
+          if(S.ardBlocks[b]&&S.ardBlocks[b].some(x=>x!==0)){hasData=true;}
+        }
+        if(s===0)cls='manufacturer';
+        else if(s===1&&hasData)cls='ndef';
+        else if(hasData)cls='data';
+        else cls='empty';
+        stat=hasData?'DATA':'0';
+        if(st.status==='ok')totalOk++;
+      }
+    }
+    if(s===0)cls='manufacturer';
+    box.classList.add(cls);
+    box.innerHTML=`<div class="num">${s}</div><div class="stat">${stat}</div>`;
+    if(S.ardDirty.size>0){
+      for(let i=0;i<4;i++){
+        const b=s*4+i;
+        if(S.ardDirty.has(b)){
+          const dot=document.createElement('div');
+          dot.className='warn-dot';
+          box.appendChild(dot);
+          break;
+        }
+      }
+    }
+    box.onclick=()=>{
+      document.querySelectorAll('.sector-box.active').forEach(x=>x.classList.remove('active'));
+      box.classList.add('active');
+      $('ardSector').value=s;
+      const ed=$('ardBlockEditor');
+      const target=ed.querySelector(`[data-b="${s*4}"]`);
+      if(target)target.scrollIntoView({behavior:'smooth',block:'center'});
+    };
+    map.appendChild(box);
+  }
+  $('ardKeyStatus').textContent=`${totalOk} OK / ${totalLocked} LOCK`;
+}
+
+function ardRenderBlock(b){
+  const ed=$('ardBlockEditor');
+  if(ed.querySelector('.info-text'))ed.innerHTML='';
+  let row=ed.querySelector(`[data-b="${b}"]`);
+  const d=S.ardBlocks[b];
+  const hexStr=Array.from(d).map(x=>x.toString(16).padStart(2,'0')).join(' ').toUpperCase();
+  const isTrailer=(b%4===3);
+  const sec=Math.floor(b/4);
+  const st=S.ardSectors[sec];
+  const isLocked=st&&st.status==='locked';
+  if(!row){
+    row=document.createElement('div');
+    row.className='block-editor-row';
+    row.dataset.b=b;
+    if(isTrailer)row.classList.add('trailer');
+    if(isLocked)row.classList.add('locked');
+    row.innerHTML=`
+      <div class="be-addr">${b}</div>
+      <div class="be-body">
+        <input type="text" class="be-input" value="${hexStr}" maxlength="47" ${isTrailer||isLocked?'readonly':''}>
+        <div class="be-actions">
+          <button class="save" title="Zapisz blok" ${isTrailer||isLocked?'disabled':''}>💾</button>
+          <button class="revert" title="Przywróć" disabled>↺</button>
+        </div>
+      </div>`;
+    ed.appendChild(row);
+    const inp=row.querySelector('.be-input');
+    const saveBtn=row.querySelector('button.save');
+    const revertBtn=row.querySelector('button.revert');
+    inp.addEventListener('input',()=>{
+      const cur=inp.value.replace(/\s+/g,'').toUpperCase();
+      if(cur.length===32&&/^[0-9A-F]{32}$/.test(cur)){
+        const bytes=new Uint8Array(16);
+        for(let i=0;i<16;i++)bytes[i]=parseInt(cur.substr(i*2,2),16);
+        const orig=Array.from(S.ardOriginal[b]).map(x=>x.toString(16).padStart(2,'0')).join('');
+        if(orig!==cur.toLowerCase()){
+          S.ardBlocks[b]=bytes;S.ardDirty.add(b);
+          inp.classList.add('modified');row.classList.add('modified');
+          saveBtn.disabled=false;revertBtn.disabled=false;
+        }else{
+          S.ardBlocks[b]=bytes;S.ardDirty.delete(b);
+          inp.classList.remove('modified');row.classList.remove('modified');
+          saveBtn.disabled=true;revertBtn.disabled=true;
+        }
+        ardCheckDirty();ardRenderDiff();
+      }
+    });
+    saveBtn.addEventListener('click',()=>{
+      const cur=inp.value.replace(/\s+/g,'').toUpperCase();
+      if(cur.length===32&&/^[0-9A-F]{32}$/.test(cur))ardSend(`WRITE ${b} ${cur}`);
+    });
+    revertBtn.addEventListener('click',()=>{
+      S.ardBlocks[b]=new Uint8Array(S.ardOriginal[b]);
+      S.ardDirty.delete(b);
+      inp.value=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ').toUpperCase();
+      inp.classList.remove('modified');row.classList.remove('modified');
+      saveBtn.disabled=true;revertBtn.disabled=true;
+      ardCheckDirty();ardRenderDiff();
+    });
+  }else{
+    const inp=row.querySelector('input');
+    inp.value=hexStr;
+    inp.classList.remove('modified');row.classList.remove('modified');
+    row.querySelector('button.save').disabled=true;
+    row.querySelector('button.revert').disabled=true;
+  }
+}
+
+function ardRenderEditor(){
+  const ed=$('ardBlockEditor');
+  ed.innerHTML='';
+  let hasData=false;
+  for(let b=0;b<64;b++){if(S.ardBlocks[b].some(x=>x!==0)){hasData=true;break;}}
+  if(!hasData){ed.innerHTML='<div class="info-text">Brak danych. Naciśnij „Odczytaj wszystko”.</div>';return;}
+  for(let b=0;b<64;b++)ardRenderBlock(b);
+}
+
+function ardCheckDirty(){
+  $('ardDirtyCount').textContent=S.ardDirty.size;
+  $('ardWriteDirty').disabled=S.ardDirty.size===0;
+  $('ardRevertAll').disabled=S.ardDirty.size===0;
+}
+
+function ardRenderDiff(){
+  const view=$('ardDiffView');
+  if(S.ardDirty.size===0){view.innerHTML='<span class="same">Brak zmian</span>';$('ardDiffCard').style.display='none';return;}
+  $('ardDiffCard').style.display='';
+  let html='';
+  for(const b of Array.from(S.ardDirty).sort((a,b)=>a-b)){
+    const old=Array.from(S.ardOriginal[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ').toUpperCase();
+    const neu=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ').toUpperCase();
+    html+=`<div><span class="same">Blok ${b}:</span><br><span class="old">- ${old}</span><br><span class="new">+ ${neu}</span></div>`;
+  }
+  view.innerHTML=html;
+}
+
+function ardRenderHistory(){
+  const list=$('ardHistoryList');
+  const hist=JSON.parse(localStorage.getItem('ardHistory')||'[]');
+  if(!hist.length){list.innerHTML='<div class="info-text">Brak zapisanych zrzutów.</div>';return;}
+  list.innerHTML='';
+  hist.forEach((h,i)=>{
+    const d=document.createElement('div');
+    d.className='history-item';
+    d.innerHTML=`<div><div class="hist-uid">${h.uid||'?'}</div><div class="hist-meta">${new Date(h.time).toLocaleString('pl')}</div></div><div class="hist-actions"><button data-i="${i}" class="load">Wczytaj</button><button data-i="${i}" class="del">✕</button></div>`;
+    d.querySelector('.load').onclick=()=>{
+      const blocks=h.blocks.map(arr=>new Uint8Array(arr));
+      S.ardBlocks=blocks;S.ardOriginal=blocks.map(b=>new Uint8Array(b));S.ardDirty.clear();
+      S.ardUid=h.uid;S.ardSak=h.sak;
+      $('ardUid').textContent=formatUid(h.uid);$('ardSak').textContent='0x'+(h.sak||'?');
+      detectCardType();ardRenderEditor();ardRenderDiff();ardCheckDirty();
+      toast('Wczytano z historii','ok');
+    };
+    d.querySelector('.del').onclick=()=>{
+      hist.splice(i,1);localStorage.setItem('ardHistory',JSON.stringify(hist));ardRenderHistory();
+    };
+    list.appendChild(d);
   });
-  const pts = new THREE.Points(geo, mat);
-  scene.add(pts);
-  window.__dust = {pts, spd, N};
-})();
+}
 
-/* ───────────── POST FX ───────────── */
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
+// ================== SEND ==================
+async function ardSend(cmd){
+  if(!S.ardConnected||!S.ardWriter){toast('Nie połączono','err');return;}
+  try{
+    ardOut('> '+cmd,'tx');
+    S.ardCmdHistory.push(cmd);
+    if(S.ardCmdHistory.length>50)S.ardCmdHistory.shift();
+    S.ardCmdHistoryIdx=S.ardCmdHistory.length;
+    const data=new TextEncoder().encode(cmd+'\n');
+    await S.ardWriter.write(data);
+  }catch(e){log('Błąd wysyłania: '+e.message,'err');ardOut('// Błąd: '+e.message,'err');}
+}
 
-const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.85, 0.72, 0.72);
-composer.addPass(bloom);
-composer.addPass(new OutputPass());
+$('ardConnect').onclick=ardConnect;
+$('ardDisconnect').onclick=async()=>{
+  try{
+    ardSetConnected(false);
+    if(S.ardReader){try{await S.ardReader.cancel();}catch(e){}}
+    if(S.ardWriter){try{S.ardWriter.releaseLock();}catch(e){}S.ardWriter=null;}
+    if(S.ardPort){await S.ardPort.close();S.ardPort=null;}
+    log('Rozłączono','info');ardOut('// Rozłączono','sys');
+  }catch(e){log('Błąd: '+e.message,'err');}
+};
 
-const gradePass = new ShaderPass({
-  uniforms:{
-    tDiffuse:{value:null},
-    uTime:{value:0},
-    uVig:{value:1.15},
-    uGrain:{value:0.045},
-    uAberr:{value:0.0018}
-  },
-  vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-  fragmentShader:`
-    uniform sampler2D tDiffuse; uniform float uTime,uVig,uGrain,uAberr;
-    varying vec2 vUv;
-    float rand(vec2 co){ return fract(sin(dot(co, vec2(12.9898,78.233))) * 43758.5453); }
-    void main(){
-      vec2 d = vUv - 0.5;
-      vec2 off = d * uAberr;
-      vec4 c;
-      c.r = texture2D(tDiffuse, vUv + off).r;
-      c.g = texture2D(tDiffuse, vUv).g;
-      c.b = texture2D(tDiffuse, vUv - off).b;
-      c.a = 1.0;
-      float v = smoothstep(0.92, 0.12, length(d)*uVig);
-      c.rgb *= mix(0.28, 1.0, v);
-      // subtle cool shadows / warm highlights
-      c.rgb.r *= 0.995 + 0.005 * smoothstep(0.0,0.5,length(d));
-      c.rgb.b *= 1.02 - 0.02 * smoothstep(0.0,0.5,length(d));
-      float g = rand(vUv*vec2(1920.0,1080.0) + fract(uTime)*97.0) - 0.5;
-      c.rgb += g * uGrain;
-      gl_FragColor = c;
-    }`
+$('ardPing').onclick=()=>ardSend('PING');
+$('ardUid').onclick=()=>ardSend('UID');
+$('ardDump').onclick=()=>{
+  S.ardBlocks=new Array(64).fill(null).map(()=>new Uint8Array(16));
+  S.ardOriginal=new Array(64).fill(null).map(()=>new Uint8Array(16));
+  S.ardDirty.clear();
+  S.ardSectors=new Array(16).fill(null);
+  S.ardDumpFailedSectors=[];
+  $('ardBlockEditor').innerHTML='<div class="info-text">Odczyt w toku…</div>';
+  $('ardRetryDump').style.display='none';
+  ardRenderSectorMap();
+  ardSend('DUMP');
+};
+$('ardCancelDump').onclick=()=>{S.ardDumpCancel=true;ardOut('// Anulowanie...','sys');};
+$('ardRetryDump').onclick=()=>{
+  if(S.ardDumpFailedSectors.length===0){toast('Brak nieudanych','info');return;}
+  const failed=S.ardDumpFailedSectors.slice();
+  S.ardDumpFailedSectors=[];
+  (async()=>{
+    for(const s of failed){
+      await ardSend(`READ ${s}`);
+      await new Promise(r=>setTimeout(r,500));
+    }
+  })();
+};
+
+$('ardReadSector').onclick=()=>{ardSend(`READ ${$('ardSector').value}`);};
+
+$('ardSetKey').onclick=()=>{
+  const s=$('ardKeySector').value;
+  const k=$('ardKeyHex').value.trim().toUpperCase();
+  if(!/^[0-9A-F]{12}$/.test(k))return toast('Klucz: 12 hex','err');
+  if(s==='all'){
+    for(let i=0;i<16;i++){S.ardKeys[i]=k;ardSend(`KEY ${i} ${k}`);}
+  }else{
+    S.ardKeys[s]=k;ardSend(`KEY ${s} ${k}`);
+  }
+  toast('Klucz ustawiony','ok');
+};
+document.querySelectorAll('.key-preset-row button').forEach(b=>{
+  b.onclick=()=>{document.querySelectorAll('.key-preset-row button').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('ardKeyHex').value=b.dataset.key;};
 });
-composer.addPass(gradePass);
 
-/* ───────────── KAMERA ───────────── */
-const camKeys = [
-  {t:0.00, pos:[ 0.00, 0.42, 4.55], tgt:[0,  0.02, 0]},
-  {t:0.14, pos:[ 1.35, 0.85, 3.85], tgt:[0,  0.10, 0]},
-  {t:0.30, pos:[ 0.55, 1.55, 3.35], tgt:[0,  0.28, 0]},
-  {t:0.48, pos:[-1.35, 1.85, 3.30], tgt:[0,  0.52, 0]},
-  {t:0.66, pos:[-0.65, 2.05, 3.05], tgt:[0,  0.80, 0]},
-  {t:0.84, pos:[ 1.15, 1.70, 2.95], tgt:[0,  1.02, 0]},
-  {t:1.00, pos:[ 0.00, 1.32, 2.65], tgt:[0,  1.06, 0]}
-];
-
-function sampleCam(t){
-  if(t <= camKeys[0].t) return camKeys[0];
-  const last = camKeys[camKeys.length-1];
-  if(t >= last.t) return last;
-  for(let i=0;i<camKeys.length-1;i++){
-    const a = camKeys[i], b = camKeys[i+1];
-    if(t >= a.t && t <= b.t){
-      const k = easeIO((t-a.t)/(b.t-a.t));
-      return {
-        pos:[lerp(a.pos[0],b.pos[0],k), lerp(a.pos[1],b.pos[1],k), lerp(a.pos[2],b.pos[2],k)],
-        tgt:[lerp(a.tgt[0],b.tgt[0],k), lerp(a.tgt[1],b.tgt[1],k), lerp(a.tgt[2],b.tgt[2],k)]
-      };
-    }
+$('ardTestAllKeys').onclick=async()=>{
+  if(!S.ardConnected)return;
+  for(let s=0;s<16;s++){
+    ardSend(`READ ${s}`);
+    await new Promise(r=>setTimeout(r,300));
   }
-  return last;
-}
+};
 
-/* ───────────── SCROLL ───────────── */
-let targetP = 0, P = 0;
-const hintEl = document.getElementById('hint');
-const barEl  = document.getElementById('bar');
-const pctEl  = document.getElementById('hudPct');
-const modeEl = document.getElementById('hudMode');
-const panels = [...document.querySelectorAll('.panel')].map(el => ({
-  el,
-  a:+el.dataset.a, b:+el.dataset.b, c:+el.dataset.c, d:+el.dataset.d
-}));
-
-function onScroll(){
-  const max = document.body.scrollHeight - window.innerHeight;
-  targetP = max > 0 ? clamp(window.scrollY / max, 0, 1) : 0;
-}
-window.addEventListener('scroll', onScroll, {passive:true});
-onScroll();
-
-/* ───────────── MOUSE ───────────── */
-let mx = 0, my = 0, tmx = 0, tmy = 0;
-window.addEventListener('pointermove', e=>{
-  tmx = (e.clientX / window.innerWidth  - 0.5) * 2;
-  tmy = (e.clientY / window.innerHeight - 0.5) * 2;
-}, {passive:true});
-
-/* ───────────── RESIZE ───────────── */
-function resize(){
-  const w = window.innerWidth, h = window.innerHeight;
-  camera.aspect = w/h; camera.updateProjectionMatrix();
-  renderer.setSize(w,h);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  composer.setSize(w,h);
-  bloom.setSize(w,h);
-}
-window.addEventListener('resize', resize);
-
-/* ───────────── LOOP ───────────── */
-const clock = new THREE.Clock();
-const lookAt = new THREE.Vector3();
-const camPos = new THREE.Vector3();
-const tmpV = new THREE.Vector3();
-
-function animate(){
-  requestAnimationFrame(animate);
-  const dt = Math.min(clock.getDelta(), 0.05);
-  const t  = clock.elapsedTime;
-
-  P += (targetP - P) * (1 - Math.pow(0.001, dt));
-  const p = P;
-
-  mx += (tmx - mx) * (1 - Math.pow(0.0001, dt));
-  my += (tmy - my) * (1 - Math.pow(0.0001, dt));
-
-  /* ─── TIMELINE ─── */
-  const lidOpen   = smooth(0.10, 0.34, p);
-  const budsRise  = smooth(0.34, 0.66, p);
-  const spread    = smooth(0.62, 0.92, p);
-  const glowBoost = smooth(0.70, 1.00, p);
-
-  // wieko
-  hinge.rotation.x = -lidOpen * 1.98;
-
-  // słuchawki
-  const riseY = budsRise * 1.34;
-  const idle  = Math.sin(t * 0.9) * 0.012 * budsRise;
-
-  budL.position.y = BUD_BASE.y + riseY + idle;
-  budR.position.y = BUD_BASE.y + riseY + idle * 0.85;
-
-  budL.position.x = BUD_BASE.lx - spread * 0.30;
-  budR.position.x = BUD_BASE.rx + spread * 0.30;
-
-  budL.position.z = spread * 0.16;
-  budR.position.z = spread * 0.16;
-
-  budL.rotation.y =  0.34 - spread * 0.55 + Math.sin(t*0.55)*0.05*spread;
-  budR.rotation.y = -0.34 + spread * 0.55 - Math.sin(t*0.55)*0.05*spread;
-  budL.rotation.z =  spread * 0.16;
-  budR.rotation.z = -spread * 0.16;
-  budL.rotation.x = Math.sin(t*0.7+1.0)*0.045*spread;
-  budR.rotation.x = Math.sin(t*0.7)*0.045*spread;
-
-  // delikatne unoszenie
-  product.position.y = Math.sin(t*0.55) * 0.018 + spread * 0.06;
-  product.rotation.y = Math.sin(t*0.22) * 0.05 * (1 - budsRise*0.6);
-
-  /* ─── GLOW SYSTEM ─── */
-  const pulse = 0.55 + 0.45 * Math.sin(t*2.4);
-  const bootPulse = 0.6 + 0.4 * Math.sin(t*1.6);
-
-  // LED
-  ledMat.emissiveIntensity = 5 + pulse * 10 + glowBoost * 8;
-  ledGlow.material.opacity = 0.35 + pulse * 0.35 + glowBoost * 0.3;
-  const ledS = 0.20 + pulse * 0.10 + glowBoost * 0.06;
-  ledGlow.scale.set(ledS, ledS, 1);
-  ledLight.intensity = (0.4 + pulse * 0.8) * (0.4 + lidOpen * 0.6);
-
-  // halo za produktem
-  halo.material.opacity = 0.08 + budsRise * 0.32 + glowBoost * 0.35;
-  haloInner.material.opacity = 0.05 + budsRise * 0.22 + glowBoost * 0.25;
-
-  const haloS = 6.5 + Math.sin(t*0.6) * 0.3 + glowBoost * 1.5;
-  halo.scale.set(haloS, haloS, 1);
-  halo.material.rotation = t * 0.05;
-
-  const hiS = 2.8 + Math.sin(t*0.9) * 0.1 + glowBoost * 0.4;
-  haloInner.scale.set(hiS, hiS, 1);
-
-  // światła podążające za słuchawkami
-  budL.getWorldPosition(tmpV);
-  budGlowL.position.copy(tmpV);
-  budGlowL.intensity = budsRise * (0.9 + Math.sin(t*1.8) * 0.35) + glowBoost * 1.4;
-
-  budR.getWorldPosition(tmpV);
-  budGlowR.position.copy(tmpV);
-  budGlowR.intensity = budsRise * (0.9 + Math.sin(t*1.8 + 1.3) * 0.35) + glowBoost * 1.4;
-
-  // aura przy słuchawkach
-  budL.getWorldPosition(auraL.position);
-  auraL.material.opacity = budsRise * (0.35 + Math.sin(t*1.2)*0.15) + glowBoost * 0.25;
-  const aS = 0.9 + glowBoost * 0.6 + Math.sin(t*1.5)*0.08;
-  auraL.scale.set(aS, aS, 1);
-
-  budR.getWorldPosition(auraR.position);
-  auraR.material.opacity = budsRise * (0.35 + Math.sin(t*1.2+0.7)*0.15) + glowBoost * 0.25;
-  auraR.scale.set(aS, aS, 1);
-
-  /* ─── KAMERA ─── */
-  const kf = sampleCam(p);
-  camPos.set(kf.pos[0], kf.pos[1], kf.pos[2]);
-  lookAt.set(kf.tgt[0], kf.tgt[1], kf.tgt[2]);
-
-  camPos.x += mx * 0.34 * (1 - p*0.25);
-  camPos.y += -my * 0.22 * (1 - p*0.25);
-  camPos.x += Math.sin(t*0.35) * 0.02;
-  camPos.y += Math.cos(t*0.28) * 0.015;
-
-  camera.position.lerp(camPos, 1 - Math.pow(0.0008, dt));
-  camera.lookAt(lookAt);
-
-  /* ─── BLOOM ─── */
-  bloom.strength = lerp(0.45, 1.15, glowBoost) + lidOpen * 0.15 + budsRise * 0.15;
-  bloom.threshold = lerp(0.82, 0.62, glowBoost);
-
-  /* ─── POST FX ─── */
-  gradePass.uniforms.uTime.value = t;
-  bgMat.uniforms.uTime.value = t;
-
-  /* ─── KURZ ─── */
-  const dust = window.__dust;
-  if(dust){
-    const arr = dust.pts.geometry.attributes.position.array;
-    for(let i=0;i<dust.N;i++){
-      arr[i*3+1] += dust.spd[i] * dt * 0.28;
-      arr[i*3+0] += Math.sin(t*0.4 + i) * dt * 0.02;
-      if(arr[i*3+1] > 4.8){ arr[i*3+1] = -4.8; }
-    }
-    dust.pts.geometry.attributes.position.needsUpdate = true;
-    dust.pts.rotation.y = t * 0.012;
-    dust.pts.material.opacity = 0.32 + 0.28 * glowBoost;
+$('ardShowAll').onclick=()=>ardRenderEditor();
+$('ardShowModified').onclick=()=>{
+  const ed=$('ardBlockEditor');
+  ed.innerHTML='';
+  if(S.ardDirty.size===0){ed.innerHTML='<div class="info-text">Brak zmian.</div>';return;}
+  for(const b of Array.from(S.ardDirty).sort((a,b)=>a-b))ardRenderBlock(b);
+};
+$('ardCopyHexAll').onclick=async()=>{
+  let txt='';
+  for(let b=0;b<64;b++)txt+=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join(' ')+'\n';
+  try{await navigator.clipboard.writeText(txt);toast('HEX skopiowany','ok');}catch(e){toast('Błąd','err');}
+};
+$('ardExportBin').onclick=()=>{
+  const out=new Uint8Array(1024);
+  for(let b=0;b<64;b++)out.set(S.ardBlocks[b],b*16);
+  downloadBlob(new Blob([out],{type:'application/octet-stream'}),`dump-${(S.ardUid||'unknown').replace(/\s/g,'')}.bin`);
+};
+$('ardExportMfd').onclick=()=>{
+  const out=new Uint8Array(1024);
+  for(let b=0;b<64;b++)out.set(S.ardBlocks[b],b*16);
+  downloadBlob(new Blob([out],{type:'application/octet-stream'}),`dump-${(S.ardUid||'unknown').replace(/\s/g,'')}.mfd`);
+};
+$('ardImportFile').onclick=()=>$('ardFileInput').click();
+$('ardFileInput').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  const buf=new Uint8Array(await f.arrayBuffer());
+  if(buf.length<1024)return toast('Plik za mały (min 1024 B)','err');
+  S.ardBlocks=new Array(64).fill(null).map(()=>new Uint8Array(16));
+  S.ardOriginal=new Array(64).fill(null).map(()=>new Uint8Array(16));
+  for(let b=0;b<64;b++){
+    const chunk=buf.slice(b*16,(b+1)*16);
+    S.ardBlocks[b]=chunk;
+    S.ardOriginal[b]=new Uint8Array(chunk);
   }
+  S.ardDirty.clear();
+  ardRenderEditor();ardRenderDiff();ardCheckDirty();
+  toast('Import OK','ok');
+  e.target.value='';
+};
+$('ardWriteDirty').onclick=async()=>{
+  if(S.ardDirty.size===0)return;
+  if(!confirm(`Zapisać ${S.ardDirty.size} bloków na kartę?`))return;
+  const blocks=Array.from(S.ardDirty).sort((a,b)=>a-b);
+  for(const b of blocks){
+    const hex=Array.from(S.ardBlocks[b]).map(x=>x.toString(16).padStart(2,'0')).join('');
+    ardSend(`WRITE ${b} ${hex}`);
+    await new Promise(r=>setTimeout(r,250));
+  }
+  toast(`Wysłano ${blocks.length} zapisów`,'ok');
+};
+$('ardRevertAll').onclick=()=>{
+  if(!confirm('Przywrócić wszystkie bloki do stanu oryginalnego?'))return;
+  S.ardBlocks=S.ardOriginal.map(b=>new Uint8Array(b));
+  S.ardDirty.clear();
+  ardRenderEditor();ardRenderDiff();ardCheckDirty();
+  toast('Przywrócono','ok');
+};
 
-  /* ─── UI ─── */
-  barEl.style.width = (p*100).toFixed(2) + '%';
-  pctEl.textContent = String(Math.round(p*100)).padStart(3,'0') + '%';
-  modeEl.textContent = p < 0.10 ? 'STANDBY'
-                     : p < 0.34 ? 'OTWIERANIE'
-                     : p < 0.66 ? 'AKTYWACJA'
-                     : p < 0.90 ? 'PAROWANIE'
-                     : 'GOTOWE';
-  hintEl.style.opacity = p > 0.015 ? 0 : 1;
+$('ardHistorySave').onclick=()=>{
+  if(!S.ardUid)return toast('Brak danych','err');
+  const hist=JSON.parse(localStorage.getItem('ardHistory')||'[]');
+  hist.unshift({uid:S.ardUid,sak:S.ardSak,time:Date.now(),blocks:S.ardBlocks.map(b=>Array.from(b))});
+  while(hist.length>10)hist.pop();
+  localStorage.setItem('ardHistory',JSON.stringify(hist));
+  ardRenderHistory();
+  toast('Zapisano do historii','ok');
+};
+$('ardHistoryClear').onclick=()=>{
+  if(!confirm('Wyczyścić historię?'))return;
+  localStorage.removeItem('ardHistory');ardRenderHistory();
+};
 
-  panels.forEach(pl=>{
-    let o = smooth(pl.a, pl.b, p) * (1 - smooth(pl.c, pl.d, p));
-    o = clamp(o, 0, 1);
-    const dir = pl.el.classList.contains('right') ? 1 : pl.el.classList.contains('left') ? -1 : 0;
-    pl.el.style.opacity = o.toFixed(3);
-    pl.el.style.transform = `translate3d(${(1-o)*dir*36}px, ${(1-o)*26}px, 0)`;
+$('ardConsoleFilter').addEventListener('click',e=>{
+  const btn=e.target.closest('button');
+  if(!btn)return;
+  document.querySelectorAll('#ardConsoleFilter button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  S.ardConsoleFilter=btn.dataset.f;
+  const filter=S.ardConsoleFilter;
+  document.querySelectorAll('#ardOutput div').forEach(d=>{
+    d.style.display=(filter==='all'||d.className.includes(filter))?'':'none';
   });
-
-  composer.render();
-}
-
-/* ───────────── START ───────────── */
-window.addEventListener('load', ()=>{
-  setTimeout(()=>{ document.getElementById('loader').classList.add('gone'); }, 900);
-  setTimeout(()=>{ document.getElementById('loader').style.display='none'; }, 2200);
 });
 
-animate();
+$('ardSend').onclick=()=>{const c=$('ardCmd').value.trim();if(c){ardSend(c);$('ardCmd').value='';}};
+$('ardCmd').addEventListener('keydown',e=>{
+  if(e.key==='Enter')$('ardSend').click();
+  else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    if(S.ardCmdHistoryIdx>0){S.ardCmdHistoryIdx--;$('ardCmd').value=S.ardCmdHistory[S.ardCmdHistoryIdx]||'';}
+  }else if(e.key==='ArrowDown'){
+    e.preventDefault();
+    if(S.ardCmdHistoryIdx<S.ardCmdHistory.length-1){S.ardCmdHistoryIdx++;$('ardCmd').value=S.ardCmdHistory[S.ardCmdHistoryIdx]||'';}
+    else{S.ardCmdHistoryIdx=S.ardCmdHistory.length;$('ardCmd').value='';}
+  }
+});
+
+$('ardCopySketch').onclick=async()=>{try{await navigator.clipboard.writeText(ARD_SKETCH);toast('Skopiowano','ok');}catch(e){toast('Błąd','err');}};
+$('ardDownloadSketch').onclick=()=>{downloadBlob(new Blob([ARD_SKETCH],{type:'text/plain'}),'nfc_rc522.ino');};
+
+// ================== RESZTA ==================
+function downloadBlob(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
+
+$('readBtn').onclick=async()=>{
+  if(!('NDEFReader' in window))return toast('Brak Web NFC','err');
+  try{
+    showBig('i-scan','Zbliż kartę…','');
+    const ndef=new NDEFReader();
+    const ctrl=new AbortController();
+    const to=setTimeout(()=>{ctrl.abort();hideBig();toast('Timeout','err');},30000);
+    await ndef.scan({signal:ctrl.signal});
+    ndef.onreading=({serialNumber,message})=>{
+      clearTimeout(to);ctrl.abort();hideBig();
+      let html=`<div class="uid-display" style="padding:11px;background:var(--s2);border-radius:8px;text-align:center;font-family:var(--mo);color:var(--pr);font-weight:700;margin-bottom:8px">UID: ${serialNumber}</div>`;
+      if(!message||!message.records.length){html+='<div class="info-text">Karta pusta</div>';}
+      else{message.records.forEach(r=>{const bytes=r.data?new Uint8Array(r.data.buffer||r.data):new Uint8Array(0);let txt;try{txt=new TextDecoder(r.encoding||'utf-8').decode(bytes);}catch(e){txt='';}if(!/[\x20-\x7E\s]*/.test(txt))txt=Array.from(bytes.slice(0,32)).map(x=>x.toString(16).padStart(2,'0')).join(' ');html+=`<div class="card" style="padding:10px;margin-bottom:6px"><strong style="color:var(--pr);font-size:10px;text-transform:uppercase">${r.recordType}${r.mediaType?' / '+r.mediaType:''}</strong><div style="font-family:var(--mo);font-size:11px;margin-top:4px;word-break:break-all">${txt.substring(0,200)}</div></div>`;});}
+      $('readResult').innerHTML=html;
+    };
+    ndef.onreadingerror=()=>{clearTimeout(to);hideBig();toast('Błąd odczytu','err');};
+  }catch(e){hideBig();toast('Błąd: '+e.message,'err');}
+};
+
+$('ardAutoReconnect').onchange=e=>{S.ardSettings.autoReconnect=e.target.checked;saveSettings();};
+$('ardAutoDump').onchange=e=>{S.ardSettings.autoDump=e.target.checked;saveSettings();};
+$('ardVibrate').onchange=e=>{S.ardSettings.vibrate=e.target.checked;saveSettings();};
+$('ardBaudGlobal').onchange=e=>{S.ardSettings.baud=parseInt(e.target.value);$('ardBaud').value=e.target.value;saveSettings();};
+$('ardResetAll').onclick=()=>{
+  if(!confirm('Reset wszystkiego?'))return;
+  S.ardBlocks=new Array(64).fill(null).map(()=>new Uint8Array(16));
+  S.ardOriginal=new Array(64).fill(null).map(()=>new Uint8Array(16));
+  S.ardDirty.clear();S.ardSectors=new Array(16).fill(null);
+  S.ardUid=null;S.ardSak=null;
+  $('ardUid').textContent='—';$('ardSak').textContent='—';
+  ardRenderEditor();ardRenderSectorMap();ardRenderDiff();ardCheckDirty();
+  toast('Reset OK','ok');
+};
+
+function loadSettings(){try{const s=localStorage.getItem('ardSettings');if(s)Object.assign(S.ardSettings,JSON.parse(s));}catch(e){}
+  $('ardBaud').value=S.ardSettings.baud;$('ardBaudGlobal').value=S.ardSettings.baud;
+  $('ardAutoReconnect').checked=S.ardSettings.autoReconnect;
+  $('ardAutoDump').checked=S.ardSettings.autoDump;
+  $('ardVibrate').checked=S.ardSettings.vibrate;
+}
+function saveSettings(){try{localStorage.setItem('ardSettings',JSON.stringify(S.ardSettings));}catch(e){}}
+
+$('logToggle').onclick=()=>$('logPanel').classList.toggle('open');
+$('logClear').onclick=()=>{$('log').innerHTML='';};
+
+loadSettings();
+ardRenderHistory();
+log('Gotowe','ok');
+if(hasSerial)ardOut('// Web Serial gotowe – kliknij „Połącz (COM5)”','sys');
 </script>
 </body>
 </html>
