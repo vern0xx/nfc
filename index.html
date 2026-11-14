@@ -6,12 +6,13 @@
 <meta name="theme-color" content="#18181b">
 <title>NFC Master Pro</title>
 <style>
-:root{--bg:#18181b;--card:#27272a;--card2:#1f1f23;--border:#3f3f46;--text:#f4f4f5;--muted:#a1a1aa;--primary:#3b82f6;--success:#22c55e;--error:#ef4444;--warning:#f59e0b;--info:#06b6d4;--r:12px;--touch:44px;--mono:'SF Mono',Consolas,monospace}
+:root{--bg:#18181b;--card:#27272a;--card2:#1f1f23;--card3:#343438;--border:#3f3f46;--text:#f4f4f5;--muted:#a1a1aa;--primary:#3b82f6;--primary-h:#2563eb;--success:#22c55e;--error:#ef4444;--warning:#f59e0b;--info:#06b6d4;--gold:#eab308;--r:12px;--touch:44px;--mono:'SF Mono',Consolas,monospace}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;font-size:15px;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);overflow-x:hidden}
 .icon{width:20px;height:20px;flex-shrink:0;vertical-align:middle}
-.icon-lg{width:28px;height:28px}.icon-xl{width:96px;height:96px}
+.icon-lg{width:28px;height:28px}
+.icon-xl{width:96px;height:96px}
 header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
 header h1{font-size:16px;margin:0;font-weight:700;flex:1;display:flex;align-items:center;gap:8px}
 .badge{padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;gap:5px}
@@ -57,8 +58,6 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
 .result-item details{margin-top:8px}
 .result-item summary{cursor:pointer;color:var(--info);font-size:11px;font-weight:700;text-transform:uppercase;padding:4px 0}
 .hex-block{font-family:var(--mono);font-size:11px;background:#000;padding:10px;border-radius:6px;color:#9ca3af;white-space:pre;overflow-x:auto;line-height:1.5;margin-top:6px}
-.hex-block .addr{color:#6366f1}
-.hex-block .ascii{color:#eab308}
 .info-text{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6}
 .info-text kbd{background:var(--card2);padding:2px 6px;border-radius:4px;border:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--primary)}
 .alert{padding:10px 12px;border-radius:10px;margin-bottom:10px;font-size:12px;display:flex;gap:10px;line-height:1.5}
@@ -73,7 +72,7 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
 .slot.empty{opacity:.6}
 .slot-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .slot-title strong{font-size:12px;text-transform:uppercase;color:var(--primary)}
-.slot-info{font-family:var(--mono);font-size:11px;color:var(--muted);word-break:break-all}
+.slot-info{font-family:var(--mono);font-size:11px;color:var(--muted);word-break:break-all;white-space:pre-line}
 .slot-count{padding:3px 10px;background:var(--primary);color:#fff;border-radius:20px;font-size:11px;font-weight:700}
 #logPanel{background:var(--card2);border-top:1px solid var(--border);max-height:36px;overflow:hidden;transition:max-height .2s}
 #logPanel.open{max-height:180px}
@@ -110,6 +109,110 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
 .chip.text{background:var(--info);color:#000}
 .chip.url{background:var(--success);color:#000}
 .chip.empty{background:var(--muted)}
+
+/* CARD VISUALIZER */
+.card-viz{perspective:1200px;margin-bottom:16px}
+.card-inner{
+  position:relative;
+  aspect-ratio:1.586;width:100%;max-width:400px;margin:0 auto;
+  border-radius:18px;
+  background:linear-gradient(160deg,#2a2a30 0%,#1a1a1f 40%,#0f0f12 100%);
+  border:1px solid #3f3f46;
+  box-shadow:0 20px 60px -20px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.05);
+  padding:18px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  overflow:hidden;
+  transition:transform .5s,box-shadow .3s,border-color .3s;
+  animation:cardFloat 4s ease-in-out infinite;
+}
+@keyframes cardFloat{0%,100%{transform:translateY(0) rotateX(2deg)}50%{transform:translateY(-6px) rotateX(-2deg)}}
+.card-viz.active .card-inner{border-color:var(--success);box-shadow:0 20px 80px -20px rgba(34,197,94,.4),inset 0 1px 0 rgba(255,255,255,.08);animation:none;transform:none}
+.card-viz.error .card-inner{border-color:var(--error);box-shadow:0 20px 80px -20px rgba(239,68,68,.4)}
+.card-viz.scanning .card-inner{border-color:var(--primary);box-shadow:0 20px 80px -20px rgba(59,130,246,.5),0 0 0 1px rgba(59,130,246,.3)}
+.card-inner::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 80% 20%,rgba(59,130,246,.15),transparent 50%),
+    radial-gradient(circle at 20% 80%,rgba(139,92,246,.1),transparent 50%);
+  pointer-events:none;
+}
+.card-scanline{
+  position:absolute;left:0;right:0;height:3px;top:-3px;
+  background:linear-gradient(90deg,transparent,var(--primary),transparent);
+  box-shadow:0 0 20px 4px var(--primary);
+  opacity:0;pointer-events:none;
+}
+.card-viz.scanning .card-scanline{opacity:1;animation:scanMove 1.5s ease-in-out infinite}
+@keyframes scanMove{0%{top:0}100%{top:100%}}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;z-index:1}
+.card-chip{width:38px;height:32px;color:var(--gold)}
+.card-wave{width:32px;height:32px;color:rgba(59,130,246,.5);transition:color .3s}
+.card-viz.active .card-wave{color:var(--success)}
+.card-viz.scanning .card-wave{color:var(--primary);animation:pl 1.2s ease-in-out infinite}
+.card-uid{
+  font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:2px;
+  color:var(--muted);text-align:center;z-index:1;
+  transition:color .3s,text-shadow .3s;
+  word-spacing:4px;
+}
+.card-viz.active .card-uid{color:var(--text);text-shadow:0 0 20px rgba(34,197,94,.4)}
+.card-records{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;z-index:1;min-height:22px}
+.card-empty{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.card-chip-tag{
+  padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;
+  background:rgba(59,130,246,.2);color:#93c5fd;border:1px solid rgba(59,130,246,.4);
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.card-chip-tag.mime{background:rgba(245,158,11,.2);color:#fcd34d;border-color:rgba(245,158,11,.4)}
+.card-chip-tag.text{background:rgba(6,182,212,.2);color:#67e8f9;border-color:rgba(6,182,212,.4)}
+.card-chip-tag.url{background:rgba(34,197,94,.2);color:#86efac;border-color:rgba(34,197,94,.4)}
+.card-footer{display:flex;justify-content:space-between;align-items:center;z-index:1;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700}
+.card-viz.active .card-footer{color:var(--text)}
+
+/* MIFARE BLOCKS */
+.sector-block{background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.sector-head{padding:8px 12px;background:var(--card3);display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--primary)}
+.sector-head .badge-sm{background:var(--card2);padding:2px 8px;border-radius:20px;font-size:10px;color:var(--muted)}
+.sector-head .badge-sm.used{background:var(--success);color:#000}
+.block-row{display:grid;grid-template-columns:44px 1fr;gap:8px;padding:6px 10px;font-family:var(--mono);font-size:10px;border-top:1px solid rgba(255,255,255,.03);align-items:center}
+.block-row.trailer{background:rgba(239,68,68,.08);color:#fca5a5}
+.block-row.ndef-used{background:rgba(34,197,94,.06)}
+.block-row.empty{color:#52525b}
+.block-addr{color:var(--primary);font-weight:700;text-align:right}
+.block-row.trailer .block-addr{color:var(--error)}
+.block-data{display:flex;flex-direction:column;gap:2px;word-break:break-all}
+.block-hex{color:var(--text)}
+.block-row.empty .block-hex{color:#52525b}
+.block-ascii{color:var(--muted);font-size:9px;opacity:.7}
+.block-row.trailer .block-hex{color:#fca5a5}
+
+/* CROPPER MODAL */
+#cropModal{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:1000;display:none;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#cropModal.show{display:flex}
+.crop-header{display:flex;align-items:center;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--border);gap:12px}
+.crop-header h3{margin:0;font-size:15px;flex:1}
+.crop-header button{background:var(--card2);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.crop-stage{flex:1;position:relative;overflow:hidden;touch-action:none;background:#000;display:flex;align-items:center;justify-content:center;margin:10px;border-radius:12px}
+#cropCanvas{position:absolute;top:0;left:0;width:100%;height:100%;cursor:grab}
+#cropCanvas:active{cursor:grabbing}
+.crop-frame{
+  position:absolute;pointer-events:none;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.6);
+  border:2px solid white;
+  border-radius:2px;
+}
+.crop-frame::before,.crop-frame::after{content:'';position:absolute;background:rgba(255,255,255,.4);pointer-events:none}
+.crop-frame::before{top:33.33%;bottom:33.33%;left:0;right:0;border-top:1px dashed rgba(255,255,255,.4);border-bottom:1px dashed rgba(255,255,255,.4);background:none}
+.crop-frame::after{left:33.33%;right:33.33%;top:0;bottom:0;border-left:1px dashed rgba(255,255,255,.4);border-right:1px dashed rgba(255,255,255,.4);background:none}
+.crop-controls{padding:12px 16px;background:var(--card);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
+.crop-controls .ctrl-row{display:flex;align-items:center;gap:10px}
+.crop-controls label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;margin:0;min-width:60px}
+.crop-controls input[type=range]{flex:1;margin:0;padding:0;background:transparent;border:none;min-height:auto}
+.crop-aspects{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.crop-aspects button{background:var(--card2);border:2px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.crop-aspects button.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.crop-footer{display:flex;gap:10px;padding:12px 16px;background:var(--card);border-top:1px solid var(--border)}
+.crop-footer .btn{flex:1}
 </style>
 </head>
 <body>
@@ -124,7 +227,6 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
 <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
 <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
 <symbol id="i-unlock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol>
-<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
 <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
 <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
 <symbol id="i-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
@@ -141,6 +243,10 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
 <symbol id="i-hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
 <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
 <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+<symbol id="i-chip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
+<symbol id="i-crop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
 </svg>
 
 <header>
@@ -151,6 +257,7 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
 
 <nav>
   <button data-tab="read" class="active"><svg class="icon"><use href="#i-search"/></svg> Odczyt</button>
+  <button data-tab="blocks"><svg class="icon"><use href="#i-grid"/></svg> Bloki</button>
   <button data-tab="write"><svg class="icon"><use href="#i-globe"/></svg> URL</button>
   <button data-tab="data"><svg class="icon"><use href="#i-doc"/></svg> Dane</button>
   <button data-tab="photo"><svg class="icon"><use href="#i-camera"/></svg> Zdjęcie</button>
@@ -163,6 +270,21 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
 <main>
 
 <section id="tab-read" class="tab active">
+  <div class="card-viz" id="cardViz">
+    <div class="card-inner">
+      <div class="card-scanline"></div>
+      <div class="card-top">
+        <svg class="card-chip"><use href="#i-chip"/></svg>
+        <svg class="card-wave"><use href="#i-nfc"/></svg>
+      </div>
+      <div class="card-uid" id="cardUid">---- ---- ---- ----</div>
+      <div class="card-records" id="cardRecords"><span class="card-empty">Czeka na kartę…</span></div>
+      <div class="card-footer">
+        <span id="cardType">NFC TAG</span>
+        <span id="cardSize">0 B</span>
+      </div>
+    </div>
+  </div>
   <div class="card">
     <h2><svg class="icon"><use href="#i-search"/></svg> Odczyt karty</h2>
     <button class="btn" id="readBtn"><svg class="icon"><use href="#i-scan"/></svg> Odczytaj kartę</button>
@@ -180,13 +302,29 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
   </div>
 </section>
 
+<section id="tab-blocks" class="tab">
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-grid"/></svg> Bloki MIFARE</h2>
+    <div class="alert warn">
+      <svg class="icon"><use href="#i-warn"/></svg>
+      <div><b>Uwaga:</b> Web NFC nie ma dostępu do surowych bloków MIFARE. Poniżej widzisz <b>rekonstrukcję</b> z NDEF (bloki 4–62). Do prawdziwego odczytu bloków użyj <b>MIFARE Classic Tool</b>.</div>
+    </div>
+    <button class="btn" id="blocksRead"><svg class="icon"><use href="#i-scan"/></svg> Odczytaj i pokaż bloki</button>
+    <div class="stats">
+      <div class="stat"><div class="v" id="blocksUsed">0</div><div class="l">Zajęte</div></div>
+      <div class="stat"><div class="v" id="blocksFree">0</div><div class="l">Wolne</div></div>
+      <div class="stat"><div class="v" id="blocksPct">0%</div><div class="l">Użycie</div></div>
+    </div>
+  </div>
+  <div id="blocksView"></div>
+</section>
+
 <section id="tab-write" class="tab">
   <div class="card">
     <h2><svg class="icon"><use href="#i-globe"/></svg> Zapisz URL</h2>
     <label>Adres strony</label>
     <input type="url" id="urlInput" value="https://vercode.pl">
     <button class="btn" id="writeUrlBtn"><svg class="icon"><use href="#i-save"/></svg> Zapisz URL</button>
-    <p class="info-text">Telefon otworzy tę stronę po przyłożeniu karty.</p>
   </div>
 </section>
 
@@ -200,13 +338,13 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
     <label>URL</label>
     <input type="url" id="urlDataInput" value="https://vercode.pl">
     <button class="btn" id="writeDataBtn"><svg class="icon"><use href="#i-save"/></svg> Zapisz dane + URL</button>
-    <div class="alert info"><svg class="icon"><use href="#i-info"/></svg><div>Format: <kbd>NAME=X;ID=Y;URL=Z;</kbd> — łatwy do sparsowania w Arduino.</div></div>
+    <div class="alert info"><svg class="icon"><use href="#i-info"/></svg><div>Format: <kbd>NAME=X;ID=Y;URL=Z;</kbd></div></div>
   </div>
 </section>
 
 <section id="tab-photo" class="tab">
   <div class="card">
-    <h2><svg class="icon"><use href="#i-camera"/></svg> Zdjęcie</h2>
+    <h2><svg class="icon"><use href="#i-camera"/></svg> Zdjęcie (kadrowane)</h2>
     <div class="photo-btns">
       <button class="btn secondary" id="cameraBtn"><svg class="icon"><use href="#i-camera"/></svg> Aparat</button>
       <button class="btn secondary" id="galleryBtn"><svg class="icon"><use href="#i-image"/></svg> Galeria</button>
@@ -222,7 +360,7 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
       <option value="600">Średnia (~600 B)</option>
     </select>
     <button class="btn" id="writePhotoBtn" disabled><svg class="icon"><use href="#i-save"/></svg> Zapisz zdjęcie</button>
-    <div class="alert warn"><svg class="icon"><use href="#i-warn"/></svg><div>MIFARE 1K ma ~750 B na NDEF. Zdjęcie jako miniatura base64.</div></div>
+    <div class="alert warn"><svg class="icon"><use href="#i-warn"/></svg><div>Miniatura base64 na kartę. Dla pełnego zdjęcia użyj NTAG215 lub zapisz URL.</div></div>
   </div>
 </section>
 
@@ -251,7 +389,7 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
     <h2><svg class="icon"><use href="#i-clone"/></svg> Klonowanie</h2>
     <div class="slot empty" id="slot">
       <div class="slot-title"><strong>Bufor źródłowy</strong><span class="slot-count" id="slotCount">—</span></div>
-      <div class="slot-info" id="slotInfo">Brak danych. Odczytaj kartę źródłową.</div>
+      <div class="slot-info" id="slotInfo">Brak danych.</div>
     </div>
     <div class="row">
       <button class="btn" id="cloneRead"><svg class="icon"><use href="#i-search"/></svg> Odczytaj źródło</button>
@@ -261,10 +399,9 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
       <button class="btn success" id="cloneCopy"><svg class="icon"><use href="#i-copy"/></svg> Kopiuj</button>
       <button class="btn warning" id="cloneMove"><svg class="icon"><use href="#i-move"/></svg> Przenieś</button>
     </div>
-    <div class="alert info"><svg class="icon"><use href="#i-info"/></svg><div>Kopiuj: zapisuje rekordy źródłowe na nowej karcie. Przenieś: to samo + czyści kartę źródłową.</div></div>
   </div>
   <div class="card">
-    <h2><svg class="icon"><use href="#i-hex"/></svg> Podgląd HEX źródła</h2>
+    <h2><svg class="icon"><use href="#i-hex"/></svg> Podgląd HEX</h2>
     <div class="hex-block" id="cloneHex" style="min-height:60px">—</div>
   </div>
 </section>
@@ -272,7 +409,7 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
 <section id="tab-hex" class="tab">
   <div class="card">
     <h2><svg class="icon"><use href="#i-hex"/></svg> Bufor binarny</h2>
-    <label>HEX (spacje dowolne)</label>
+    <label>HEX</label>
     <textarea id="hexInput" placeholder="00 01 02 03 ..."></textarea>
     <div class="stats">
       <div class="stat"><div class="v" id="hexBytes">0</div><div class="l">Bajtów</div></div>
@@ -288,7 +425,6 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
       <button class="btn danger" id="hexClear"><svg class="icon"><use href="#i-trash"/></svg> Wyczyść</button>
     </div>
     <input type="file" id="hexFile" accept=".bin,.dat,application/octet-stream" style="display:none">
-    <div class="alert info"><svg class="icon"><use href="#i-info"/></svg><div>Zapis na kartę jako rekord MIME <kbd>application/octet-stream</kbd>. Karta musi mieć miejsce.</div></div>
   </div>
   <div class="card">
     <h2><svg class="icon"><use href="#i-doc"/></svg> Podgląd</h2>
@@ -304,11 +440,6 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
   <div class="card warn">
     <h2><svg class="icon"><use href="#i-refresh"/></svg> Reset karty</h2>
     <button class="btn warning" id="resetCardBtn"><svg class="icon"><use href="#i-refresh"/></svg> Wyczyść kartę</button>
-  </div>
-  <div class="card danger">
-    <h2><svg class="icon"><use href="#i-lock"/></svg> Zablokuj</h2>
-    <button class="btn danger" id="lockCardBtn"><svg class="icon"><use href="#i-lock"/></svg> Zablokuj permanentnie</button>
-    <div class="alert error"><svg class="icon"><use href="#i-warn"/></svg><div>NIEODWRACALNE. Karta nigdy nie pozwoli na zapis.</div></div>
   </div>
   <div class="card">
     <h2><svg class="icon"><use href="#i-refresh"/></svg> Reset aplikacji</h2>
@@ -340,6 +471,37 @@ button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
   <div class="text" id="bigText"></div>
   <div class="sub" id="bigSub"></div>
   <button id="bigCancel" style="display:none"><svg class="icon"><use href="#i-x"/></svg> Anuluj</button>
+</div>
+
+<div id="cropModal">
+  <div class="crop-header">
+    <h3>Przytnij zdjęcie</h3>
+    <button id="cropClose"><svg class="icon"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="crop-stage" id="cropStage">
+    <canvas id="cropCanvas"></canvas>
+    <div class="crop-frame" id="cropFrame"></div>
+  </div>
+  <div class="crop-controls">
+    <div class="ctrl-row">
+      <label>Skala</label>
+      <input type="range" id="cropZoom" min="10" max="400" value="100">
+    </div>
+    <div class="crop-aspects">
+      <button data-aspect="1" class="active">1:1</button>
+      <button data-aspect="1.333">4:3</button>
+      <button data-aspect="1.778">16:9</button>
+      <button data-aspect="0">Free</button>
+    </div>
+    <div class="ctrl-row">
+      <button class="btn secondary sm" id="cropRotate"><svg class="icon"><use href="#i-rotate"/></svg> Obróć 90°</button>
+      <button class="btn secondary sm" id="cropReset"><svg class="icon"><use href="#i-refresh"/></svg> Reset</button>
+    </div>
+  </div>
+  <div class="crop-footer">
+    <button class="btn secondary" id="cropCancel">Anuluj</button>
+    <button class="btn success" id="cropApply"><svg class="icon"><use href="#i-crop"/></svg> Zastosuj</button>
+  </div>
 </div>
 
 <script>
@@ -419,9 +581,7 @@ document.body.addEventListener('click', function a(){
   document.body.removeEventListener('click', a);
 }, { once:true });
 
-async function keepAwake(){
-  try{ if('wakeLock' in navigator) await navigator.wakeLock.request('screen'); }catch(e){}
-}
+async function keepAwake(){ try{ if('wakeLock' in navigator) await navigator.wakeLock.request('screen'); }catch(e){} }
 keepAwake();
 document.addEventListener('visibilitychange', () => { if(document.visibilityState==='visible') keepAwake(); });
 
@@ -459,6 +619,33 @@ function hexDump(b){
     lines.push(`${i.toString(16).padStart(4,'0')}  ${hex}  ${asc}`);
   }
   return lines.join('\n') || '—';
+}
+
+function renderCard(tag){
+  const cardViz = $('cardViz');
+  cardViz.classList.remove('scanning','error');
+  if(!tag){
+    cardViz.classList.remove('active');
+    $('cardUid').textContent = '---- ---- ---- ----';
+    $('cardRecords').innerHTML = '<span class="card-empty">Czeka na kartę…</span>';
+    $('cardType').textContent = 'NFC TAG';
+    $('cardSize').textContent = '0 B';
+    return;
+  }
+  cardViz.classList.add('active');
+  $('cardUid').textContent = tag.serialNumber || '---- ---- ---- ----';
+  const chips = [];
+  let totalB = 0;
+  for(const r of tag.records){
+    const bytes = new Uint8Array(r.data);
+    totalB += bytes.length;
+    const cls = r.recordType === 'mime' ? 'mime' : r.recordType === 'text' ? 'text' : r.recordType === 'url' ? 'url' : '';
+    chips.push(`<span class="card-chip-tag ${cls}">${r.recordType}</span>`);
+  }
+  if(!chips.length) chips.push('<span class="card-empty">Pusty NDEF</span>');
+  $('cardRecords').innerHTML = chips.join('');
+  $('cardType').textContent = tag.serialNumber ? tag.serialNumber.split(':').length === 7 ? 'MIFARE 1K' : 'NFC TAG' : 'NFC TAG';
+  $('cardSize').textContent = `${totalB} B`;
 }
 
 async function captureTag(){
@@ -503,7 +690,6 @@ function recForWrite(r){
   if(t === 'absolute-url') return { recordType: 'absolute-url', data: new TextDecoder().decode(bytes) };
   if(t === 'mime') return { recordType: 'mime', mediaType: r.mediaType || 'application/octet-stream', data: bytes };
   if(t === 'empty') return { recordType: 'empty' };
-  if(t === 'unknown') return { recordType: 'unknown', data: bytes };
   return { recordType: 'mime', mediaType: r.mediaType || 'application/octet-stream', data: bytes };
 }
 
@@ -534,18 +720,21 @@ $('readBtn').onclick = async () => {
   if(!hasNfc) return;
   $('readResult').innerHTML = '';
   $('readActions').style.display = 'none';
+  $('cardViz').classList.add('scanning');
+  $('cardViz').classList.remove('active','error');
   try{
     showBig('i-scan', 'Zbliż kartę…', 'Odczyt w toku');
     const tag = await captureTag();
     hideBig(); vibrate(30);
     state.read = tag;
+    renderCard(tag);
     log(`Odczyt ${tag.records.length} rekordów z ${tag.serialNumber}`,'ok');
 
     let html = `<div class="uid-display">UID: ${tag.serialNumber}</div>`;
     if(!tag.records.length){
       html += `<div class="result-item"><strong>Zawartość</strong><div class="preview">Karta pusta (brak NDEF)</div></div>`;
     } else {
-      tag.records.forEach((r, i) => {
+      tag.records.forEach(r => {
         const cls = r.recordType === 'mime' ? 'mime' : r.recordType;
         const bytes = new Uint8Array(r.data);
         const prev = recordPreview(r);
@@ -559,8 +748,104 @@ $('readBtn').onclick = async () => {
     $('readResult').innerHTML = html;
     $('readActions').style.display = 'block';
   }catch(e){
-    hideBig(); log('Błąd: ' + e.message,'err'); toast('Błąd: ' + e.message,'err');
+    hideBig();
+    $('cardViz').classList.remove('scanning');
+    $('cardViz').classList.add('error');
+    log('Błąd: ' + e.message,'err'); toast('Błąd: ' + e.message,'err');
   }
+};
+
+function renderBlocks(tag){
+  const blocks = new Array(64).fill(null).map(() => new Uint8Array(16));
+  let totalData = new Uint8Array(0);
+  if(tag){
+    const chunks = tag.records.map(r => new Uint8Array(r.data));
+    const total = chunks.reduce((a,c) => a+c.length, 0);
+    totalData = new Uint8Array(total);
+    let off = 0;
+    for(const c of chunks){ totalData.set(c, off); off += c.length; }
+  }
+  const tlv = new Uint8Array(2 + totalData.length + 1);
+  if(totalData.length > 0){
+    tlv[0] = 0x03;
+    tlv[1] = totalData.length > 254 ? 0xFF : totalData.length;
+    let idx = 2;
+    if(totalData.length > 254){ tlv[1] = 0xFF; tlv[2] = (totalData.length >> 8) & 0xFF; tlv[3] = totalData.length & 0xFF; idx = 4; }
+    tlv.set(totalData, idx);
+    tlv[idx + totalData.length] = 0xFE;
+  }
+  for(let b = 4; b < 64; b++){
+    if((b % 4) === 3) continue;
+    const start = (b - 4) * 16;
+    if(start >= tlv.length) break;
+    blocks[b] = tlv.slice(start, start + 16);
+  }
+  if(tag && tag.serialNumber){
+    const parts = tag.serialNumber.split(':').map(x => parseInt(x, 16)).filter(x => !isNaN(x));
+    const b0 = new Uint8Array(16);
+    for(let i = 0; i < Math.min(parts.length, 4); i++) b0[i] = parts[i];
+    if(parts.length >= 4){
+      b0[4] = parts[0] ^ parts[1] ^ parts[2] ^ parts[3];
+    }
+    blocks[0] = b0;
+  }
+  blocks[1] = new Uint8Array([0x14,0x01,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);
+  blocks[2] = new Uint8Array([0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1,0x03,0xE1]);
+
+  let used = 0, free = 0;
+  const view = $('blocksView');
+  view.innerHTML = '';
+  for(let s = 0; s < 16; s++){
+    const sectorDiv = document.createElement('div');
+    sectorDiv.className = 'sector-block';
+    const head = document.createElement('div');
+    head.className = 'sector-head';
+    const usedInSector = [];
+    for(let i = 0; i < 4; i++){
+      const b = s * 4 + i;
+      if(i === 3) continue;
+      const d = blocks[b];
+      if(d && d.some(x => x !== 0)) usedInSector.push(b);
+    }
+    head.innerHTML = `<span>Sektor ${s} (bloki ${s*4}–${s*4+3})</span><span class="badge-sm ${usedInSector.length ? 'used' : ''}">${usedInSector.length}/3</span>`;
+    sectorDiv.appendChild(head);
+    for(let i = 0; i < 4; i++){
+      const b = s * 4 + i;
+      const d = blocks[b];
+      const row = document.createElement('div');
+      const isTrailer = (i === 3);
+      const isUsed = d && d.some(x => x !== 0);
+      row.className = 'block-row';
+      if(isTrailer) row.classList.add('trailer');
+      else if(isUsed) row.classList.add('ndef-used');
+      else row.classList.add('empty');
+      const hex = isTrailer ? '•• •• •• •• •• •• FF 07 80 69 •• •• •• •• •• ••' : Array.from(d || new Uint8Array(16)).map(x => x.toString(16).padStart(2,'0')).join(' ');
+      const asc = isTrailer ? 'Key A + Access + Key B' : Array.from(d || new Uint8Array(16)).map(x => x >= 32 && x < 127 ? String.fromCharCode(x) : '·').join('');
+      row.innerHTML = `<span class="block-addr">${b}</span><div class="block-data"><span class="block-hex">${hex}</span><span class="block-ascii">${asc}</span></div>`;
+      sectorDiv.appendChild(row);
+      if(!isTrailer){
+        if(isUsed) used++; else free++;
+      }
+    }
+    view.appendChild(sectorDiv);
+  }
+  $('blocksUsed').textContent = used;
+  $('blocksFree').textContent = free;
+  $('blocksPct').textContent = Math.round((used / (used + free)) * 100) + '%';
+}
+
+$('blocksRead').onclick = async () => {
+  if(!hasNfc) return;
+  try{
+    showBig('i-scan', 'Zbliż kartę…', 'Odczyt bloków');
+    const tag = await captureTag();
+    hideBig(); vibrate(30);
+    renderBlocks(tag);
+    renderCard(tag);
+    state.read = tag;
+    log(`Bloki: ${tag.serialNumber}`,'ok');
+    toast('Rekonstrukcja bloków gotowa','ok');
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
 };
 
 $('readToClone').onclick = () => {
@@ -616,7 +901,7 @@ $('writeUrlBtn').onclick = async () => {
   try{
     showBig('i-save', 'Zbliż kartę…', 'Zapis URL', hideBig);
     await writeTag([{ recordType:'url', data: url }]);
-    hideBig(); showBigSuccess('URL zapisany', url); log('URL zapisany: ' + url,'ok');
+    hideBig(); showBigSuccess('URL zapisany', url); log('URL: ' + url,'ok');
   }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
 };
 
@@ -640,40 +925,153 @@ const fileInput = $('fileInput'), cameraInput = $('cameraInput');
 $('galleryBtn').onclick = () => fileInput.click();
 $('cameraBtn').onclick = () => cameraInput.click();
 
-async function compressImage(file, target){
-  return new Promise(res => {
+const crop = {
+  img: null, scale: 1, offsetX: 0, offsetY: 0, rotation: 0,
+  aspect: 1, dragging: false, startX: 0, startY: 0, startOffX: 0, startOffY: 0
+};
+
+function openCropModal(file){
+  const reader = new FileReader();
+  reader.onload = e => {
     const img = new Image();
     img.onload = () => {
-      const c = document.createElement('canvas');
-      let w = img.width, h = img.height;
-      const ratio = Math.sqrt((w*h)/(target*3.5));
-      if(ratio > 1){ w = Math.round(w/ratio); h = Math.round(h/ratio); }
-      c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img, 0, 0, w, h);
-      let q = 0.75, dataUrl = c.toDataURL('image/jpeg', q);
-      while(dataUrl.length > target*1.4 && q > 0.1){ q -= 0.1; dataUrl = c.toDataURL('image/jpeg', q); }
-      res({ dataUrl, size: dataUrl.length, w, h });
+      crop.img = img;
+      crop.scale = 1;
+      crop.offsetX = 0;
+      crop.offsetY = 0;
+      crop.rotation = 0;
+      crop.aspect = 1;
+      document.querySelectorAll('.crop-aspects button').forEach(b => b.classList.toggle('active', b.dataset.aspect === '1'));
+      $('cropZoom').value = 100;
+      $('cropModal').classList.add('show');
+      requestAnimationFrame(() => { layoutCropFrame(); renderCrop(); });
     };
-    const r = new FileReader();
-    r.onload = e => { img.src = e.target.result; };
-    r.readAsDataURL(file);
-  });
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
-async function handlePhoto(file){
-  if(!file) return;
-  toast('Kompresja…','info');
-  const target = parseInt($('compressSelect').value, 10);
-  const r = await compressImage(file, target);
-  state.photo = r.dataUrl;
-  $('photoPreview').src = r.dataUrl;
-  $('photoPreview').style.display = 'block';
-  $('photoInfo').textContent = `${r.w}×${r.h} px • ${r.size} B base64`;
-  $('writePhotoBtn').disabled = false;
-  log(`Zdjęcie ${r.size} B`,'ok');
+function layoutCropFrame(){
+  const stage = $('cropStage');
+  const frame = $('cropFrame');
+  const W = stage.clientWidth - 40;
+  const H = stage.clientHeight - 40;
+  let fw, fh;
+  if(crop.aspect === 0){
+    fw = W; fh = H;
+  } else if(W / H > crop.aspect){
+    fh = H; fw = fh * crop.aspect;
+  } else {
+    fw = W; fh = fw / crop.aspect;
+  }
+  const left = (stage.clientWidth - fw) / 2;
+  const top = (stage.clientHeight - fh) / 2;
+  frame.style.left = left + 'px';
+  frame.style.top = top + 'px';
+  frame.style.width = fw + 'px';
+  frame.style.height = fh + 'px';
 }
-fileInput.onchange = e => handlePhoto(e.target.files[0]);
-cameraInput.onchange = e => handlePhoto(e.target.files[0]);
+
+function renderCrop(){
+  const stage = $('cropStage');
+  const canvas = $('cropCanvas');
+  const W = stage.clientWidth;
+  const H = stage.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+  if(!crop.img) return;
+  ctx.save();
+  ctx.translate(W/2 + crop.offsetX, H/2 + crop.offsetY);
+  ctx.rotate(crop.rotation * Math.PI / 180);
+  const fit = Math.min(W / crop.img.width, H / crop.img.height);
+  const s = fit * crop.scale;
+  ctx.scale(s, s);
+  ctx.drawImage(crop.img, -crop.img.width/2, -crop.img.height/2);
+  ctx.restore();
+}
+
+function applyCrop(){
+  const stage = $('cropStage');
+  const canvas = $('cropCanvas');
+  const frame = $('cropFrame');
+  const stageRect = stage.getBoundingClientRect();
+  const frameRect = frame.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const cx = (frameRect.left - stageRect.left) * dpr;
+  const cy = (frameRect.top - stageRect.top) * dpr;
+  const cw = frameRect.width * dpr;
+  const ch = frameRect.height * dpr;
+  const out = document.createElement('canvas');
+  out.width = cw;
+  out.height = ch;
+  const octx = out.getContext('2d');
+  octx.drawImage(canvas, cx, cy, cw, ch, 0, 0, cw, ch);
+  const target = parseInt($('compressSelect').value, 10);
+  let q = 0.85;
+  let dataUrl = out.toDataURL('image/jpeg', q);
+  while(dataUrl.length > target * 1.5 && q > 0.15){
+    q -= 0.1;
+    dataUrl = out.toDataURL('image/jpeg', q);
+  }
+  state.photo = dataUrl;
+  $('photoPreview').src = dataUrl;
+  $('photoPreview').style.display = 'block';
+  const bytes = Math.round((dataUrl.split(',')[1] || '').length * 0.75);
+  $('photoInfo').textContent = `${Math.round(frameRect.width)}×${Math.round(frameRect.height)} px • ~${bytes} B`;
+  $('writePhotoBtn').disabled = false;
+  $('cropModal').classList.remove('show');
+  log(`Zdjęcie przycięte: ~${bytes} B`,'ok');
+  toast('Zdjęcie gotowe','ok');
+}
+
+$('cropClose').onclick = () => $('cropModal').classList.remove('show');
+$('cropCancel').onclick = () => $('cropModal').classList.remove('show');
+$('cropApply').onclick = applyCrop;
+
+$('cropZoom').oninput = (e) => { crop.scale = parseInt(e.target.value,10) / 100; renderCrop(); };
+$('cropRotate').onclick = () => { crop.rotation = (crop.rotation + 90) % 360; renderCrop(); };
+$('cropReset').onclick = () => {
+  crop.scale = 1; crop.offsetX = 0; crop.offsetY = 0; crop.rotation = 0;
+  $('cropZoom').value = 100;
+  renderCrop();
+};
+document.querySelectorAll('.crop-aspects button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.crop-aspects button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    crop.aspect = parseFloat(b.dataset.aspect);
+    layoutCropFrame();
+  };
+});
+
+const cropCanvas = $('cropCanvas');
+cropCanvas.addEventListener('pointerdown', (e) => {
+  crop.dragging = true; crop.startX = e.clientX; crop.startY = e.clientY;
+  crop.startOffX = crop.offsetX; crop.startOffY = crop.offsetY;
+  cropCanvas.setPointerCapture(e.pointerId);
+});
+cropCanvas.addEventListener('pointermove', (e) => {
+  if(!crop.dragging) return;
+  crop.offsetX = crop.startOffX + (e.clientX - crop.startX);
+  crop.offsetY = crop.startOffY + (e.clientY - crop.startY);
+  renderCrop();
+});
+cropCanvas.addEventListener('pointerup', () => { crop.dragging = false; });
+cropCanvas.addEventListener('pointercancel', () => { crop.dragging = false; });
+
+window.addEventListener('resize', () => {
+  if($('cropModal').classList.contains('show')){ layoutCropFrame(); renderCrop(); }
+});
+
+fileInput.onchange = e => { if(e.target.files[0]) openCropModal(e.target.files[0]); e.target.value = ''; };
+cameraInput.onchange = e => { if(e.target.files[0]) openCropModal(e.target.files[0]); e.target.value = ''; };
 
 $('writePhotoBtn').onclick = async () => {
   if(!state.photo) return;
@@ -712,6 +1110,8 @@ $('editLoadBtn').onclick = async () => {
     $('editName').value = name;
     $('editId').value = id;
     $('editForm').style.display = 'block';
+    renderCard(tag);
+    state.read = tag;
     log(`Wczytano ${tag.serialNumber}`,'ok');
   }catch(e){ hideBig(); toast('Błąd: ' + e.message,'err'); log(e.message,'err'); }
 };
@@ -746,7 +1146,7 @@ function renderClone(){
   if(!s){
     $('slot').classList.add('empty');
     $('slotCount').textContent = '—';
-    $('slotInfo').textContent = 'Brak danych. Odczytaj kartę źródłową.';
+    $('slotInfo').textContent = 'Brak danych.';
     $('cloneHex').textContent = '—';
     return;
   }
@@ -807,10 +1207,8 @@ function updateHexView(){
   $('hexBits').textContent = state.hex.length * 8;
 }
 $('hexInput').oninput = () => {
-  try{
-    state.hex = hexToBytes($('hexInput').value);
-    updateHexView();
-  }catch(e){ $('hexView').textContent = 'Błąd HEX: ' + e.message; }
+  try{ state.hex = hexToBytes($('hexInput').value); updateHexView(); }
+  catch(e){ $('hexView').textContent = 'Błąd HEX: ' + e.message; }
 };
 $('hexClear').onclick = () => { state.hex = new Uint8Array(0); $('hexInput').value = ''; updateHexView(); log('HEX wyczyszczony','info'); };
 $('hexLoadFile').onclick = () => $('hexFile').click();
@@ -867,25 +1265,6 @@ $('resetCardBtn').onclick = async () => {
     hideBig(); showBigSuccess('Zresetowano'); log('Reset karty OK','ok');
   }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
 };
-$('lockCardBtn').onclick = async () => {
-  if(!confirm('NIEODWRACALNE. Zablokować kartę na stałe?')) return;
-  if(!confirm('Ostatnie ostrzeżenie. Kontynuować?')) return;
-  try{
-    showBig('i-lock', 'Zbliż kartę…', 'Blokowanie permanentne', hideBig);
-    const ndef = new NDEFReader();
-    const ctrl = new AbortController();
-    let done = false;
-    ndef.onreading = async ({ message }) => {
-      if(done) return; done = true; ctrl.abort();
-      try{
-        await message.makeReadOnly();
-        hideBig(); showBigSuccess('Zablokowano permanentnie'); log('LOCK OK','ok');
-      }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-    };
-    await ndef.scan({ signal: ctrl.signal });
-    setTimeout(() => { if(!done){ ctrl.abort(); hideBig(); toast('Timeout','err'); } }, 30000);
-  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
-};
 $('resetAppBtn').onclick = () => {
   if(!confirm('Reset aplikacji?')) return;
   $('urlInput').value = 'https://vercode.pl';
@@ -898,10 +1277,15 @@ $('resetAppBtn').onclick = () => {
   $('photoPreview').style.display = 'none';
   $('photoPreview').src = '';
   $('photoInfo').textContent = '';
+  $('blocksView').innerHTML = '';
+  $('blocksUsed').textContent = '0';
+  $('blocksFree').textContent = '0';
+  $('blocksPct').textContent = '0%';
   state.read = null; state.clone = null; state.hex = new Uint8Array(0); state.photo = null;
   $('hexInput').value = '';
   updateHexView();
   renderClone();
+  renderCard(null);
   $('writePhotoBtn').disabled = true;
   $('log').innerHTML = '';
   log('Aplikacja zresetowana','ok');
