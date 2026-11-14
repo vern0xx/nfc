@@ -2,195 +2,118 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#18181b">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>NFC Master – vercode.pl</title>
+<title>NFC Master Pro</title>
 <style>
-:root{
-  --bg:#18181b; --card:#27272a; --card2:#1f1f23; --border:#3f3f46;
-  --text:#f4f4f5; --muted:#a1a1aa; --primary:#3b82f6; --primary-h:#2563eb;
-  --success:#22c55e; --error:#ef4444; --warning:#f59e0b; --info:#06b6d4;
-  --radius:12px; --touch:44px;
-}
+:root{--bg:#18181b;--card:#27272a;--card2:#1f1f23;--border:#3f3f46;--text:#f4f4f5;--muted:#a1a1aa;--primary:#3b82f6;--success:#22c55e;--error:#ef4444;--warning:#f59e0b;--info:#06b6d4;--r:12px;--touch:44px;--mono:'SF Mono',Consolas,monospace}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:var(--bg);color:var(--text);min-height:100vh;
-  display:flex;flex-direction:column;font-size:15px;
-  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  overflow-x:hidden;
-}
-.icon{width:20px;height:20px;flex-shrink:0;display:inline-block;vertical-align:middle}
-.icon-lg{width:32px;height:32px}
-.icon-xl{width:96px;height:96px}
-
-/* HEADER */
-header{
-  display:flex;align-items:center;gap:12px;padding:12px 16px;
-  background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;
-}
-header h1{font-size:17px;margin:0;font-weight:700;flex:1;display:flex;align-items:center;gap:8px}
-.badge{
-  padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;
-  background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;gap:5px;
-}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;font-size:15px;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);overflow-x:hidden}
+.icon{width:20px;height:20px;flex-shrink:0;vertical-align:middle}
+.icon-lg{width:28px;height:28px}.icon-xl{width:96px;height:96px}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+header h1{font-size:16px;margin:0;font-weight:700;flex:1;display:flex;align-items:center;gap:8px}
+.badge{padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;gap:5px}
 .badge .icon{width:14px;height:14px}
 .badge.ok{background:var(--success);color:#000;border-color:var(--success)}
 .badge.err{background:var(--error);color:#fff;border-color:var(--error)}
 .badge.wait{background:var(--warning);color:#000;border-color:var(--warning)}
-.hbtn{
-  background:var(--card2);border:1px solid var(--border);color:var(--text);
-  width:38px;height:38px;border-radius:10px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:background .15s;
-}
+.hbtn{background:var(--card2);border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .hbtn:active{background:var(--border)}
-.hbtn.active{background:var(--primary);border-color:var(--primary)}
-
-/* NAV */
-nav{
-  display:flex;gap:6px;padding:10px 12px;overflow-x:auto;
-  background:var(--card2);border-bottom:1px solid var(--border);scrollbar-width:none;
-}
+nav{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;background:var(--card2);border-bottom:1px solid var(--border);scrollbar-width:none}
 nav::-webkit-scrollbar{display:none}
-nav button{
-  flex-shrink:0;padding:10px 14px;font-size:13px;font-weight:600;
-  background:var(--card);border:1px solid var(--border);color:var(--muted);
-  border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px;
-  font-family:inherit;transition:all .15s;min-height:var(--touch);
-}
+nav button{flex-shrink:0;padding:10px 14px;font-size:13px;font-weight:600;background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;min-height:var(--touch)}
 nav button .icon{width:16px;height:16px}
 nav button.active{background:var(--primary);border-color:var(--primary);color:#fff}
 nav button:active{transform:scale(.97)}
-
-/* MAIN */
-main{flex:1;padding:16px;overflow-y:auto}
-.tab{display:none;max-width:600px;margin:0 auto;padding-bottom:32px}
-.tab.active{display:block;animation:fade .25s}
-@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.card{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
-  padding:20px;margin-bottom:14px;
-}
-.card h2{margin:0 0 14px;font-size:15px;color:var(--primary);font-weight:700;display:flex;align-items:center;gap:8px}
+main{flex:1;padding:14px;overflow-y:auto}
+.tab{display:none;max-width:640px;margin:0 auto;padding-bottom:32px}
+.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.card h2{margin:0 0 12px;font-size:14px;color:var(--primary);font-weight:700;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.5px}
 .card.danger h2{color:var(--error)}
 .card.warn h2{color:var(--warning)}
 .card.ok h2{color:var(--success)}
-
-label{display:block;font-size:12px;margin-bottom:6px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-input,textarea,select{
-  width:100%;padding:12px;margin-bottom:12px;
-  background:var(--card2);border:2px solid var(--border);
-  border-radius:10px;color:var(--text);font-size:15px;font-family:inherit;
-  min-height:var(--touch);
-}
+label{display:block;font-size:11px;margin-bottom:6px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+input,textarea,select{width:100%;padding:12px;margin-bottom:10px;background:var(--card2);border:2px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:inherit;min-height:var(--touch)}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)}
-textarea{resize:vertical;min-height:80px}
+textarea{resize:vertical;min-height:120px;font-family:var(--mono);font-size:12px;line-height:1.5}
 select{cursor:pointer}
-
-button.btn{
-  background:var(--primary);color:#fff;border:none;padding:14px 20px;
-  border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;
-  font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  min-height:var(--touch);transition:background .15s;width:100%;
-}
+button.btn{background:var(--primary);color:#fff;border:none;padding:14px 20px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--touch);width:100%;text-transform:uppercase;letter-spacing:.3px}
 button.btn:active:not(:disabled){transform:scale(.98)}
 button.btn:disabled{opacity:.4;cursor:not-allowed}
 button.btn.secondary{background:var(--card2);color:var(--text);border:2px solid var(--border)}
 button.btn.success{background:var(--success);color:#000}
 button.btn.danger{background:var(--error)}
 button.btn.warning{background:var(--warning);color:#000}
-button.btn.sm{padding:10px 14px;font-size:13px;width:auto;min-height:38px}
-.row{display:flex;gap:8px;margin-bottom:10px}
-.row > *{flex:1}
-.row > .btn{width:auto}
-
-.uid-display{
-  font-family:'SF Mono',Consolas,monospace;font-size:17px;padding:12px;
-  background:var(--card2);border:1px solid var(--border);border-radius:10px;
-  text-align:center;letter-spacing:2px;color:var(--primary);margin:10px 0;font-weight:600;
-}
-.result-item{
-  padding:10px 12px;background:var(--card2);border-radius:8px;
-  margin-bottom:6px;font-size:13px;word-break:break-all;border-left:3px solid var(--primary);
-}
-.result-item strong{color:var(--primary);font-weight:700;display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+button.btn.sm{padding:9px 12px;font-size:12px;width:auto;min-height:36px}
+.row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.row > *{flex:1;min-width:120px}
+.uid-display{font-family:var(--mono);font-size:16px;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;text-align:center;letter-spacing:2px;color:var(--primary);margin:10px 0;font-weight:700}
+.result-item{padding:10px 12px;background:var(--card2);border-radius:8px;margin-bottom:8px;font-size:13px;word-break:break-all;border-left:3px solid var(--primary)}
+.result-item strong{color:var(--primary);font-weight:700;display:block;margin-bottom:6px;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.result-item .preview{font-family:var(--mono);font-size:11px;color:var(--muted);word-break:break-all;line-height:1.4}
+.result-item details{margin-top:8px}
+.result-item summary{cursor:pointer;color:var(--info);font-size:11px;font-weight:700;text-transform:uppercase;padding:4px 0}
+.hex-block{font-family:var(--mono);font-size:11px;background:#000;padding:10px;border-radius:6px;color:#9ca3af;white-space:pre;overflow-x:auto;line-height:1.5;margin-top:6px}
+.hex-block .addr{color:#6366f1}
+.hex-block .ascii{color:#eab308}
 .info-text{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6}
-.info-text kbd{background:var(--card2);padding:2px 6px;border-radius:4px;border:1px solid var(--border);font-family:monospace;font-size:11px}
-.alert{
-  padding:12px 14px;border-radius:10px;margin-bottom:12px;font-size:13px;
-  display:flex;gap:10px;align-items:flex-start;line-height:1.5;
-}
+.info-text kbd{background:var(--card2);padding:2px 6px;border-radius:4px;border:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--primary)}
+.alert{padding:10px 12px;border-radius:10px;margin-bottom:10px;font-size:12px;display:flex;gap:10px;line-height:1.5}
 .alert .icon{flex-shrink:0;margin-top:2px}
 .alert.info{background:rgba(6,182,212,.12);border:1px solid var(--info);color:#67e8f9}
 .alert.warn{background:rgba(245,158,11,.12);border:1px solid var(--warning);color:#fcd34d}
 .alert.error{background:rgba(239,68,68,.12);border:1px solid var(--error);color:#fca5a5}
 .alert.success{background:rgba(34,197,94,.12);border:1px solid var(--success);color:#86efac}
-
-#photoPreview{max-width:100%;max-height:220px;border-radius:10px;display:none;margin:10px auto;border:2px solid var(--border)}
-.photo-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-
-/* LOG */
-#logPanel{background:var(--card2);border-top:1px solid var(--border);max-height:140px;overflow:hidden;transition:max-height .2s}
-#logPanel.open{max-height:200px}
-#logHeader{
-  display:flex;align-items:center;padding:6px 12px;font-size:11px;
-  text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;cursor:pointer;
-  background:var(--card);
-}
-#logHeader .icon{width:14px;height:14px;margin-right:6px}
+#photoPreview{max-width:100%;max-height:200px;border-radius:10px;display:none;margin:10px auto;border:2px solid var(--border)}
+.photo-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.slot{border:2px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--card2)}
+.slot.empty{opacity:.6}
+.slot-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.slot-title strong{font-size:12px;text-transform:uppercase;color:var(--primary)}
+.slot-info{font-family:var(--mono);font-size:11px;color:var(--muted);word-break:break-all}
+.slot-count{padding:3px 10px;background:var(--primary);color:#fff;border-radius:20px;font-size:11px;font-weight:700}
+#logPanel{background:var(--card2);border-top:1px solid var(--border);max-height:36px;overflow:hidden;transition:max-height .2s}
+#logPanel.open{max-height:180px}
+#logHeader{display:flex;align-items:center;padding:8px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;cursor:pointer;background:var(--card);gap:6px}
+#logHeader .icon{width:14px;height:14px}
 #logHeader .spacer{flex:1}
 #logHeader button{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;display:flex}
-#logHeader button:hover{color:var(--error)}
-#log{background:#000;padding:8px 12px;font-family:'SF Mono',Consolas,monospace;font-size:11px;max-height:140px;overflow-y:auto;line-height:1.6}
+#log{background:#000;padding:8px 12px;font-family:var(--mono);font-size:11px;max-height:140px;overflow-y:auto;line-height:1.6}
 #log div{padding:2px 0;color:#9ca3af;word-break:break-all}
 #log div.ok{color:var(--success)}
 #log div.err{color:var(--error)}
 #log div.info{color:var(--warning)}
-
-/* TOAST */
 #toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 32px);max-width:400px}
-.toast{
-  background:var(--card);border:2px solid var(--border);border-radius:12px;
-  padding:12px 16px;display:flex;gap:10px;align-items:center;
-  box-shadow:0 8px 24px rgba(0,0,0,.5);font-size:14px;font-weight:600;
-  animation:slideUp .25s;pointer-events:auto;
-}
+.toast{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;gap:10px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.5);font-size:13px;font-weight:600;animation:su .25s;pointer-events:auto}
 .toast.ok{border-color:var(--success);color:#86efac}
 .toast.err{border-color:var(--error);color:#fca5a5}
 .toast.info{border-color:var(--info);color:#67e8f9}
-@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-
-/* BIG STATUS OVERLAY */
-#bigStatus{
-  position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:999;
-  display:none;align-items:center;justify-content:center;flex-direction:column;
-  padding:32px;text-align:center;backdrop-filter:blur(6px);
-}
-#bigStatus.show{display:flex;animation:fade .2s}
-#bigStatus .icon-xl{color:var(--primary);margin-bottom:24px;animation:pulse 1.5s ease-in-out infinite}
+@keyframes su{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+#bigStatus{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:999;display:none;align-items:center;justify-content:center;flex-direction:column;padding:32px;text-align:center;backdrop-filter:blur(6px)}
+#bigStatus.show{display:flex}
+#bigStatus .icon-xl{color:var(--primary);margin-bottom:24px;animation:pl 1.5s ease-in-out infinite}
 #bigStatus.ok .icon-xl{color:var(--success);animation:none}
 #bigStatus.err .icon-xl{color:var(--error);animation:none}
 #bigStatus .text{font-size:20px;font-weight:700;line-height:1.4;max-width:400px}
-#bigStatus .sub{font-size:14px;color:var(--muted);margin-top:12px;max-width:400px}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.08)}}
-#bigStatus button{
-  margin-top:24px;background:var(--card2);color:var(--text);border:2px solid var(--border);
-  padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;
-  font-family:inherit;display:flex;align-items:center;gap:8px;
-}
-
-/* ANIMATIONS */
-.spin{animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+#bigStatus .sub{font-size:13px;color:var(--muted);margin-top:12px;max-width:400px}
+@keyframes pl{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.08)}}
+#bigStatus button{margin-top:24px;background:var(--card2);color:var(--text);border:2px solid var(--border);padding:12px 24px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-top:10px}
+.stat{background:var(--card2);padding:10px;border-radius:8px;text-align:center}
+.stat .v{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--primary)}
+.stat .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.chip{display:inline-block;padding:3px 8px;background:var(--primary);color:#fff;border-radius:20px;font-size:10px;font-weight:700;margin-right:4px;text-transform:uppercase}
+.chip.mime{background:var(--warning);color:#000}
+.chip.text{background:var(--info);color:#000}
+.chip.url{background:var(--success);color:#000}
+.chip.empty{background:var(--muted)}
 </style>
 </head>
 <body>
 
-<!-- ===== SVG SPRITE ===== -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
 <symbol id="i-nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/></symbol>
 <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
@@ -203,81 +126,87 @@ button.btn.sm{padding:10px 14px;font-size:13px;width:auto;min-height:38px}
 <symbol id="i-unlock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol>
 <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
 <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
-<symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
 <symbol id="i-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
 <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
 <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
 <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
-<symbol id="i-chip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></symbol>
 <symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></symbol>
 <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
 <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
 <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+<symbol id="i-clone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M8 22h12a2 2 0 0 0 2-2V8"/><path d="M14 8h4v4"/><path d="M14 12 8 18"/></symbol>
+<symbol id="i-move" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></symbol>
+<symbol id="i-hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
 </svg>
 
-<!-- ===== HEADER ===== -->
 <header>
-  <h1><svg class="icon icon-lg"><use href="#i-nfc"/></svg> NFC Master</h1>
+  <h1><svg class="icon icon-lg"><use href="#i-nfc"/></svg> NFC Master Pro</h1>
   <span id="nfcBadge" class="badge wait"><svg class="icon"><use href="#i-scan"/></svg> Sprawdzam</span>
-  <button class="hbtn" id="fsBtn" title="Pełny ekran"><svg class="icon"><use href="#i-full"/></svg></button>
+  <button class="hbtn" id="fsBtn"><svg class="icon"><use href="#i-full"/></svg></button>
 </header>
 
-<!-- ===== NAV ===== -->
 <nav>
   <button data-tab="read" class="active"><svg class="icon"><use href="#i-search"/></svg> Odczyt</button>
-  <button data-tab="writeUrl"><svg class="icon"><use href="#i-globe"/></svg> URL</button>
-  <button data-tab="writeData"><svg class="icon"><use href="#i-doc"/></svg> Dane</button>
+  <button data-tab="write"><svg class="icon"><use href="#i-globe"/></svg> URL</button>
+  <button data-tab="data"><svg class="icon"><use href="#i-doc"/></svg> Dane</button>
   <button data-tab="photo"><svg class="icon"><use href="#i-camera"/></svg> Zdjęcie</button>
   <button data-tab="edit"><svg class="icon"><use href="#i-edit"/></svg> Edycja</button>
+  <button data-tab="clone"><svg class="icon"><use href="#i-clone"/></svg> Klonuj</button>
+  <button data-tab="hex"><svg class="icon"><use href="#i-hex"/></svg> HEX</button>
   <button data-tab="tools"><svg class="icon"><use href="#i-settings"/></svg> Narzędzia</button>
 </nav>
 
-<!-- ===== MAIN ===== -->
 <main>
 
-<!-- ODCZYT -->
 <section id="tab-read" class="tab active">
   <div class="card">
     <h2><svg class="icon"><use href="#i-search"/></svg> Odczyt karty</h2>
     <button class="btn" id="readBtn"><svg class="icon"><use href="#i-scan"/></svg> Odczytaj kartę</button>
-    <div id="readResult" style="margin-top:14px"></div>
+    <div id="readResult" style="margin-top:12px"></div>
+    <div id="readActions" style="display:none;margin-top:10px">
+      <div class="row">
+        <button class="btn sm secondary" id="readToClone"><svg class="icon"><use href="#i-clone"/></svg> Do klonowania</button>
+        <button class="btn sm secondary" id="readToHex"><svg class="icon"><use href="#i-hex"/></svg> Do HEX</button>
+      </div>
+      <div class="row">
+        <button class="btn sm secondary" id="readExportJson"><svg class="icon"><use href="#i-download"/></svg> JSON</button>
+        <button class="btn sm secondary" id="readExportBin"><svg class="icon"><use href="#i-download"/></svg> BIN</button>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- ZAPIS URL -->
-<section id="tab-writeUrl" class="tab">
+<section id="tab-write" class="tab">
   <div class="card">
     <h2><svg class="icon"><use href="#i-globe"/></svg> Zapisz URL</h2>
     <label>Adres strony</label>
-    <input type="url" id="urlInput" value="https://vercode.pl" placeholder="https://...">
+    <input type="url" id="urlInput" value="https://vercode.pl">
     <button class="btn" id="writeUrlBtn"><svg class="icon"><use href="#i-save"/></svg> Zapisz URL</button>
     <p class="info-text">Telefon otworzy tę stronę po przyłożeniu karty.</p>
   </div>
 </section>
 
-<!-- ZAPIS DANYCH -->
-<section id="tab-writeData" class="tab">
+<section id="tab-data" class="tab">
   <div class="card">
     <h2><svg class="icon"><use href="#i-doc"/></svg> Dane dla Arduino</h2>
     <label>Imię / Nazwa</label>
     <input type="text" id="nameInput" placeholder="Jan Kowalski">
     <label>ID / Numer</label>
-    <input type="text" id="idInput" placeholder="np. Pracownik 42">
+    <input type="text" id="idInput" placeholder="42">
     <label>URL</label>
     <input type="url" id="urlDataInput" value="https://vercode.pl">
     <button class="btn" id="writeDataBtn"><svg class="icon"><use href="#i-save"/></svg> Zapisz dane + URL</button>
-    <div class="alert info">
-      <svg class="icon"><use href="#i-info"/></svg>
-      <div>Zapisywane są 2 rekordy: URL (telefon) oraz <kbd>NAME=...;ID=...;URL=...;</kbd> (czytelne dla Arduino po sparsowaniu).</div>
-    </div>
+    <div class="alert info"><svg class="icon"><use href="#i-info"/></svg><div>Format: <kbd>NAME=X;ID=Y;URL=Z;</kbd> — łatwy do sparsowania w Arduino.</div></div>
   </div>
 </section>
 
-<!-- ZDJĘCIE -->
 <section id="tab-photo" class="tab">
   <div class="card">
-    <h2><svg class="icon"><use href="#i-camera"/></svg> Zdjęcie na kartę</h2>
+    <h2><svg class="icon"><use href="#i-camera"/></svg> Zdjęcie</h2>
     <div class="photo-btns">
       <button class="btn secondary" id="cameraBtn"><svg class="icon"><use href="#i-camera"/></svg> Aparat</button>
       <button class="btn secondary" id="galleryBtn"><svg class="icon"><use href="#i-image"/></svg> Galeria</button>
@@ -286,30 +215,26 @@ button.btn.sm{padding:10px 14px;font-size:13px;width:auto;min-height:38px}
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
     <img id="photoPreview" alt="">
     <div id="photoInfo" class="info-text"></div>
-    <label style="margin-top:12px">Kompresja</label>
+    <label style="margin-top:10px">Kompresja</label>
     <select id="compressSelect">
       <option value="100">Bardzo mała (~100 B)</option>
       <option value="300" selected>Mała (~300 B)</option>
       <option value="600">Średnia (~600 B)</option>
     </select>
     <button class="btn" id="writePhotoBtn" disabled><svg class="icon"><use href="#i-save"/></svg> Zapisz zdjęcie</button>
-    <div class="alert warn">
-      <svg class="icon"><use href="#i-warn"/></svg>
-      <div>Karta MIFARE 1K ma ~750 B na NDEF. Zdjęcie zapisze się jako <b>miniatura</b> base64. Dla pełnego zdjęcia użyj NTAG215.</div>
-    </div>
+    <div class="alert warn"><svg class="icon"><use href="#i-warn"/></svg><div>MIFARE 1K ma ~750 B na NDEF. Zdjęcie jako miniatura base64.</div></div>
   </div>
 </section>
 
-<!-- EDYCJA -->
 <section id="tab-edit" class="tab">
   <div class="card">
-    <h2><svg class="icon"><use href="#i-edit"/></svg> Edycja karty</h2>
-    <button class="btn secondary" id="editLoadBtn"><svg class="icon"><use href="#i-search"/></svg> Wczytaj dane z karty</button>
-    <div id="editForm" style="display:none;margin-top:16px">
+    <h2><svg class="icon"><use href="#i-edit"/></svg> Edycja</h2>
+    <button class="btn secondary" id="editLoadBtn"><svg class="icon"><use href="#i-search"/></svg> Wczytaj z karty</button>
+    <div id="editForm" style="display:none;margin-top:12px">
       <div class="uid-display" id="editUid">UID: ---</div>
       <label>URL</label>
       <input type="url" id="editUrl">
-      <label>Imię / Nazwa</label>
+      <label>Nazwa</label>
       <input type="text" id="editName">
       <label>ID</label>
       <input type="text" id="editId">
@@ -321,544 +246,674 @@ button.btn.sm{padding:10px 14px;font-size:13px;width:auto;min-height:38px}
   </div>
 </section>
 
-<!-- NARZĘDZIA -->
-<section id="tab-tools" class="tab">
-
-  <div class="card ok">
-    <h2><svg class="icon"><use href="#i-unlock"/></svg> Odblokowanie / format</h2>
-    <p class="info-text" style="margin-top:0">Przywraca kartę do stanu NDEF (formatuje puste/nieobsługiwane karty). Działa na kartach z domyślnymi kluczami.</p>
-    <button class="btn success" id="formatBtn"><svg class="icon"><use href="#i-unlock"/></svg> Formatuj jako NDEF (odblokuj)</button>
+<section id="tab-clone" class="tab">
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-clone"/></svg> Klonowanie</h2>
+    <div class="slot empty" id="slot">
+      <div class="slot-title"><strong>Bufor źródłowy</strong><span class="slot-count" id="slotCount">—</span></div>
+      <div class="slot-info" id="slotInfo">Brak danych. Odczytaj kartę źródłową.</div>
+    </div>
+    <div class="row">
+      <button class="btn" id="cloneRead"><svg class="icon"><use href="#i-search"/></svg> Odczytaj źródło</button>
+      <button class="btn secondary" id="cloneClear"><svg class="icon"><use href="#i-trash"/></svg> Wyczyść</button>
+    </div>
+    <div class="row">
+      <button class="btn success" id="cloneCopy"><svg class="icon"><use href="#i-copy"/></svg> Kopiuj</button>
+      <button class="btn warning" id="cloneMove"><svg class="icon"><use href="#i-move"/></svg> Przenieś</button>
+    </div>
+    <div class="alert info"><svg class="icon"><use href="#i-info"/></svg><div>Kopiuj: zapisuje rekordy źródłowe na nowej karcie. Przenieś: to samo + czyści kartę źródłową.</div></div>
   </div>
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-hex"/></svg> Podgląd HEX źródła</h2>
+    <div class="hex-block" id="cloneHex" style="min-height:60px">—</div>
+  </div>
+</section>
 
+<section id="tab-hex" class="tab">
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-hex"/></svg> Bufor binarny</h2>
+    <label>HEX (spacje dowolne)</label>
+    <textarea id="hexInput" placeholder="00 01 02 03 ..."></textarea>
+    <div class="stats">
+      <div class="stat"><div class="v" id="hexBytes">0</div><div class="l">Bajtów</div></div>
+      <div class="stat"><div class="v" id="hexBits">0</div><div class="l">Bitów</div></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn sm secondary" id="hexLoadFile"><svg class="icon"><use href="#i-upload"/></svg> BIN</button>
+      <button class="btn sm secondary" id="hexSaveFile"><svg class="icon"><use href="#i-download"/></svg> BIN</button>
+      <button class="btn sm secondary" id="hexLoadTag"><svg class="icon"><use href="#i-scan"/></svg> Z karty</button>
+    </div>
+    <div class="row">
+      <button class="btn success" id="hexWriteTag"><svg class="icon"><use href="#i-save"/></svg> Zapisz na kartę</button>
+      <button class="btn danger" id="hexClear"><svg class="icon"><use href="#i-trash"/></svg> Wyczyść</button>
+    </div>
+    <input type="file" id="hexFile" accept=".bin,.dat,application/octet-stream" style="display:none">
+    <div class="alert info"><svg class="icon"><use href="#i-info"/></svg><div>Zapis na kartę jako rekord MIME <kbd>application/octet-stream</kbd>. Karta musi mieć miejsce.</div></div>
+  </div>
+  <div class="card">
+    <h2><svg class="icon"><use href="#i-doc"/></svg> Podgląd</h2>
+    <div class="hex-block" id="hexView" style="min-height:60px">—</div>
+  </div>
+</section>
+
+<section id="tab-tools" class="tab">
+  <div class="card ok">
+    <h2><svg class="icon"><use href="#i-unlock"/></svg> Formatuj / odblokuj</h2>
+    <button class="btn success" id="formatBtn"><svg class="icon"><use href="#i-unlock"/></svg> Format NDEF</button>
+  </div>
   <div class="card warn">
     <h2><svg class="icon"><use href="#i-refresh"/></svg> Reset karty</h2>
-    <p class="info-text" style="margin-top:0">Usuwa wszystkie rekordy NDEF z karty – karta zostaje pusta, ale sformatowana.</p>
-    <button class="btn warning" id="resetCardBtn"><svg class="icon"><use href="#i-refresh"/></svg> Wyczyść kartę (reset NDEF)</button>
+    <button class="btn warning" id="resetCardBtn"><svg class="icon"><use href="#i-refresh"/></svg> Wyczyść kartę</button>
   </div>
-
   <div class="card danger">
-    <h2><svg class="icon"><use href="#i-lock"/></svg> Zablokuj kartę permanentnie</h2>
-    <p class="info-text" style="margin-top:0"><b>Operacja nieodwracalna.</b> Karta po zablokowaniu nigdy nie pozwoli na zapis. Używaj tylko na kartach, które mają być stałe (np. wizytówki, ulotki).</p>
-    <button class="btn danger" id="lockCardBtn"><svg class="icon"><use href="#i-lock"/></svg> Zablokuj (nieodwracalne)</button>
+    <h2><svg class="icon"><use href="#i-lock"/></svg> Zablokuj</h2>
+    <button class="btn danger" id="lockCardBtn"><svg class="icon"><use href="#i-lock"/></svg> Zablokuj permanentnie</button>
+    <div class="alert error"><svg class="icon"><use href="#i-warn"/></svg><div>NIEODWRACALNE. Karta nigdy nie pozwoli na zapis.</div></div>
   </div>
-
   <div class="card">
     <h2><svg class="icon"><use href="#i-refresh"/></svg> Reset aplikacji</h2>
-    <p class="info-text" style="margin-top:0">Czyści wszystkie formularze, log i przywraca stan początkowy.</p>
-    <button class="btn secondary" id="resetAppBtn"><svg class="icon"><use href="#i-refresh"/></svg> Zresetuj aplikację</button>
+    <button class="btn secondary" id="resetAppBtn"><svg class="icon"><use href="#i-refresh"/></svg> Reset</button>
   </div>
-
   <div class="card">
-    <h2><svg class="icon"><use href="#i-info"/></svg> Informacje</h2>
-    <div class="alert info">
-      <svg class="icon"><use href="#i-info"/></svg>
-      <div>
-        <b>Web NFC</b> wymaga:<br>
-        • Chrome / Edge / Samsung Internet na Androidzie<br>
-        • Połączenie HTTPS (nie HTTP)<br>
-        • Włączonego NFC w telefonie
-      </div>
-    </div>
-    <div class="alert warn">
-      <svg class="icon"><use href="#i-warn"/></svg>
-      <div><b>Ograniczenia:</b> Web NFC nie potrafi złamać niestandardowych kluczy MIFARE Classic. Karty zablokowane kluczami wymagają aplikacji <b>MIFARE Classic Tool</b>.</div>
-    </div>
-    <div class="alert success">
-      <svg class="icon"><use href="#i-check"/></svg>
-      <div><b>Współpraca z Arduino:</b> zapisujesz tekst <kbd>NAME=X;ID=Y;URL=Z;</kbd>, Arduino odczytuje przez NDEF + split po <kbd>;</kbd> i <kbd>=</kbd>.</div>
-    </div>
+    <h2><svg class="icon"><use href="#i-info"/></svg> Info</h2>
+    <div class="alert info"><svg class="icon"><use href="#i-info"/></svg><div><b>Web NFC</b> wymaga Chrome/Edge na Androidzie + HTTPS + NFC.</div></div>
+    <div class="alert warn"><svg class="icon"><use href="#i-warn"/></svg><div>Niestandardowe klucze MIFARE Classic → MIFARE Classic Tool.</div></div>
   </div>
-
 </section>
 
 </main>
 
-<!-- LOG -->
 <div id="logPanel">
   <div id="logHeader">
     <svg class="icon"><use href="#i-doc"/></svg> Log
     <span class="spacer"></span>
-    <button id="logToggle" title="Rozwiń"><svg class="icon"><use href="#i-chevron"/></svg></button>
-    <button id="logClear" title="Wyczyść"><svg class="icon"><use href="#i-trash"/></svg></button>
+    <button id="logToggle"><svg class="icon"><use href="#i-chevron"/></svg></button>
+    <button id="logClear"><svg class="icon"><use href="#i-trash"/></svg></button>
   </div>
   <div id="log"></div>
 </div>
 
-<!-- TOAST -->
 <div id="toasts"></div>
 
-<!-- BIG STATUS -->
 <div id="bigStatus">
   <svg class="icon-xl" id="bigIcon"><use href="#i-scan"/></svg>
-  <div class="text" id="bigText">Zbliż kartę do telefonu…</div>
+  <div class="text" id="bigText"></div>
   <div class="sub" id="bigSub"></div>
   <button id="bigCancel" style="display:none"><svg class="icon"><use href="#i-x"/></svg> Anuluj</button>
 </div>
 
 <script>
 'use strict';
+const $ = id => document.getElementById(id);
+const state = { clone: null, hex: new Uint8Array(0), read: null, photo: null };
 
-// ============ LOG ============
-const logEl = document.getElementById('log');
 function log(msg, type=''){
+  const el = $('log');
   const d = document.createElement('div');
   if(type) d.className = type;
   d.textContent = `[${new Date().toLocaleTimeString('pl')}] ${msg}`;
-  logEl.appendChild(d);
-  logEl.scrollTop = logEl.scrollHeight;
-  while(logEl.children.length > 120) logEl.removeChild(logEl.firstChild);
+  el.appendChild(d); el.scrollTop = el.scrollHeight;
+  while(el.children.length > 120) el.removeChild(el.firstChild);
 }
-document.getElementById('logClear').onclick = () => { logEl.innerHTML = ''; log('Log wyczyszczony', 'info'); };
-document.getElementById('logToggle').onclick = () => {
-  document.getElementById('logPanel').classList.toggle('open');
-};
-
-// ============ TOAST ============
 function toast(msg, type='info'){
   const t = document.createElement('div');
   t.className = 'toast ' + type;
-  const iconId = type === 'ok' ? 'i-check' : type === 'err' ? 'i-x' : 'i-info';
-  t.innerHTML = `<svg class="icon"><use href="#${iconId}"/></svg><span>${msg}</span>`;
-  document.getElementById('toasts').appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 3000);
+  const ic = type === 'ok' ? 'i-check' : type === 'err' ? 'i-x' : 'i-info';
+  t.innerHTML = `<svg class="icon"><use href="#${ic}"/></svg><span>${msg}</span>`;
+  $('toasts').appendChild(t);
+  setTimeout(() => { t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 2800);
 }
+function vibrate(p){ if(navigator.vibrate) navigator.vibrate(p); }
 
-// ============ VIBRATE ============
-function vibrate(pattern){ if(navigator.vibrate) navigator.vibrate(pattern); }
+function showBig(icon, text, sub='', cancelFn=null){
+  $('bigIcon').innerHTML = `<use href="#${icon}"/>`;
+  $('bigStatus').className = 'show';
+  $('bigText').textContent = text;
+  $('bigSub').textContent = sub;
+  const btn = $('bigCancel');
+  if(cancelFn){ btn.style.display='flex'; btn.onclick = () => { cancelFn(); hideBig(); }; }
+  else btn.style.display='none';
+}
+function showBigSuccess(text, sub=''){
+  $('bigIcon').innerHTML = `<use href="#i-check"/>`;
+  $('bigStatus').className = 'show ok';
+  $('bigText').textContent = text;
+  $('bigSub').textContent = sub;
+  $('bigCancel').style.display='none';
+  vibrate([40,30,40]);
+  setTimeout(hideBig, 1600);
+}
+function showBigError(text, sub=''){
+  $('bigIcon').innerHTML = `<use href="#i-x"/>`;
+  $('bigStatus').className = 'show err';
+  $('bigText').textContent = text;
+  $('bigSub').textContent = sub;
+  $('bigCancel').style.display='none';
+  vibrate([80,40,80]);
+  setTimeout(hideBig, 3200);
+}
+function hideBig(){ $('bigStatus').className=''; }
 
-// ============ NFC SUPPORT ============
 const hasNfc = 'NDEFReader' in window;
-const nfcBadge = document.getElementById('nfcBadge');
 if(hasNfc){
-  nfcBadge.className = 'badge ok';
-  nfcBadge.innerHTML = '<svg class="icon"><use href="#i-check"/></svg> NFC OK';
-  log('Web NFC dostępne', 'ok');
+  $('nfcBadge').className = 'badge ok';
+  $('nfcBadge').innerHTML = '<svg class="icon"><use href="#i-check"/></svg> NFC OK';
+  log('Web NFC dostępne','ok');
 }else{
-  nfcBadge.className = 'badge err';
-  nfcBadge.innerHTML = '<svg class="icon"><use href="#i-x"/></svg> Brak NFC';
-  log('Web NFC NIE wspierane – użyj Chrome na Androidzie + HTTPS', 'err');
+  $('nfcBadge').className = 'badge err';
+  $('nfcBadge').innerHTML = '<svg class="icon"><use href="#i-x"/></svg> Brak NFC';
+  log('Web NFC NIE wspierane','err');
   document.querySelectorAll('main button').forEach(b => b.disabled = true);
 }
 
-// ============ FULLSCREEN ============
-async function enterFullscreen(){
+async function enterFs(){
   try{
     const el = document.documentElement;
     if(el.requestFullscreen) await el.requestFullscreen();
     else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-    log('Pełny ekran włączony', 'ok');
-    toast('Pełny ekran', 'ok');
-    vibrate(20);
-  }catch(e){ log('Nie można wejść w pełny ekran: ' + e.message, 'err'); }
-}
-document.getElementById('fsBtn').onclick = enterFullscreen;
-// auto at first touch
-document.body.addEventListener('click', function autoFs(){
-  if(!document.fullscreenElement && !document.webkitFullscreenElement) enterFullscreen();
-  document.body.removeEventListener('click', autoFs);
-}, { once: true });
-
-// ============ WAKE LOCK ============
-let wakeLock = null;
-async function keepAwake(){
-  try{
-    if('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
   }catch(e){}
 }
-document.addEventListener('visibilitychange', () => {
-  if(document.visibilityState === 'visible') keepAwake();
-});
-keepAwake();
+$('fsBtn').onclick = enterFs;
+document.body.addEventListener('click', function a(){
+  if(!document.fullscreenElement && !document.webkitFullscreenElement) enterFs();
+  document.body.removeEventListener('click', a);
+}, { once:true });
 
-// ============ TABS ============
+async function keepAwake(){
+  try{ if('wakeLock' in navigator) await navigator.wakeLock.request('screen'); }catch(e){}
+}
+keepAwake();
+document.addEventListener('visibilitychange', () => { if(document.visibilityState==='visible') keepAwake(); });
+
 document.querySelectorAll('nav button').forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    $('tab-' + btn.dataset.tab).classList.add('active');
     vibrate(10);
   };
 });
 
-// ============ BIG STATUS ============
-const bigStatus = document.getElementById('bigStatus');
-const bigIcon = document.getElementById('bigIcon');
-const bigText = document.getElementById('bigText');
-const bigSub = document.getElementById('bigSub');
-const bigCancel = document.getElementById('bigCancel');
-let cancelBigFn = null;
+function recData(r){
+  if(r.data instanceof DataView) return new Uint8Array(r.data.buffer, r.data.byteOffset, r.data.byteLength);
+  if(r.data instanceof ArrayBuffer) return new Uint8Array(r.data);
+  if(r.data instanceof Uint8Array) return r.data;
+  if(typeof r.data === 'string') return new TextEncoder().encode(r.data);
+  return new Uint8Array(0);
+}
+function bytesToHex(b, sep=' '){ return Array.from(b).map(x => x.toString(16).padStart(2,'0')).join(sep); }
+function hexToBytes(h){
+  h = h.replace(/\s+/g,'').replace(/0x/gi,'').replace(/[^0-9a-f]/gi,'');
+  if(h.length % 2) throw new Error('Nieparzysta długość HEX');
+  const a = new Uint8Array(h.length/2);
+  for(let i=0;i<a.length;i++) a[i] = parseInt(h.substr(i*2,2),16);
+  return a;
+}
+function hexDump(b){
+  const lines = [];
+  for(let i=0;i<b.length;i+=16){
+    const c = b.slice(i, i+16);
+    const hex = Array.from(c).map(x => x.toString(16).padStart(2,'0')).join(' ').padEnd(47,' ');
+    const asc = Array.from(c).map(x => x >= 32 && x < 127 ? String.fromCharCode(x) : '.').join('');
+    lines.push(`${i.toString(16).padStart(4,'0')}  ${hex}  ${asc}`);
+  }
+  return lines.join('\n') || '—';
+}
 
-function showBig(iconId, text, sub='', cancelFn=null){
-  bigIcon.innerHTML = `<use href="#${iconId}"/>`;
-  bigStatus.className = 'show';
-  bigText.textContent = text;
-  bigSub.textContent = sub;
-  if(cancelFn){ bigCancel.style.display = 'flex'; cancelBigFn = cancelFn; }
-  else { bigCancel.style.display = 'none'; cancelBigFn = null; }
-}
-function showBigSuccess(text, sub=''){
-  bigIcon.innerHTML = `<use href="#i-check"/>`;
-  bigStatus.className = 'show ok';
-  bigText.textContent = text;
-  bigSub.textContent = sub;
-  bigCancel.style.display = 'none';
-  vibrate([40, 30, 40]);
-  setTimeout(hideBig, 1800);
-}
-function showBigError(text, sub=''){
-  bigIcon.innerHTML = `<use href="#i-x"/>`;
-  bigStatus.className = 'show err';
-  bigText.textContent = text;
-  bigSub.textContent = sub;
-  bigCancel.style.display = 'flex';
-  cancelBigFn = hideBig;
-  vibrate([80, 40, 80]);
-  setTimeout(hideBig, 3500);
-}
-function hideBig(){ bigStatus.className = ''; bigCancel.style.display = 'none'; cancelBigFn = null; }
-bigCancel.onclick = () => { if(cancelBigFn) cancelBigFn(); hideBig(); };
-
-// ============ READ ============
-document.getElementById('readBtn').onclick = async () => {
-  if(!hasNfc) return;
-  const result = document.getElementById('readResult');
-  result.innerHTML = '';
-  try{
-    showBig('i-scan', 'Zbliż kartę do telefonu…', 'Odczyt w toku');
+async function captureTag(){
+  return new Promise((resolve, reject) => {
+    if(!hasNfc) return reject(new Error('Brak Web NFC'));
     const ndef = new NDEFReader();
-    const controller = new AbortController();
-    let done = false;
-
-    const timeout = setTimeout(() => {
-      if(!done){ controller.abort(); hideBig(); log('Timeout odczytu', 'err'); toast('Nie wykryto karty (10s)', 'err'); }
-    }, 10000);
-
-    await ndef.scan({ signal: controller.signal });
-    log('Skanowanie rozpoczęte', 'ok');
-
+    const ctrl = new AbortController();
+    const to = setTimeout(() => { ctrl.abort(); reject(new Error('Timeout (30s)')); }, 30000);
     ndef.onreading = ({ serialNumber, message }) => {
-      done = true;
-      clearTimeout(timeout);
-      controller.abort();
-      hideBig();
-      vibrate(30);
-      log(`Odczytano UID: ${serialNumber}`, 'ok');
-
-      let html = `<div class="uid-display">UID: ${serialNumber}</div>`;
-      if(!message || message.records.length === 0){
-        html += '<div class="result-item"><strong>Zawartość</strong>Karta pusta (brak NDEF)</div>';
-      } else {
+      clearTimeout(to); ctrl.abort();
+      const records = [];
+      if(message && message.records){
         for(const r of message.records){
-          let content = '';
-          try{
-            const decoded = new TextDecoder(r.encoding || 'utf-8').decode(r.data);
-            if(r.recordType === 'url') content = decoded;
-            else if(r.recordType === 'text') content = decoded;
-            else if(r.recordType === 'mime') content = `[${r.mediaType}] ${r.data.byteLength} B`;
-            else content = decoded.slice(0, 120);
-          }catch(e){ content = '(binarne)'; }
-          html += `<div class="result-item"><strong>${r.recordType}</strong>${content}</div>`;
+          const copy = { recordType: r.recordType };
+          if(r.mediaType) copy.mediaType = r.mediaType;
+          if(r.id) copy.id = r.id;
+          if(r.encoding) copy.encoding = r.encoding;
+          if(r.lang) copy.lang = r.lang;
+          const bytes = recData(r);
+          copy.data = bytes.buffer.slice(0);
+          records.push(copy);
         }
       }
-      result.innerHTML = html;
+      resolve({ serialNumber, records });
     };
-
-    ndef.onreadingerror = () => {
-      done = true;
-      clearTimeout(timeout);
-      hideBig();
-      showBigError('Błąd odczytu karty');
-      log('Błąd odczytu', 'err');
-    };
-  }catch(e){
-    hideBig();
-    log('Błąd: ' + e.message, 'err');
-    toast('Błąd: ' + e.message, 'err');
-  }
-};
-
-// ============ WRITE HELPER ============
-async function writeRecords(records, successMsg){
-  if(!hasNfc) return;
-  try{
-    showBig('i-save', 'Zbliż kartę do zapisu…', 'Nie odsuwaj karty', hideBig);
-    const ndef = new NDEFReader();
-    await ndef.write({ records });
-    hideBig();
-    log(successMsg, 'ok');
-    showBigSuccess('Zapisano!', successMsg);
-    toast(successMsg, 'ok');
-  }catch(e){
-    hideBig();
-    log('Błąd zapisu: ' + e.message, 'err');
-    showBigError('Błąd zapisu', e.message);
-    toast('Błąd: ' + e.message, 'err');
-  }
+    ndef.onreadingerror = () => { clearTimeout(to); reject(new Error('Błąd odczytu')); };
+    ndef.scan({ signal: ctrl.signal }).catch(e => { clearTimeout(to); reject(e); });
+  });
 }
 
-// ============ WRITE URL ============
-document.getElementById('writeUrlBtn').onclick = () => {
-  const url = document.getElementById('urlInput').value.trim();
-  if(!url) return toast('Podaj URL', 'err');
-  writeRecords([{ recordType: 'url', data: url }], `URL zapisany: ${url}`);
+function recForWrite(r){
+  const t = r.recordType;
+  const bytes = new Uint8Array(r.data);
+  if(t === 'text'){
+    const txt = new TextDecoder(r.encoding || 'utf-8').decode(bytes);
+    const out = { recordType: 'text', data: txt };
+    if(r.encoding) out.encoding = r.encoding;
+    if(r.lang) out.lang = r.lang;
+    return out;
+  }
+  if(t === 'url') return { recordType: 'url', data: new TextDecoder().decode(bytes) };
+  if(t === 'absolute-url') return { recordType: 'absolute-url', data: new TextDecoder().decode(bytes) };
+  if(t === 'mime') return { recordType: 'mime', mediaType: r.mediaType || 'application/octet-stream', data: bytes };
+  if(t === 'empty') return { recordType: 'empty' };
+  if(t === 'unknown') return { recordType: 'unknown', data: bytes };
+  return { recordType: 'mime', mediaType: r.mediaType || 'application/octet-stream', data: bytes };
+}
+
+async function writeTag(records){
+  if(!hasNfc) throw new Error('Brak Web NFC');
+  const ndef = new NDEFReader();
+  await ndef.write({ records });
+}
+
+function downloadBlob(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function recordPreview(r){
+  const bytes = new Uint8Array(r.data);
+  const head = bytes.slice(0, 32);
+  let txt;
+  try{ txt = new TextDecoder(r.encoding || 'utf-8').decode(head); }catch(e){ txt = ''; }
+  if(/[\x00-\x08\x0e-\x1f]/.test(txt)) return hexDump(head);
+  return txt + (bytes.length > 32 ? '…' : '');
+}
+
+$('readBtn').onclick = async () => {
+  if(!hasNfc) return;
+  $('readResult').innerHTML = '';
+  $('readActions').style.display = 'none';
+  try{
+    showBig('i-scan', 'Zbliż kartę…', 'Odczyt w toku');
+    const tag = await captureTag();
+    hideBig(); vibrate(30);
+    state.read = tag;
+    log(`Odczyt ${tag.records.length} rekordów z ${tag.serialNumber}`,'ok');
+
+    let html = `<div class="uid-display">UID: ${tag.serialNumber}</div>`;
+    if(!tag.records.length){
+      html += `<div class="result-item"><strong>Zawartość</strong><div class="preview">Karta pusta (brak NDEF)</div></div>`;
+    } else {
+      tag.records.forEach((r, i) => {
+        const cls = r.recordType === 'mime' ? 'mime' : r.recordType;
+        const bytes = new Uint8Array(r.data);
+        const prev = recordPreview(r);
+        html += `<div class="result-item">
+          <strong><span class="chip ${cls}">${r.recordType}</span>${r.mediaType ? ' ' + r.mediaType : ''}</strong>
+          <div class="preview">${prev.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
+          <details><summary>HEX (${bytes.length} B)</summary><div class="hex-block">${hexDump(bytes).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div></details>
+        </div>`;
+      });
+    }
+    $('readResult').innerHTML = html;
+    $('readActions').style.display = 'block';
+  }catch(e){
+    hideBig(); log('Błąd: ' + e.message,'err'); toast('Błąd: ' + e.message,'err');
+  }
 };
 
-// ============ WRITE DATA ============
-document.getElementById('writeDataBtn').onclick = () => {
-  const name = document.getElementById('nameInput').value.trim();
-  const id = document.getElementById('idInput').value.trim();
-  const url = document.getElementById('urlDataInput').value.trim();
-  if(!url) return toast('Podaj URL', 'err');
+$('readToClone').onclick = () => {
+  if(!state.read) return;
+  state.clone = state.read;
+  renderClone();
+  document.querySelector('nav button[data-tab="clone"]').click();
+  toast('Wysłano do klonowania','ok');
+};
+
+$('readToHex').onclick = () => {
+  if(!state.read) return;
+  const chunks = state.read.records.map(r => new Uint8Array(r.data));
+  const total = chunks.reduce((a,c) => a+c.length, 0);
+  const buf = new Uint8Array(total);
+  let off = 0;
+  for(const c of chunks){ buf.set(c, off); off += c.length; }
+  state.hex = buf;
+  $('hexInput').value = bytesToHex(buf);
+  updateHexView();
+  document.querySelector('nav button[data-tab="hex"]').click();
+  toast('Wysłano do HEX','ok');
+};
+
+$('readExportJson').onclick = () => {
+  if(!state.read) return;
+  const obj = {
+    serialNumber: state.read.serialNumber,
+    records: state.read.records.map(r => ({
+      recordType: r.recordType, mediaType: r.mediaType, id: r.id,
+      encoding: r.encoding, lang: r.lang,
+      dataHex: bytesToHex(new Uint8Array(r.data), '')
+    }))
+  };
+  downloadBlob(new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'}), `tag-${state.read.serialNumber.replace(/:/g,'')}.json`);
+  log('Eksport JSON','ok');
+};
+
+$('readExportBin').onclick = () => {
+  if(!state.read) return;
+  const chunks = state.read.records.map(r => new Uint8Array(r.data));
+  const total = chunks.reduce((a,c) => a+c.length, 0);
+  const buf = new Uint8Array(total);
+  let off = 0;
+  for(const c of chunks){ buf.set(c, off); off += c.length; }
+  downloadBlob(new Blob([buf], {type:'application/octet-stream'}), `tag-${state.read.serialNumber.replace(/:/g,'')}.bin`);
+  log(`Eksport BIN (${total} B)`,'ok');
+};
+
+$('writeUrlBtn').onclick = async () => {
+  const url = $('urlInput').value.trim();
+  if(!url) return toast('Podaj URL','err');
+  try{
+    showBig('i-save', 'Zbliż kartę…', 'Zapis URL', hideBig);
+    await writeTag([{ recordType:'url', data: url }]);
+    hideBig(); showBigSuccess('URL zapisany', url); log('URL zapisany: ' + url,'ok');
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
+};
+
+$('writeDataBtn').onclick = async () => {
+  const name = $('nameInput').value.trim();
+  const id = $('idInput').value.trim();
+  const url = $('urlDataInput').value.trim();
+  if(!url) return toast('Podaj URL','err');
   const payload = `NAME=${name};ID=${id};URL=${url};`;
-  writeRecords([
-    { recordType: 'url', data: url },
-    { recordType: 'text', data: payload, lang: 'pl' }
-  ], `Dane zapisane: ${payload}`);
+  try{
+    showBig('i-save', 'Zbliż kartę…', 'Zapis danych', hideBig);
+    await writeTag([
+      { recordType:'url', data: url },
+      { recordType:'text', data: payload, lang:'pl' }
+    ]);
+    hideBig(); showBigSuccess('Dane zapisane', payload); log('Dane: ' + payload,'ok');
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
 };
 
-// ============ PHOTO ============
-let photoBase64 = null;
-const fileInput = document.getElementById('fileInput');
-const cameraInput = document.getElementById('cameraInput');
-const photoPreview = document.getElementById('photoPreview');
-const photoInfo = document.getElementById('photoInfo');
-const writePhotoBtn = document.getElementById('writePhotoBtn');
+const fileInput = $('fileInput'), cameraInput = $('cameraInput');
+$('galleryBtn').onclick = () => fileInput.click();
+$('cameraBtn').onclick = () => cameraInput.click();
 
-document.getElementById('galleryBtn').onclick = () => fileInput.click();
-document.getElementById('cameraBtn').onclick = () => cameraInput.click();
-
-async function compressImage(file, targetBytes){
-  return new Promise(resolve => {
+async function compressImage(file, target){
+  return new Promise(res => {
     const img = new Image();
     img.onload = () => {
-      const canvas = document.createElement('canvas');
+      const c = document.createElement('canvas');
       let w = img.width, h = img.height;
-      const ratio = Math.sqrt((w * h) / (targetBytes * 3.5));
-      if(ratio > 1){ w = Math.round(w / ratio); h = Math.round(h / ratio); }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      let q = 0.75;
-      let dataUrl = canvas.toDataURL('image/jpeg', q);
-      while(dataUrl.length > targetBytes * 1.4 && q > 0.1){
-        q -= 0.1;
-        dataUrl = canvas.toDataURL('image/jpeg', q);
-      }
-      resolve({ dataUrl, size: dataUrl.length, w, h });
+      const ratio = Math.sqrt((w*h)/(target*3.5));
+      if(ratio > 1){ w = Math.round(w/ratio); h = Math.round(h/ratio); }
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      let q = 0.75, dataUrl = c.toDataURL('image/jpeg', q);
+      while(dataUrl.length > target*1.4 && q > 0.1){ q -= 0.1; dataUrl = c.toDataURL('image/jpeg', q); }
+      res({ dataUrl, size: dataUrl.length, w, h });
     };
-    const reader = new FileReader();
-    reader.onload = e => { img.src = e.target.result; };
-    reader.readAsDataURL(file);
+    const r = new FileReader();
+    r.onload = e => { img.src = e.target.result; };
+    r.readAsDataURL(file);
   });
 }
 
 async function handlePhoto(file){
   if(!file) return;
-  const target = parseInt(document.getElementById('compressSelect').value, 10);
-  toast('Kompresja…', 'info');
+  toast('Kompresja…','info');
+  const target = parseInt($('compressSelect').value, 10);
   const r = await compressImage(file, target);
-  photoBase64 = r.dataUrl;
-  photoPreview.src = r.dataUrl;
-  photoPreview.style.display = 'block';
-  photoInfo.textContent = `${r.w}×${r.h} px • ${r.size} B base64`;
-  writePhotoBtn.disabled = false;
-  log(`Zdjęcie: ${r.size} B`, 'ok');
-  toast('Zdjęcie gotowe', 'ok');
+  state.photo = r.dataUrl;
+  $('photoPreview').src = r.dataUrl;
+  $('photoPreview').style.display = 'block';
+  $('photoInfo').textContent = `${r.w}×${r.h} px • ${r.size} B base64`;
+  $('writePhotoBtn').disabled = false;
+  log(`Zdjęcie ${r.size} B`,'ok');
 }
 fileInput.onchange = e => handlePhoto(e.target.files[0]);
 cameraInput.onchange = e => handlePhoto(e.target.files[0]);
 
-writePhotoBtn.onclick = async () => {
-  if(!photoBase64) return;
-  const b64 = photoBase64.split(',')[1];
+$('writePhotoBtn').onclick = async () => {
+  if(!state.photo) return;
+  const b64 = state.photo.split(',')[1];
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
-  for(let i=0; i<bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
   try{
-    showBig('i-save', 'Zbliż kartę (zdjęcie)…', `${bytes.length} B`, hideBig);
-    const ndef = new NDEFReader();
-    await ndef.write({ records: [{ recordType: 'mime', mediaType: 'image/jpeg', data: bytes.buffer }] });
-    hideBig();
-    log('Zdjęcie zapisane', 'ok');
-    showBigSuccess('Zdjęcie zapisane!', `${bytes.length} B`);
-  }catch(e){
-    hideBig();
-    log('Błąd: ' + e.message, 'err');
-    showBigError('Błąd zapisu zdjęcia', 'Karta może być za mała');
-  }
+    showBig('i-save', 'Zbliż kartę…', `${bytes.length} B`, hideBig);
+    await writeTag([{ recordType:'mime', mediaType:'image/jpeg', data: bytes }]);
+    hideBig(); showBigSuccess('Zdjęcie zapisane', `${bytes.length} B`); log('Zdjęcie OK','ok');
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
 };
 
-// ============ EDIT ============
-document.getElementById('editLoadBtn').onclick = async () => {
+$('editLoadBtn').onclick = async () => {
   if(!hasNfc) return;
   try{
-    showBig('i-search', 'Wczytuję kartę…', 'Zbliż kartę', hideBig);
-    const ndef = new NDEFReader();
-    const controller = new AbortController();
-    await ndef.scan({ signal: controller.signal });
-    const timeout = setTimeout(() => { controller.abort(); hideBig(); toast('Timeout', 'err'); }, 10000);
-
-    ndef.onreading = ({ serialNumber, message }) => {
-      clearTimeout(timeout);
-      controller.abort();
-      hideBig();
-      vibrate(30);
-
-      const data = { uid: serialNumber, url: '', name: '', id: '' };
-      for(const r of message.records){
-        try{
-          const t = new TextDecoder(r.encoding || 'utf-8').decode(r.data);
-          if(r.recordType === 'url') data.url = t;
-          else if(r.recordType === 'text'){
-            t.split(';').forEach(part => {
-              const [k, v] = part.split('=');
-              if(k === 'NAME') data.name = v || '';
-              if(k === 'ID') data.id = v || '';
-              if(k === 'URL' && !data.url) data.url = v || '';
-            });
-          }
-        }catch(e){}
+    showBig('i-search', 'Zbliż kartę…', 'Odczyt');
+    const tag = await captureTag();
+    hideBig(); vibrate(30);
+    let url = '', name = '', id = '';
+    for(const r of tag.records){
+      const t = r.recordType;
+      if(t === 'url') url = new TextDecoder().decode(new Uint8Array(r.data));
+      else if(t === 'text'){
+        new TextDecoder().decode(new Uint8Array(r.data)).split(';').forEach(p => {
+          const [k,v] = p.split('=');
+          if(k === 'NAME') name = v || '';
+          if(k === 'ID') id = v || '';
+          if(k === 'URL' && !url) url = v || '';
+        });
       }
-      document.getElementById('editUid').textContent = 'UID: ' + serialNumber;
-      document.getElementById('editUrl').value = data.url;
-      document.getElementById('editName').value = data.name;
-      document.getElementById('editId').value = data.id;
-      document.getElementById('editForm').style.display = 'block';
-      log(`Wczytano kartę ${serialNumber}`, 'ok');
-      toast('Karta wczytana', 'ok');
-    };
-    ndef.onreadingerror = () => { clearTimeout(timeout); hideBig(); toast('Błąd odczytu', 'err'); };
-  }catch(e){
-    hideBig();
-    log('Błąd: ' + e.message, 'err');
-    toast('Błąd: ' + e.message, 'err');
-  }
+    }
+    $('editUid').textContent = 'UID: ' + tag.serialNumber;
+    $('editUrl').value = url;
+    $('editName').value = name;
+    $('editId').value = id;
+    $('editForm').style.display = 'block';
+    log(`Wczytano ${tag.serialNumber}`,'ok');
+  }catch(e){ hideBig(); toast('Błąd: ' + e.message,'err'); log(e.message,'err'); }
 };
 
-document.getElementById('editSaveBtn').onclick = () => {
-  const url = document.getElementById('editUrl').value.trim();
-  const name = document.getElementById('editName').value.trim();
-  const id = document.getElementById('editId').value.trim();
-  if(!url) return toast('Podaj URL', 'err');
+$('editSaveBtn').onclick = async () => {
+  const url = $('editUrl').value.trim();
+  const name = $('editName').value.trim();
+  const id = $('editId').value.trim();
+  if(!url) return toast('Podaj URL','err');
   const payload = `NAME=${name};ID=${id};URL=${url};`;
-  writeRecords([
-    { recordType: 'url', data: url },
-    { recordType: 'text', data: payload, lang: 'pl' }
-  ], 'Karta zaktualizowana');
+  try{
+    showBig('i-save', 'Zbliż kartę…', 'Zapis');
+    await writeTag([
+      { recordType:'url', data: url },
+      { recordType:'text', data: payload, lang:'pl' }
+    ]);
+    hideBig(); showBigSuccess('Zaktualizowano'); log('Edycja OK','ok');
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
 };
 
-document.getElementById('editClearBtn').onclick = async () => {
-  if(!confirm('Wyczyścić całą zawartość NDEF z karty?')) return;
+$('editClearBtn').onclick = async () => {
+  if(!confirm('Wyczyścić kartę?')) return;
   try{
-    showBig('i-trash', 'Czyszczę kartę…', '', hideBig);
-    const ndef = new NDEFReader();
-    await ndef.write({ records: [{ recordType: 'text', data: '', lang: 'pl' }] });
-    hideBig();
-    log('Karta wyczyszczona', 'ok');
-    showBigSuccess('Karta wyczyszczona');
-  }catch(e){
-    hideBig();
-    log('Błąd: ' + e.message, 'err');
-    showBigError('Błąd czyszczenia', e.message);
+    showBig('i-trash', 'Zbliż kartę…', 'Czyszczenie');
+    await writeTag([{ recordType:'text', data:'', lang:'pl' }]);
+    hideBig(); showBigSuccess('Wyczyszczono'); log('Wyczyszczono','ok');
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
+};
+
+function renderClone(){
+  const s = state.clone;
+  if(!s){
+    $('slot').classList.add('empty');
+    $('slotCount').textContent = '—';
+    $('slotInfo').textContent = 'Brak danych. Odczytaj kartę źródłową.';
+    $('cloneHex').textContent = '—';
+    return;
   }
+  $('slot').classList.remove('empty');
+  $('slotCount').textContent = s.records.length;
+  const totalB = s.records.reduce((a,r) => a + new Uint8Array(r.data).length, 0);
+  $('slotInfo').textContent = `UID: ${s.serialNumber}\nRekordy: ${s.records.length} • ${totalB} B`;
+  const chunks = s.records.map(r => new Uint8Array(r.data));
+  const total = chunks.reduce((a,c) => a+c.length, 0);
+  const buf = new Uint8Array(total);
+  let off = 0;
+  for(const c of chunks){ buf.set(c, off); off += c.length; }
+  $('cloneHex').textContent = hexDump(buf);
+}
+renderClone();
+
+$('cloneRead').onclick = async () => {
+  try{
+    showBig('i-scan', 'Zbliż kartę źródłową…', '');
+    const tag = await captureTag();
+    hideBig(); state.clone = tag; renderClone(); vibrate(30);
+    log(`Źródło: ${tag.serialNumber}, ${tag.records.length} rekordów`,'ok');
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
 };
 
-// ============ TOOLS ============
-document.getElementById('formatBtn').onclick = async () => {
-  if(!hasNfc) return;
-  if(!confirm('Sformatować kartę jako NDEF? Próba na kartach z domyślnymi kluczami.')) return;
+$('cloneClear').onclick = () => { state.clone = null; renderClone(); log('Bufor wyczyszczony','info'); };
+
+$('cloneCopy').onclick = async () => {
+  if(!state.clone) return toast('Brak źródła','err');
   try{
-    showBig('i-unlock', 'Formatuję kartę…', 'Zbliż kartę', hideBig);
-    const ndef = new NDEFReader();
-    // Zapis pustej wiadomości NDEF wymusza format
-    await ndef.write({ records: [{ recordType: 'text', data: '', lang: 'pl' }] });
-    hideBig();
-    log('Karta sformatowana jako NDEF', 'ok');
-    showBigSuccess('Karta sformatowana!', 'Można teraz zapisać URL');
-  }catch(e){
-    hideBig();
-    log('Formatowanie nieudane: ' + e.message, 'err');
-    showBigError('Nie można sformatować', 'Karta może mieć niestandardowe klucze – użyj MCT');
-  }
+    showBig('i-save', 'Zbliż kartę docelową…', 'Kopiowanie', hideBig);
+    const records = state.clone.records.map(recForWrite).filter(Boolean);
+    await writeTag(records);
+    hideBig(); showBigSuccess('Skopiowano!', `${records.length} rekordów`); log('Kopia OK','ok');
+  }catch(e){ hideBig(); showBigError('Błąd kopiowania', e.message); log(e.message,'err'); }
 };
 
-document.getElementById('resetCardBtn').onclick = async () => {
-  if(!hasNfc) return;
-  if(!confirm('Zresetować kartę? Usunie wszystkie rekordy NDEF.')) return;
+$('cloneMove').onclick = async () => {
+  if(!state.clone) return toast('Brak źródła','err');
+  if(!confirm('Przenieść? Skopiuje na nową kartę, potem poproszę o przyłożenie źródła, aby je wyczyścić.')) return;
   try{
-    showBig('i-refresh', 'Resetuję kartę…', '', hideBig);
-    const ndef = new NDEFReader();
-    await ndef.write({ records: [{ recordType: 'text', data: '', lang: 'pl' }] });
-    hideBig();
-    log('Karta zresetowana', 'ok');
-    showBigSuccess('Karta zresetowana!');
-  }catch(e){
-    hideBig();
-    log('Reset nieudany: ' + e.message, 'err');
-    showBigError('Nie można zresetować', e.message);
-  }
+    showBig('i-save', 'Zbliż kartę docelową…', 'Kopiowanie', hideBig);
+    const records = state.clone.records.map(recForWrite).filter(Boolean);
+    await writeTag(records);
+    hideBig(); showBigSuccess('Skopiowano!', 'Teraz wyczyścimy źródło');
+    await new Promise(r => setTimeout(r, 1800));
+    if(!confirm('Przyłóż kartę źródłową do wyczyszczenia. Kontynuować?')) return;
+    showBig('i-trash', 'Zbliż kartę źródłową…', 'Czyszczenie źródła');
+    await writeTag([{ recordType:'text', data:'', lang:'pl' }]);
+    hideBig(); showBigSuccess('Przeniesiono!', 'Źródło wyczyszczone');
+    log('Move OK','ok');
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
 };
 
-document.getElementById('lockCardBtn').onclick = async () => {
-  if(!hasNfc) return;
-  if(!confirm('UWAGA: Zablokujesz kartę NA STAŁE. Nie będzie można jej już nigdy edytować. Kontynuować?')) return;
-  if(!confirm('Ostatnie ostrzeżenie – operacja NIEODWRACALNA. Kontynuować?')) return;
+function updateHexView(){
+  $('hexView').textContent = hexDump(state.hex);
+  $('hexBytes').textContent = state.hex.length;
+  $('hexBits').textContent = state.hex.length * 8;
+}
+$('hexInput').oninput = () => {
   try{
-    showBig('i-lock', 'Blokuję kartę na stałe…', 'Nie odsuwaj!', hideBig);
+    state.hex = hexToBytes($('hexInput').value);
+    updateHexView();
+  }catch(e){ $('hexView').textContent = 'Błąd HEX: ' + e.message; }
+};
+$('hexClear').onclick = () => { state.hex = new Uint8Array(0); $('hexInput').value = ''; updateHexView(); log('HEX wyczyszczony','info'); };
+$('hexLoadFile').onclick = () => $('hexFile').click();
+$('hexFile').onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  const buf = new Uint8Array(await f.arrayBuffer());
+  state.hex = buf;
+  $('hexInput').value = bytesToHex(buf);
+  updateHexView(); log(`Wczytano ${buf.length} B z ${f.name}`,'ok');
+  e.target.value = '';
+};
+$('hexSaveFile').onclick = () => {
+  if(!state.hex.length) return toast('Bufor pusty','err');
+  downloadBlob(new Blob([state.hex], {type:'application/octet-stream'}), 'nfc-buffer.bin');
+  log('Eksport BIN','ok');
+};
+$('hexLoadTag').onclick = async () => {
+  try{
+    showBig('i-scan', 'Zbliż kartę…', '');
+    const tag = await captureTag();
+    const chunks = tag.records.map(r => new Uint8Array(r.data));
+    const total = chunks.reduce((a,c) => a+c.length, 0);
+    const buf = new Uint8Array(total);
+    let off = 0;
+    for(const c of chunks){ buf.set(c, off); off += c.length; }
+    state.hex = buf;
+    $('hexInput').value = bytesToHex(buf);
+    updateHexView();
+    hideBig(); showBigSuccess('Odczytano do HEX'); log(`Karta → HEX (${total} B)`,'ok');
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
+};
+$('hexWriteTag').onclick = async () => {
+  if(!state.hex.length) return toast('Bufor pusty','err');
+  try{
+    showBig('i-save', 'Zbliż kartę…', `${state.hex.length} B`);
+    await writeTag([{ recordType:'mime', mediaType:'application/octet-stream', data: state.hex }]);
+    hideBig(); showBigSuccess('Zapisano', `${state.hex.length} B`); log('HEX → karta','ok');
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
+};
+
+$('formatBtn').onclick = async () => {
+  if(!confirm('Sformatować jako NDEF?')) return;
+  try{
+    showBig('i-unlock', 'Zbliż kartę…', 'Formatowanie');
+    await writeTag([{ recordType:'text', data:'', lang:'pl' }]);
+    hideBig(); showBigSuccess('Sformatowano'); log('Format OK','ok');
+  }catch(e){ hideBig(); showBigError('Nie udało się', 'Może mieć niestandardowe klucze'); log(e.message,'err'); }
+};
+$('resetCardBtn').onclick = async () => {
+  if(!confirm('Wyczyścić kartę?')) return;
+  try{
+    showBig('i-refresh', 'Zbliż kartę…', 'Reset');
+    await writeTag([{ recordType:'text', data:'', lang:'pl' }]);
+    hideBig(); showBigSuccess('Zresetowano'); log('Reset karty OK','ok');
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
+};
+$('lockCardBtn').onclick = async () => {
+  if(!confirm('NIEODWRACALNE. Zablokować kartę na stałe?')) return;
+  if(!confirm('Ostatnie ostrzeżenie. Kontynuować?')) return;
+  try{
+    showBig('i-lock', 'Zbliż kartę…', 'Blokowanie permanentne', hideBig);
     const ndef = new NDEFReader();
-    await ndef.scan();
-    const controller = new AbortController();
+    const ctrl = new AbortController();
     let done = false;
     ndef.onreading = async ({ message }) => {
-      if(done) return;
-      done = true;
-      controller.abort();
+      if(done) return; done = true; ctrl.abort();
       try{
         await message.makeReadOnly();
-        hideBig();
-        log('Karta ZABLOKOWANA na stałe', 'ok');
-        showBigSuccess('Karta zablokowana!', 'Nieodwracalne');
-      }catch(e){
-        hideBig();
-        log('Błąd blokady: ' + e.message, 'err');
-        showBigError('Błąd blokady', e.message);
-      }
+        hideBig(); showBigSuccess('Zablokowano permanentnie'); log('LOCK OK','ok');
+      }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
     };
-    setTimeout(() => { if(!done){ controller.abort(); hideBig(); toast('Timeout', 'err'); } }, 10000);
-  }catch(e){
-    hideBig();
-    log('Błąd: ' + e.message, 'err');
-    showBigError('Błąd', e.message);
-  }
+    await ndef.scan({ signal: ctrl.signal });
+    setTimeout(() => { if(!done){ ctrl.abort(); hideBig(); toast('Timeout','err'); } }, 30000);
+  }catch(e){ hideBig(); showBigError('Błąd', e.message); log(e.message,'err'); }
 };
-
-document.getElementById('resetAppBtn').onclick = () => {
-  if(!confirm('Zresetować aplikację? Wyczyszczone zostaną formularze i log.')) return;
-  document.getElementById('urlInput').value = 'https://vercode.pl';
-  document.getElementById('urlDataInput').value = 'https://vercode.pl';
-  document.getElementById('nameInput').value = '';
-  document.getElementById('idInput').value = '';
-  document.getElementById('editForm').style.display = 'none';
-  document.getElementById('editUrl').value = '';
-  document.getElementById('editName').value = '';
-  document.getElementById('editId').value = '';
-  document.getElementById('readResult').innerHTML = '';
-  document.getElementById('photoInfo').textContent = '';
-  photoPreview.style.display = 'none';
-  photoPreview.src = '';
-  photoBase64 = null;
-  writePhotoBtn.disabled = true;
-  logEl.innerHTML = '';
-  log('Aplikacja zresetowana', 'ok');
-  toast('Reset aplikacji', 'ok');
-  vibrate([20, 20, 20]);
-  // switch to first tab
+$('resetAppBtn').onclick = () => {
+  if(!confirm('Reset aplikacji?')) return;
+  $('urlInput').value = 'https://vercode.pl';
+  $('urlDataInput').value = 'https://vercode.pl';
+  $('nameInput').value = '';
+  $('idInput').value = '';
+  $('editForm').style.display = 'none';
+  $('readResult').innerHTML = '';
+  $('readActions').style.display = 'none';
+  $('photoPreview').style.display = 'none';
+  $('photoPreview').src = '';
+  $('photoInfo').textContent = '';
+  state.read = null; state.clone = null; state.hex = new Uint8Array(0); state.photo = null;
+  $('hexInput').value = '';
+  updateHexView();
+  renderClone();
+  $('writePhotoBtn').disabled = true;
+  $('log').innerHTML = '';
+  log('Aplikacja zresetowana','ok');
+  toast('Reset','ok');
   document.querySelector('nav button[data-tab="read"]').click();
 };
 
-// ============ INIT ============
-log('Gotowe. Wybierz zakładkę i przyłóż kartę.', 'ok');
-log('Wskazówka: dotknij ekranu, aby włączyć pełny ekran.', 'info');
+$('logToggle').onclick = () => $('logPanel').classList.toggle('open');
+$('logClear').onclick = () => { $('log').innerHTML = ''; log('Log wyczyszczony','info'); };
+
+log('Gotowe','ok');
+log('Dotknij ekranu by włączyć fullscreen','info');
 </script>
 </body>
 </html>
